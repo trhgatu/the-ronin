@@ -4,7 +4,7 @@ import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 const stats = [
-  { label: "Designation", value: "Senior Technical Architect" },
+  { label: "Designation", value: "Software Architect" },
   { label: "Base_Location", value: "Ho Chi Minh City, VN" },
   { label: "Core_Directive", value: "Functional Aesthetics" },
   { label: "System_Status", value: "Open for Innovation" },

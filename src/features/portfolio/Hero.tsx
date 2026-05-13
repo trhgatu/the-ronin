@@ -101,27 +101,30 @@ export const Hero = () => {
               <div className="h-px flex-1 bg-gradient-to-r from-accent/50 to-transparent" />
             </div>
 
-            <h1 className="hero-reveal text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-[0.8] tracking-tighter text-foreground mb-12">
-              <motion.div
-                initial={{ x: -20, opacity: 0 }}
-                whileInView={{ x: 0, opacity: 1 }}
-                transition={{ duration: 1 }}
-              >
-                TRHGATU
-              </motion.div>
-              <motion.div
-                initial={{ x: 20, opacity: 0 }}
-                whileInView={{ x: 0, opacity: 1 }}
-                transition={{ duration: 1 }}
-              >
-                <span
-                  className="text-transparent"
-                  style={{ WebkitTextStroke: "1px var(--text-stroke)" }}
+            <div className="hero-reveal mb-12">
+              <h1 className="text-7xl md:text-9xl font-black italic uppercase leading-[0.8] tracking-tighter text-foreground mb-4">
+                <motion.div
+                  initial={{ x: -30, opacity: 0 }}
+                  whileInView={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 1.2, ease: "circOut" }}
                 >
-                  ARCHITECT.
+                  TRHGATU
+                </motion.div>
+              </h1>
+              <motion.div
+                initial={{ x: 30, opacity: 0 }}
+                whileInView={{ x: 0, opacity: 1 }}
+                transition={{ duration: 1.2, ease: "circOut", delay: 0.2 }}
+                className="flex items-center gap-6"
+              >
+                <div className="h-px w-20 bg-accent/40" />
+                <span 
+                  className="text-2xl md:text-4xl font-extralight uppercase tracking-[0.3em] text-foreground/60 italic"
+                >
+                  Software Architect
                 </span>
               </motion.div>
-            </h1>
+            </div>
 
             <div className="hero-reveal max-w-xl">
               <p className="text-2xl md:text-4xl lg:text-5xl font-extralight text-foreground leading-[1.1] tracking-tight mb-12 border-l-2 border-accent pl-12 italic">

@@ -175,8 +175,8 @@ export const Stack = () => {
       <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--separator-gray)] opacity-30" />
       <div className="absolute inset-0 -rotate-6 scale-150 pointer-events-none">
         <div
-          className="absolute inset-0 bg-[linear-gradient(to_right,var(--foreground),transparent_1px),linear-gradient(to_bottom,var(--foreground),transparent_1px)] bg-[size:40px_40px] opacity-5"
-          style={{ maskImage: 'radial-gradient(circle at center, black, transparent 80%)', WebkitMaskImage: 'radial-gradient(circle at center, black, transparent 80%)' }}
+          className="absolute inset-0 bg-[linear-gradient(to_right,var(--foreground),transparent_1px),linear-gradient(to_bottom,var(--foreground),transparent_1px)] bg-[size:40px_40px] opacity-15"
+          style={{ maskImage: 'radial-gradient(circle at center, black, transparent 90%)', WebkitMaskImage: 'radial-gradient(circle at center, black, transparent 90%)' }}
         />
       </div>
 
