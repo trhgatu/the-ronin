@@ -20,22 +20,34 @@ export const metadata: Metadata = {
   description: "Transmuting the chaos of logic into the gold of legacy.",
 };
 
+import { ThemeProvider } from "@/components/shared/ThemeProvider";
+
+import { PageBackdrop } from "@/components/shared/PageBackdrop";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-accent selection:text-black`}
       >
-        <div className="grain-overlay" />
-        <SmoothScroll>
-          <CustomCursor />
-          <Navbar />
-          {children}
-        </SmoothScroll>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <PageBackdrop />
+          <div className="grain-overlay" />
+          <SmoothScroll>
+            <CustomCursor />
+            <Navbar />
+            {children}
+          </SmoothScroll>
+        </ThemeProvider>
       </body>
     </html>
   );

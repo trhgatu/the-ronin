@@ -66,7 +66,7 @@ const ProjectCard = ({ project, index }: { project: Project, index: number }) =>
     if (!imageRef.current) return;
 
     gsap.to(imageRef.current, {
-      y: -80,
+      y: "15%",
       ease: "none",
       scrollTrigger: {
         trigger: cardRef.current,
@@ -92,13 +92,13 @@ const ProjectCard = ({ project, index }: { project: Project, index: number }) =>
       ref={cardRef}
       className={`relative w-full flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 md:gap-24 mb-60`}
     >
-      <span className={`absolute -top-20 ${isEven ? '-left-10' : '-right-10'} text-[15vw] font-black italic text-white/[0.03] pointer-events-none select-none`}>
+      <span className={`absolute -top-20 ${isEven ? '-left-10' : '-right-10'} text-[15vw] font-black italic text-foreground/[0.03] pointer-events-none select-none`}>
         {project.id}
       </span>
 
       <div className="flex-1 group cursor-none">
-        <div className="relative aspect-[16/10] overflow-hidden border border-white/10 group-hover:border-accent/40 transition-all duration-700 bg-zinc-900 shadow-2xl">
-          <div ref={imageRef} className="absolute inset-0 h-[120%] -top-[10%]">
+        <div className="relative aspect-[16/10] overflow-hidden border border-border group-hover:border-accent/40 transition-all duration-700 bg-card shadow-2xl">
+          <div ref={imageRef} className="absolute inset-0 h-[130%] -top-[15%]">
             <Image
               src={project.image}
               alt={project.title}
@@ -106,7 +106,7 @@ const ProjectCard = ({ project, index }: { project: Project, index: number }) =>
               className="object-cover grayscale-[40%] group-hover:grayscale-0 transition-all duration-1000 opacity-70 group-hover:opacity-100"
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-60" />
 
           <div className="absolute inset-0 bg-[linear-gradient(transparent,rgba(251,191,36,0.03),transparent)] bg-[size:100%_4px] animate-scanline pointer-events-none opacity-0 group-hover:opacity-100" />
         </div>
@@ -120,25 +120,25 @@ const ProjectCard = ({ project, index }: { project: Project, index: number }) =>
           <div className="h-px w-12 bg-accent/30" />
         </div>
 
-        <h3 className="text-4xl md:text-6xl font-black italic text-white uppercase tracking-tighter mb-8 leading-none">
+        <h3 className="text-4xl md:text-6xl font-black italic text-foreground uppercase tracking-tighter mb-8 leading-none">
           {project.title}
         </h3>
 
-        <p className="text-lg md:text-xl font-light text-zinc-400 leading-relaxed mb-10 max-w-xl">
+        <p className="text-lg md:text-xl font-light text-foreground/40 leading-relaxed mb-10 max-w-xl">
           {project.description}
         </p>
 
         <div className="flex flex-wrap gap-3 mb-10">
           {project.tags.map((tag: string) => (
-            <span key={tag} className="px-3 py-1 border border-white/5 text-[9px] font-mono text-zinc-500 uppercase tracking-widest bg-white/[0.02]">
+            <span key={tag} className="px-3 py-1 border border-border text-[9px] font-mono text-foreground/40 uppercase tracking-widest bg-card">
               {tag}
             </span>
           ))}
         </div>
 
-        <div className="pt-8 border-t border-white/5 flex flex-col gap-2">
-          <span className="text-[9px] font-mono text-zinc-700 uppercase tracking-widest">Protocol: {project.protocol}</span>
-          <span className="text-[9px] font-mono text-zinc-700 uppercase tracking-widest">Verification: STABLE_V2</span>
+        <div className="pt-8 border-t border-border flex flex-col gap-2">
+          <span className="text-[9px] font-mono text-foreground/30 uppercase tracking-widest">Protocol: {project.protocol}</span>
+          <span className="text-[9px] font-mono text-foreground/30 uppercase tracking-widest">Verification: STABLE_V2</span>
         </div>
       </div>
     </div>
@@ -200,9 +200,10 @@ export const Artifacts = () => {
     <section
       ref={sectionRef}
       id="artifacts"
-      className="relative py-40 bg-black overflow-hidden border-y border-white/5"
+      className="relative py-40 bg-background overflow-hidden"
     >
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[linear-gradient(to_right,#333_1px,transparent_1px),linear-gradient(to_bottom,#333_1px,transparent_1px)] bg-[size:100px_100px]" />
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--separator-gray)] opacity-30" />
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:100px_100px]" />
 
       <div className="mx-auto max-w-[1400px] px-10 relative z-10">
         {/* Unified Header */}
@@ -217,16 +218,16 @@ export const Artifacts = () => {
             <div className="h-px flex-1 bg-gradient-to-r from-accent/50 to-transparent" />
           </div>
 
-          <h2 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase text-white tracking-tighter leading-[0.8] overflow-visible">
+          <h2 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase text-foreground tracking-tighter leading-[0.8] overflow-visible">
             <span className="inline-block artifacts-title-1">SELECTED</span> <br />
-            <span className="inline-block artifacts-title-2 text-transparent" style={{ WebkitTextStroke: "1px rgba(255,255,255,0.15)" }}>ARTIFACTS.</span>
+            <span className="inline-block artifacts-title-2 text-transparent" style={{ WebkitTextStroke: "1px var(--text-stroke)" }}>ARTIFACTS.</span>
           </h2>
 
           <div className="flex flex-col md:flex-row gap-12 items-start justify-between mt-16">
-            <p className="text-xl md:text-3xl font-light text-zinc-500 max-w-2xl leading-tight tracking-tight">
+            <p className="text-xl md:text-3xl font-light text-foreground/40 max-w-2xl leading-tight tracking-tight">
               A curated collection of <span className="text-accent italic">digital manifestations</span>. Each artifact represents a specific convergence of logic, aesthetics, and architectural intent.
             </p>
-            <div className="text-[8px] font-mono text-zinc-700 max-w-[200px] leading-relaxed opacity-50 uppercase border-l border-white/10 pl-6">
+            <div className="text-[8px] font-mono text-foreground/30 max-w-[200px] leading-relaxed opacity-50 uppercase border-l border-border pl-6">
               Protocol: 04_THE_ARTIFACTS //
               Status: VERIFIED //
               Archive: SECURE

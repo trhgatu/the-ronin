@@ -72,9 +72,9 @@ export const Contact = () => {
     <section 
       id="contact"
       ref={containerRef}
-      className="py-60 relative overflow-hidden"
+      className="py-60 relative overflow-hidden bg-background"
     >
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--separator-gray)] opacity-30" />
       
       <div className="mx-auto max-w-[1400px] px-10 w-full">
         <div className="mb-24">
@@ -91,12 +91,12 @@ export const Contact = () => {
 
         <div className="flex flex-col md:flex-row gap-20 items-end justify-between">
           <div className="max-w-3xl">
-            <h2 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-[0.8] tracking-tighter mb-12">
+            <h2 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-[0.8] tracking-tighter mb-12 text-foreground">
               <span className="inline-block contact-title-1">BUILD</span> <br />
-              <span className="inline-block contact-title-2 text-transparent" style={{ WebkitTextStroke: "1px rgba(255,255,255,0.15)" }}>THE FUTURE.</span>
+              <span className="inline-block contact-title-2 text-transparent" style={{ WebkitTextStroke: "1px var(--text-stroke)" }}>THE FUTURE.</span>
             </h2>
             <div className="contact-content-reveal">
-              <p className="text-xl md:text-3xl font-light text-white/40 leading-tight tracking-tight">
+              <p className="text-xl md:text-3xl font-light text-foreground/40 leading-tight tracking-tight">
                 Architecture is about more than just code. It&apos;s about building solutions that last. 
                 Let&apos;s collaborate on your next <span className="text-accent italic">high-performance legacy</span>.
               </p>
@@ -104,7 +104,7 @@ export const Contact = () => {
           </div>
 
           <div className="contact-reveal flex flex-col items-end gap-12">
-            <div className="text-[8px] font-mono text-white/20 max-w-[200px] text-right leading-relaxed uppercase tracking-widest">
+            <div className="text-[8px] font-mono text-foreground/20 max-w-[200px] text-right leading-relaxed uppercase tracking-widest">
               Network Protocol // 
               Sector: 06_THE_CONNECTION // 
               Status: AVAILABLE_FOR_PROJECTS
@@ -112,9 +112,9 @@ export const Contact = () => {
             
             <a 
               href="mailto:trhgatu.dev@gmail.com"
-              className="group relative px-16 py-8 overflow-hidden border border-white/10 rounded-sm transition-all hover:border-accent"
+              className="group relative px-16 py-8 overflow-hidden border border-border rounded-sm transition-all hover:border-accent"
             >
-              <span className="relative z-10 text-xs font-black uppercase tracking-[0.5em] text-white group-hover:text-black transition-colors">
+              <span className="relative z-10 text-xs font-black uppercase tracking-[0.5em] text-foreground group-hover:text-background transition-colors">
                 SEND_ENCRYPTED_MESSAGE
               </span>
               <motion.div 

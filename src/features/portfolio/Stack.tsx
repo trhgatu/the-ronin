@@ -26,7 +26,7 @@ const TECH_WORKSHOP = ["Git", "Github", "Docker", "Kubernetes", "Grafana", "Figm
 
 const TechCard = ({ name }: { name: string }) => {
   return (
-    <div className="flex-shrink-0 w-72 h-24 mx-4 relative overflow-hidden border border-white/5 bg-black/60 rounded-[2px] p-5 group hover:border-accent/40 transition-all duration-700 flex items-center justify-between backdrop-blur-3xl cursor-none">
+    <div className="flex-shrink-0 w-72 h-20 mx-4 relative overflow-hidden border border-foreground/5 bg-foreground/[0.01] rounded-[2px] p-5 group hover:border-accent/20 transition-all duration-700 flex items-center justify-between backdrop-blur-xl cursor-none">
       <style jsx>{`
         @keyframes resonance {
           0%, 100% { height: 30%; }
@@ -46,7 +46,7 @@ const TechCard = ({ name }: { name: string }) => {
       <div className="relative z-10 flex items-center gap-6">
         <div className="w-12 h-12 relative">
           <Image
-            src={`https://skillicons.dev/icons?i=${name.toLowerCase()}&theme=dark`}
+            src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
             alt={name}
             width={48}
             height={48}
@@ -55,7 +55,7 @@ const TechCard = ({ name }: { name: string }) => {
           />
         </div>
         <div>
-          <h3 className="text-lg font-black text-white uppercase tracking-tighter group-hover:text-accent transition-all duration-500 relative inline-block">
+          <h3 className="text-lg font-black text-foreground uppercase tracking-tighter group-hover:text-accent transition-all duration-500 relative inline-block">
             {name}
             <span className="absolute inset-0 text-accent/10 group-hover:translate-x-[1px] transition-transform pointer-events-none">{name}</span>
           </h3>
@@ -67,7 +67,7 @@ const TechCard = ({ name }: { name: string }) => {
           {[1, 2, 3, 4].map(i => (
             <div
               key={i}
-              className="resonance-bar w-1 bg-zinc-800 group-hover:bg-accent/60 transition-colors"
+              className="resonance-bar w-1 bg-foreground/5 group-hover:bg-accent/40 transition-colors"
               style={{
                 height: `${i * 20}%`,
                 animationDelay: `${i * 0.15}s`
@@ -76,14 +76,12 @@ const TechCard = ({ name }: { name: string }) => {
           ))}
         </div>
       </div>
-      <div className="absolute top-0 left-0 w-1 h-1 border-t border-l border-white/10" />
-      <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-white/10" />
     </div>
   );
 };
 
 const DataLine = ({ text }: { text: string }) => (
-  <div className="flex-shrink-0 mx-8 text-[9px] font-mono text-zinc-700 uppercase tracking-[1em] whitespace-nowrap italic group-hover:text-accent transition-colors duration-700 py-2">
+  <div className="flex-shrink-0 mx-8 text-[8px] font-mono text-foreground/5 uppercase tracking-[0.8em] whitespace-nowrap italic transition-colors duration-700 py-2">
     {text} {" // "} {text} {" // "} {text}
   </div>
 );
@@ -109,7 +107,7 @@ const KineticMarquee = ({ children, baseVelocity = 1 }: MarqueeProps) => {
   });
 
   return (
-    <div className="flex overflow-hidden whitespace-nowrap flex-nowrap py-2 border-y border-white/[0.02] [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
+    <div className="flex overflow-hidden whitespace-nowrap flex-nowrap py-2 border-y border-border [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
       <motion.div className="flex whitespace-nowrap flex-nowrap items-center" style={{ x }}>
         {children}{children}{children}{children}
       </motion.div>
@@ -172,10 +170,14 @@ export const Stack = () => {
     <section
       ref={containerRef}
       id="essence"
-      className="relative py-80 bg-black overflow-hidden border-y border-white/5"
+      className="relative py-80 bg-background overflow-hidden"
     >
-      <div className="absolute inset-0 -rotate-6 scale-150 opacity-10 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#111_1px,transparent_1px),linear-gradient(to_bottom,#111_1px,transparent_1px)] bg-[size:40px_40px]" />
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--separator-gray)] opacity-30" />
+      <div className="absolute inset-0 -rotate-6 scale-150 pointer-events-none">
+        <div
+          className="absolute inset-0 bg-[linear-gradient(to_right,var(--foreground),transparent_1px),linear-gradient(to_bottom,var(--foreground),transparent_1px)] bg-[size:40px_40px] opacity-5"
+          style={{ maskImage: 'radial-gradient(circle at center, black, transparent 80%)', WebkitMaskImage: 'radial-gradient(circle at center, black, transparent 80%)' }}
+        />
       </div>
 
       <div className="relative z-20">
@@ -189,31 +191,22 @@ export const Stack = () => {
             <div className="h-px flex-1 bg-gradient-to-r from-accent/50 to-transparent" />
           </div>
 
-          <h2 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-[-0.08em] text-white uppercase italic leading-[0.8] overflow-visible">
+          <h2 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-[-0.08em] text-foreground uppercase italic leading-[0.8] overflow-visible">
             <span className="inline-block tech-title-1">THE ENGINE OF</span> <br />
-            <span className="inline-block tech-title-2 text-transparent ml-[10%] md:ml-[20%]" style={{ WebkitTextStroke: "1px rgba(255,255,255,0.15)" }}>
+            <span className="inline-block tech-title-2 text-transparent ml-[10%] md:ml-[20%]" style={{ WebkitTextStroke: "1px var(--text-stroke)" }}>
               CREATION.
             </span>
           </h2>
 
           <div className="flex flex-col md:flex-row gap-12 items-start justify-between mt-12">
-            <p className="text-xl md:text-3xl font-light text-zinc-500 max-w-2xl leading-tight tracking-tight">
+            <p className="text-xl md:text-3xl font-light text-foreground/40 max-w-2xl leading-tight tracking-tight">
               A precise distillation of modern primitives. Harnessing the <span className="text-accent italic">purest elements</span> of logic to build resilient digital systems.
             </p>
-            <div className="text-[8px] font-mono text-zinc-700 max-w-[200px] leading-relaxed opacity-50 uppercase border-l border-white/10 pl-6">
-              Protocol: 02_THE_ELEMENTS //
-              Status: ACTIVE //
-              Energy: NOMINAL
-              <br /><br />
-              Authorized Architect: trhgatu
-            </div>
           </div>
         </div>
-
-        {/* The Kinetic Engine Display - Refined Tilt */}
         <div className="relative -rotate-6 scale-110 md:scale-110 py-10">
-          <div className="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-black via-black/80 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-black via-black/80 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background via-background/80 to-transparent z-20 pointer-events-none" />
 
           <div className="flex flex-col gap-2 relative z-10">
             <KineticMarquee baseVelocity={-0.6}>

@@ -1,4 +1,5 @@
 import { Hero } from "@/features/portfolio/Hero";
+import { About } from "@/features/portfolio/About";
 import { Artifacts } from "@/features/portfolio/Artifacts";
 import { Stack } from "@/features/portfolio/Stack";
 import { Philosophy } from "@/features/portfolio/Philosophy";
@@ -12,9 +13,10 @@ export default function Home() {
     <main className="flex min-h-screen flex-col">
       <ScrollTimeline />
       <Hero />
+      <About />
+      <Artifacts />
       <Stack />
       <Philosophy />
-      <Artifacts />
       <Experience />
       <Contact />
       <Footer />
