@@ -4,7 +4,7 @@ import "@/app/globals.css";
 import { Navbar } from "@/components/shared/Navbar";
 import { CustomCursor } from "@/components/shared/CustomCursor";
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
