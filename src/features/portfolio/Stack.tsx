@@ -26,8 +26,16 @@ const TECH_WORKSHOP = ["Git", "Github", "Docker", "Kubernetes", "Grafana", "Figm
 
 const TechCard = ({ name }: { name: string }) => {
   return (
-    <div className="flex-shrink-0 w-72 h-20 mx-4 relative overflow-hidden border border-foreground/5 bg-foreground/[0.01] rounded-[2px] p-5 group hover:border-accent/20 transition-all duration-700 flex items-center justify-between backdrop-blur-xl cursor-none">
+    <div className="flex-shrink-0 w-72 h-20 mx-4 relative overflow-hidden border border-foreground/5 bg-foreground/[0.01] rounded-[2px] p-5 group hover:border-accent/30 transition-all duration-500 flex items-center justify-between backdrop-blur-xl cursor-none group">
       <style jsx>{`
+        @keyframes glitch {
+          0% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(-2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+          100% { transform: translate(0); }
+        }
         @keyframes resonance {
           0%, 100% { height: 30%; }
           50% { height: 100%; }
@@ -39,38 +47,62 @@ const TechCard = ({ name }: { name: string }) => {
         .group:hover .resonance-bar {
           animation-play-state: running;
         }
+        .glitch-hover {
+          display: none;
+        }
+        .group:hover .glitch-hover {
+          display: block;
+          animation: glitch 0.2s iherit infinite;
+        }
+        .chromatic-aberration {
+          transition: filter 0.3s ease;
+        }
+        .group:hover .chromatic-aberration {
+          filter: drop-shadow(-2px 0px 0px #ff000080) drop-shadow(2px 0px 0px #00ffff80);
+          animation: glitch 0.3s infinite;
+        }
       `}</style>
 
+      {/* Background Noise & Grid */}
       <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
+      
+      {/* Laser Border Effect */}
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
+      <div className="absolute bottom-0 right-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent translate-x-[100%] group-hover:translate-x-[-100%] transition-transform duration-1000 ease-in-out" />
 
       <div className="relative z-10 flex items-center gap-6">
-        <div className="w-12 h-12 relative">
-          <Image
-            src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
-            alt={name}
-            width={48}
-            height={48}
-            className="transition-all duration-700 scale-100 group-hover:scale-110"
-            unoptimized
-          />
+        <div className="w-12 h-12 relative flex items-center justify-center">
+          <div className="chromatic-aberration relative w-full h-full flex items-center justify-center">
+            <Image
+              src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
+              alt={name}
+              width={40}
+              height={40}
+              className="transition-all duration-500 scale-100 group-hover:scale-110"
+              unoptimized
+            />
+          </div>
         </div>
-        <div>
+        
+        <div className="relative">
           <h3 className="text-lg font-black text-foreground uppercase tracking-tighter group-hover:text-accent transition-all duration-500 relative inline-block">
             {name}
-            <span className="absolute inset-0 text-accent/10 group-hover:translate-x-[1px] transition-transform pointer-events-none">{name}</span>
+            <span className="absolute inset-0 text-accent/20 group-hover:translate-x-[2px] group-hover:translate-y-[-1px] transition-transform pointer-events-none glitch-hover">
+              {name}
+            </span>
           </h3>
         </div>
       </div>
 
-      <div className="relative z-10 flex flex-col items-end gap-1 h-6">
-        <div className="flex items-end gap-1 h-full">
-          {[1, 2, 3, 4].map(i => (
+      <div className="relative z-10 flex flex-col items-end justify-center gap-1">
+        <div className="flex items-end gap-[2px] h-4">
+          {[1, 2, 3, 4, 5].map(i => (
             <div
               key={i}
-              className="resonance-bar w-1 bg-foreground/5 group-hover:bg-accent/40 transition-colors"
+              className="resonance-bar w-[2px] bg-foreground/10 group-hover:bg-accent/60 transition-colors"
               style={{
-                height: `${i * 20}%`,
-                animationDelay: `${i * 0.15}s`
+                height: `${20 + (i * 15)}%`,
+                animationDelay: `${i * 0.1}s`
               }}
             />
           ))}
