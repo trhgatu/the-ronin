@@ -77,7 +77,7 @@ export const Hero = () => {
     <section
       id="hero"
       ref={containerRef}
-      className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-background"
+      className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-background pt-32 pb-20 lg:py-0"
     >
       {/* Background Technical Layer */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -88,12 +88,12 @@ export const Hero = () => {
         />
       </div>
 
-      <div className="mx-auto max-w-[1400px] w-full px-10 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 items-center">
-          <div className="lg:col-span-7">
-            <div className="flex items-center gap-4 mb-10 hero-reveal w-full">
+      <div className="mx-auto max-w-[1400px] w-full px-6 md:px-10 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
+          <div className="lg:col-span-7 order-2 lg:order-1">
+            <div className="flex items-center gap-4 mb-8 md:mb-10 hero-reveal w-full">
               <div className="flex items-center font-mono text-accent">
-                <span className="text-[12px] tracking-[0.6em] uppercase phase-label-01 font-bold">
+                <span className="text-[10px] md:text-[12px] tracking-[0.4em] md:tracking-[0.6em] uppercase phase-label-01 font-bold">
                   [ INITIALIZING ]
                 </span>
                 <span className="text-[12px] animate-pulse">_</span>
@@ -101,8 +101,8 @@ export const Hero = () => {
               <div className="h-px flex-1 bg-gradient-to-r from-accent/50 to-transparent" />
             </div>
 
-            <div className="hero-reveal mb-12">
-              <h1 className="text-7xl md:text-9xl font-black italic uppercase leading-[0.8] tracking-tighter text-foreground mb-4">
+            <div className="hero-reveal mb-8 md:mb-12 text-center lg:text-left">
+              <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black italic uppercase leading-[0.85] lg:leading-[0.8] tracking-tighter text-foreground mb-4">
                 <motion.div
                   initial={{ x: -30, opacity: 0 }}
                   whileInView={{ x: 0, opacity: 1 }}
@@ -115,25 +115,25 @@ export const Hero = () => {
                 initial={{ x: 30, opacity: 0 }}
                 whileInView={{ x: 0, opacity: 1 }}
                 transition={{ duration: 1.2, ease: "circOut", delay: 0.2 }}
-                className="flex items-center gap-6"
+                className="flex items-center justify-center lg:justify-start gap-4 md:gap-6"
               >
-                <div className="h-px w-20 bg-accent/40" />
+                <div className="h-px w-12 md:w-20 bg-accent/40" />
                 <span 
-                  className="text-2xl md:text-4xl font-extralight uppercase tracking-[0.3em] text-foreground/60 italic"
+                  className="text-xl md:text-2xl lg:text-4xl font-extralight uppercase tracking-[0.2em] md:tracking-[0.3em] text-foreground/60 italic"
                 >
                   Software Architect
                 </span>
               </motion.div>
             </div>
 
-            <div className="hero-reveal max-w-xl">
-              <p className="text-2xl md:text-4xl lg:text-5xl font-extralight text-foreground leading-[1.1] tracking-tight mb-12 border-l-2 border-accent pl-12 italic">
+            <div className="hero-reveal max-w-xl mx-auto lg:mx-0">
+              <p className="text-xl md:text-3xl lg:text-5xl font-extralight text-foreground leading-[1.2] lg:leading-[1.1] tracking-tight mb-8 md:mb-12 border-l-2 border-accent pl-6 md:pl-12 italic text-left">
                 &quot;Just a soul writing code <br />
                 the way painters write light.&quot;
               </p>
 
-              <div className="flex items-center gap-10">
-                <button className="group relative px-10 py-4 overflow-hidden border border-border bg-foreground/[0.02] hover:border-accent/40 transition-all">
+              <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-10">
+                <button className="w-full sm:w-auto group relative px-10 py-4 overflow-hidden border border-border bg-foreground/[0.02] hover:border-accent/40 transition-all">
                   <span className="relative z-10 text-[10px] font-bold uppercase tracking-[0.3em] text-foreground">
                     Begin Sequence
                   </span>
@@ -143,8 +143,8 @@ export const Hero = () => {
                     className="absolute inset-0 bg-accent/10 z-0"
                   />
                 </button>
-                <div className="text-[9px] font-mono text-foreground/40 uppercase tracking-widest hidden md:block">
-                  Protocol: 01_THE_MANIFEST <br />
+                <div className="text-[9px] font-mono text-foreground/40 uppercase tracking-widest text-center sm:text-left">
+                  Protocol: 01_THE_MANIFEST <br className="hidden sm:block" />
                   Status: Operational
                 </div>
               </div>
@@ -155,9 +155,9 @@ export const Hero = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2, ease: "circOut", delay: 0.5 }}
-            className="lg:col-span-5 flex justify-center lg:justify-end"
+            className="lg:col-span-5 flex justify-center lg:justify-end order-1 lg:order-2"
           >
-            <div className="relative w-full md:max-w-[420px] lg:max-w-[450px] aspect-square group">
+            <div className="relative w-full max-w-[280px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[450px] aspect-square group">
               {/* Minimalist Frame */}
               <div className="relative w-full h-full p-2 border border-foreground/10 bg-background/20 backdrop-blur-sm rounded-full overflow-hidden transition-all duration-700 group-hover:border-accent/30 group-hover:shadow-[0_0_40px_rgba(251,191,36,0.05)]">
 
@@ -176,7 +176,7 @@ export const Hero = () => {
                 </div>
               </div>
 
-              {/* Minimal Focus Markers (Optional but very subtle) */}
+              {/* Minimal Focus Markers */}
               <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-foreground/20 rounded-tl-xl pointer-events-none" />
               <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-foreground/20 rounded-br-xl pointer-events-none" />
             </div>
@@ -184,8 +184,8 @@ export const Hero = () => {
         </div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-20">
-        <div className="w-[1px] h-12 bg-accent/50" />
+      <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 md:gap-3 opacity-20">
+        <div className="w-[1px] h-8 md:h-12 bg-accent/50" />
         <span className="text-[7px] uppercase tracking-[0.6em] font-bold">Scroll</span>
       </div>
     </section>

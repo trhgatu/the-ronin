@@ -26,7 +26,7 @@ const TECH_WORKSHOP = ["Git", "Github", "Docker", "Kubernetes", "Grafana", "Figm
 
 const TechCard = ({ name }: { name: string }) => {
   return (
-    <div className="flex-shrink-0 w-72 h-20 mx-4 relative overflow-hidden border border-foreground/5 bg-foreground/[0.01] rounded-[2px] p-5 group hover:border-accent/30 transition-all duration-500 flex items-center justify-between backdrop-blur-xl cursor-none group">
+    <div className="flex-shrink-0 w-56 h-16 md:w-72 md:h-20 mx-2 md:mx-4 relative overflow-hidden border border-foreground/5 bg-foreground/[0.01] rounded-[2px] p-4 md:p-5 group hover:border-accent/30 transition-all duration-500 flex items-center justify-between backdrop-blur-xl cursor-none group">
       <style jsx>{`
         @keyframes glitch {
           0% { transform: translate(0); }
@@ -70,22 +70,22 @@ const TechCard = ({ name }: { name: string }) => {
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
       <div className="absolute bottom-0 right-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent translate-x-[100%] group-hover:translate-x-[-100%] transition-transform duration-1000 ease-in-out" />
 
-      <div className="relative z-10 flex items-center gap-6">
-        <div className="w-12 h-12 relative flex items-center justify-center">
+      <div className="relative z-10 flex items-center gap-3 md:gap-6">
+        <div className="w-8 h-8 md:w-12 md:h-12 relative flex items-center justify-center">
           <div className="chromatic-aberration relative w-full h-full flex items-center justify-center">
             <Image
               src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
               alt={name}
-              width={40}
-              height={40}
-              className="transition-all duration-500 scale-100 group-hover:scale-110"
+              width={32}
+              height={32}
+              className="transition-all duration-500 scale-100 group-hover:scale-110 md:w-[40px] md:h-[40px]"
               unoptimized
             />
           </div>
         </div>
         
         <div className="relative">
-          <h3 className="text-lg font-black text-foreground uppercase tracking-tighter group-hover:text-accent transition-all duration-500 relative inline-block">
+          <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-tighter group-hover:text-accent transition-all duration-500 relative inline-block">
             {name}
             <span className="absolute inset-0 text-accent/20 group-hover:translate-x-[2px] group-hover:translate-y-[-1px] transition-transform pointer-events-none glitch-hover">
               {name}
@@ -95,11 +95,11 @@ const TechCard = ({ name }: { name: string }) => {
       </div>
 
       <div className="relative z-10 flex flex-col items-end justify-center gap-1">
-        <div className="flex items-end gap-[2px] h-4">
+        <div className="flex items-end gap-[2px] h-3 md:h-4">
           {[1, 2, 3, 4, 5].map(i => (
             <div
               key={i}
-              className="resonance-bar w-[2px] bg-foreground/10 group-hover:bg-accent/60 transition-colors"
+              className="resonance-bar w-[1.5px] md:w-[2px] bg-foreground/10 group-hover:bg-accent/60 transition-colors"
               style={{
                 height: `${20 + (i * 15)}%`,
                 animationDelay: `${i * 0.1}s`
@@ -113,8 +113,8 @@ const TechCard = ({ name }: { name: string }) => {
 };
 
 const DataLine = ({ text }: { text: string }) => (
-  <div className="flex-shrink-0 mx-8 text-[8px] font-mono text-foreground/5 uppercase tracking-[0.8em] whitespace-nowrap italic transition-colors duration-700 py-2">
-    {text} {" // "} {text} {" // "} {text}
+  <div className="flex-shrink-0 mx-4 md:mx-8 text-[7px] md:text-[8px] font-mono text-foreground/5 uppercase tracking-[0.6em] md:tracking-[0.8em] whitespace-nowrap italic transition-colors duration-700 py-2">
+    {text} {" // "} {text}
   </div>
 );
 
@@ -139,7 +139,7 @@ const KineticMarquee = ({ children, baseVelocity = 1 }: MarqueeProps) => {
   });
 
   return (
-    <div className="flex overflow-hidden whitespace-nowrap flex-nowrap py-2 border-y border-border [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
+    <div className="flex overflow-hidden whitespace-nowrap flex-nowrap py-1 md:py-2 border-y border-border [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
       <motion.div className="flex whitespace-nowrap flex-nowrap items-center" style={{ x }}>
         {children}{children}{children}{children}
       </motion.div>
@@ -202,45 +202,45 @@ export const Stack = () => {
     <section
       ref={containerRef}
       id="essence"
-      className="relative py-80 bg-background overflow-hidden"
+      className="relative py-24 md:py-40 lg:py-80 bg-background overflow-hidden"
     >
       <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--separator-gray)] opacity-30" />
       <div className="absolute inset-0 -rotate-6 scale-150 pointer-events-none">
         <div
-          className="absolute inset-0 bg-[linear-gradient(to_right,var(--foreground),transparent_1px),linear-gradient(to_bottom,var(--foreground),transparent_1px)] bg-[size:40px_40px] opacity-15"
+          className="absolute inset-0 bg-[linear-gradient(to_right,var(--foreground),transparent_1px),linear-gradient(to_bottom,var(--foreground),transparent_1px)] bg-[size:20px_20px] md:bg-[size:40px_40px] opacity-10 md:opacity-15"
           style={{ maskImage: 'radial-gradient(circle at center, black, transparent 90%)', WebkitMaskImage: 'radial-gradient(circle at center, black, transparent 90%)' }}
         />
       </div>
 
       <div className="relative z-20">
-        <div className="mx-auto max-w-[1400px] px-10 mb-40 text-left">
+        <div className="mx-auto max-w-[1400px] px-6 md:px-10 mb-24 md:mb-40 text-left">
           <div className="flex items-center gap-4 mb-8 w-full">
             <div className="flex items-center font-mono text-accent">
-              <span className="text-[12px] tracking-[0.6em] uppercase phase-label-02 font-bold">
+              <span className="text-[10px] md:text-[12px] tracking-[0.4em] md:tracking-[0.6em] uppercase phase-label-02 font-bold">
               </span>
               <span className="text-[12px] animate-pulse">_</span>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-accent/50 to-transparent" />
           </div>
 
-          <h2 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-[-0.08em] text-foreground uppercase italic leading-[0.8] overflow-visible">
+          <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-[-0.08em] text-foreground uppercase italic leading-[0.85] lg:leading-[0.8] overflow-visible">
             <span className="inline-block tech-title-1">THE ENGINE OF</span> <br />
-            <span className="inline-block tech-title-2 text-transparent ml-[10%] md:ml-[20%]" style={{ WebkitTextStroke: "1px var(--text-stroke)" }}>
+            <span className="inline-block tech-title-2 text-transparent ml-[5%] md:ml-[20%]" style={{ WebkitTextStroke: "1px var(--text-stroke)" }}>
               CREATION.
             </span>
           </h2>
 
-          <div className="flex flex-col md:flex-row gap-12 items-start justify-between mt-12">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start justify-between mt-12">
             <p className="text-xl md:text-3xl font-light text-foreground/40 max-w-2xl leading-tight tracking-tight">
               A precise distillation of modern primitives. Harnessing the <span className="text-accent italic">purest elements</span> of logic to build resilient digital systems.
             </p>
           </div>
         </div>
-        <div className="relative -rotate-6 scale-110 md:scale-110 py-10">
+        <div className="relative -rotate-6 scale-110 md:scale-110 py-6 md:py-10">
           <div className="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background via-background/80 to-transparent z-20 pointer-events-none" />
 
-          <div className="flex flex-col gap-2 relative z-10">
+          <div className="flex flex-col gap-2 md:gap-3 relative z-10">
             <KineticMarquee baseVelocity={-0.6}>
               {TECH_LANGS.map((t) => <TechCard key={t} name={t} />)}
             </KineticMarquee>

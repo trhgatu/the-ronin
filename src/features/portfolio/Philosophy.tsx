@@ -37,7 +37,7 @@ export const Philosophy = () => {
 
     // Parallax for standard titles
     gsap.to(".phil-title-1", {
-      x: -100,
+      x: -50,
       ease: "none",
       scrollTrigger: {
         trigger: containerRef.current,
@@ -47,7 +47,7 @@ export const Philosophy = () => {
       }
     });
     gsap.to(".phil-title-2", {
-      x: 100,
+      x: 50,
       ease: "none",
       scrollTrigger: {
         trigger: containerRef.current,
@@ -83,17 +83,17 @@ export const Philosophy = () => {
     <section 
       ref={containerRef}
       id="philosophy"
-      className="relative py-60 bg-background overflow-hidden flex flex-col justify-center"
+      className="relative py-24 md:py-40 lg:py-60 bg-background overflow-hidden flex flex-col justify-center"
     >
       <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--separator-gray)] opacity-30" />
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:80px_80px]" />
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:60px_60px] md:bg-[size:80px_80px]" />
 
-      <div className="relative z-10 mx-auto max-w-[1400px] px-10 w-full">
+      <div className="relative z-10 mx-auto max-w-[1400px] px-6 md:px-10 w-full">
         {/* Unified Header Structure */}
-        <div className="mb-40 text-left">
+        <div className="mb-20 md:mb-40 text-left">
            <div className="flex items-center gap-4 mb-8 w-full">
               <div className="flex items-center font-mono text-accent">
-                <span className="text-[12px] tracking-[0.6em] uppercase phase-label-03 font-bold">
+                <span className="text-[10px] md:text-[12px] tracking-[0.4em] md:tracking-[0.6em] uppercase phase-label-03 font-bold">
                   [ INITIALIZING_MANIFEST ]
                 </span>
                 <span className="text-[12px] animate-pulse">_</span>
@@ -101,28 +101,28 @@ export const Philosophy = () => {
               <div className="h-px flex-1 bg-gradient-to-r from-accent/50 to-transparent" />
            </div>
            
-            <h2 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase text-foreground tracking-tighter leading-[0.8] overflow-visible">
+            <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black italic uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible">
                <span className="inline-block phil-title-1">THE</span> <br /> 
                <span className="inline-block phil-title-2 text-transparent" style={{ WebkitTextStroke: "1px var(--text-stroke)" }}>PHILOSOPHY.</span>
             </h2>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-20 items-start justify-between">
+        <div className="flex flex-col md:flex-row gap-12 md:gap-20 items-start justify-between">
           <div className="max-w-5xl">
             <blockquote 
                 ref={quoteRef}
-                className="text-4xl md:text-6xl lg:text-7xl font-extralight italic text-foreground leading-[1.1] tracking-tight border-l-2 border-accent/20 pl-12 md:pl-20"
+                className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-extralight italic text-foreground leading-[1.2] lg:leading-[1.1] tracking-tight border-l-2 border-accent/20 pl-6 md:pl-20"
             >
               I build not for show, but for soul. Code is a language of thought, a medium of expression, and a bridge to connect universes.
             </blockquote>
           </div>
 
-          <div className="flex flex-col items-end gap-6 text-right self-end mt-12 md:mt-0 opacity-40">
+          <div className="flex flex-col items-start md:items-end gap-4 md:gap-6 text-left md:text-right mt-12 md:mt-0 opacity-40 px-6 md:px-0">
             <div className="flex items-center gap-4">
-               <span className="text-[12px] font-mono text-foreground/40 uppercase tracking-[0.6em]">trhgatu // architect</span>
-               <div className="h-px w-20 bg-border" />
+               <span className="text-[10px] md:text-[12px] font-mono text-foreground/40 uppercase tracking-[0.4em] md:tracking-[0.6em]">trhgatu // architect</span>
+               <div className="h-px w-12 md:w-20 bg-border hidden sm:block" />
             </div>
-            <div className="text-[9px] font-mono text-foreground/30 uppercase tracking-[0.4em] max-w-[250px] leading-relaxed">
+            <div className="text-[8px] md:text-[9px] font-mono text-foreground/30 uppercase tracking-[0.3em] md:tracking-[0.4em] max-w-[250px] leading-relaxed">
               Authorized Manifestation // 
               Systemic Intentionality // 
               Digital Alchemy
@@ -131,8 +131,8 @@ export const Philosophy = () => {
         </div>
       </div>
 
-      <div className="absolute top-24 left-24 w-12 h-12 border-t border-l border-border" />
-      <div className="absolute bottom-24 right-24 w-12 h-12 border-b border-r border-border" />
+      <div className="absolute top-12 left-12 md:top-24 md:left-24 w-8 h-8 md:w-12 md:h-12 border-t border-l border-border opacity-20 md:opacity-100" />
+      <div className="absolute bottom-12 right-12 md:bottom-24 md:right-24 w-8 h-8 md:w-12 md:h-12 border-b border-r border-border opacity-20 md:opacity-100" />
     </section>
   );
 };
