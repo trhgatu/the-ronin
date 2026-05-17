@@ -6,7 +6,6 @@ import { useEffect, useRef, type ReactNode } from "react";
 export type ShaderFlowProps = {
   className?: string;
   flowSpeed?: [number, number];
-  iterations?: number;
   scale?: number;
   brightness?: number;
   colorLowA?: [number, number, number];
@@ -24,18 +23,37 @@ uniform vec2 uR;
 uniform float uT;
 uniform vec2 uV;
 uniform float uS;
-uniform float uTw;
-uniform float uDe;
-uniform float uMs;
 uniform float uB;
-uniform int uIt;
 uniform vec3 uColorLow;
 uniform vec3 uColorHigh;
 uniform vec3 uBgColor;
 uniform vec4 uFadeShape;
 
-float h(vec2 p){
-  return sin(p.x+sin(p.y+uT*uV.x))*sin(p.y*p.x*0.1+uT*uV.y);
+// Simple 2D pseudo-random noise
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+// 4-octave Fractal Brownian Motion (FBM) for smooth, smoky wind currents
+float fbm(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  vec2 shift = vec2(100.0);
+  mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+  for (int i = 0; i < 4; i++) {
+    v += a * noise(p);
+    p = rot * p * 2.0 + shift;
+    a *= 0.5;
+  }
+  return v;
 }
 
 float fadeAlpha(float d){
@@ -47,49 +65,67 @@ void main(){
   vec2 frag=gl_FragCoord.xy/uR;
   vec2 p=frag-0.5;
   p.x*=uR.x/uR.y;
-  p*=uS;
 
-  float ms=uT*uMs*0.1;
-  vec2 d=vec2(sin(ms),cos(ms))*0.1;
-  float kt=uTw*0.01;
-  float kd=1.0/uDe;
+  // 1. DYNAMIC ANGLE & GUST INTENSITY (Poetic, pseudo-random wind gusts swaying over time)
+  // We use prime low frequencies so they don't sync up, creating a living organic gust behavior
+  float timeGust = uT * 0.1; // Drastically slowed down time factor for Zen tranquility
+  float gust = sin(timeGust * 0.3) * 0.35 + cos(timeGust * 0.13) * 0.2 + 0.85; // Natural wind gust factor
+  float angle = -0.55 + sin(timeGust * 0.17) * 0.12 + cos(timeGust * 0.09) * 0.05; // Base -31.5deg with sway
 
-  vec2 e=vec2(0.05,0.);
-  vec2 r=vec2(0.);
-  for(int i=0;i<24;i++){
-    if(i>=uIt)break;
-    float a=h(p);
-    float b=h(p+e.xy);
-    float c=h(p+e.yx);
-    vec2 q=vec2(b-a,c-a)*20.;
-    p+=vec2(-q.y,q.x)*kt+q*kd+d;
-    r=q;
-  }
+  float cosA = cos(angle);
+  float sinA = sin(angle);
+  mat2 rotWind = mat2(cosA, sinA, -sinA, cosA);
+  
+  // Rotate viewport coordinates to align with the sweeping wind direction
+  vec2 windP = rotWind * p;
 
-  float t=clamp(length(r)*0.5,0.0,1.0);
-  vec3 col=mix(uColorLow,uColorHigh,t)*uB;
+  // 2. STRETCH ALONG THE ROTATED AXIS (Long, beautiful diagonal wind currents)
+  // We stretch X (wind direction length) and compress Y (wind direction width)
+  windP = vec2(windP.x * 0.42, windP.y * 1.85) * uS;
 
-  vec2 ndc=vec2(frag.x,1.0-frag.y);
+  // 3. GUSTY UNIDIRECTIONAL DRIFT (Sweeping diagonally from top-left to bottom-right)
+  windP.x -= uT * uV.x * gust;
+  
+  // Dynamic turbulence wave perpendicular to the flow
+  float wave = sin(windP.x * 0.22 + uT * 0.15) * 0.18 * (1.0 + sin(uT * 0.03) * 0.5);
+  windP.y += wave;
+
+  // 4. LAYERED FBM TURBULENCE (Wispy Sumi-e vertical-diagonal ink-smoke wind)
+  vec2 e = vec2(0.08, 0.0); // Offset along the rotated wind direction
+  float a = fbm(windP);
+  float b = fbm(windP + e.xy);
+  float c = fbm(windP + e.yx);
+  vec2 q = vec2(b - a, c - a) * 4.5;
+
+  windP += q * 0.7;
+  float nVal = fbm(windP + q);
+
+  // 5. MIX COLORS based on wind current density
+  float t = clamp(nVal * 1.25, 0.0, 1.0);
+  vec3 col = mix(uColorLow, uColorHigh, t) * uB;
+
+  // 6. RADIAL FADE (To blend smoothly into background)
+  vec2 ndc=vec2(frag.x, 1.0-frag.y);
   float aspect=uR.x/uR.y;
   float dx=((ndc.x-uFadeShape.x)*aspect)/uFadeShape.z;
   float dy=(ndc.y-uFadeShape.y)/uFadeShape.w;
   float fa=fadeAlpha(sqrt(dx*dx+dy*dy));
 
-  vec3 outColor=mix(uBgColor,col,fa);
+  // Soft atmospheric mist blend factor
+  vec3 outColor=mix(uBgColor, col, fa * 0.32);
   gl_FragColor=vec4(outColor,1.0);
 }`;
 
 const D = {
-  flowSpeed: [0.1, 0.2] as [number, number],
-  iterations: 14,
-  scale: 6,
-  brightness: 1,
-  colorLowA: [0.18, 0.2, 0.3] as [number, number, number],
-  colorHighA: [0.55, 0.38, 0.32] as [number, number, number],
-  fadeRx: 1.4,
-  fadeRy: 0.6,
+  flowSpeed: [0.2, 0.0] as [number, number], // Extremely gentle falling-diagonal speed (Zen breath)
+  scale: 3.0, // Elegant scale for long wind currents
+  brightness: 1.15,
+  colorLowA: [0.12, 0.12, 0.12] as [number, number, number], // Faint charcoal ink
+  colorHighA: [0.76, 0.76, 0.76] as [number, number, number], // Faint silver mist
+  fadeRx: 1.6,
+  fadeRy: 0.9,
   fadeCx: 0.5,
-  fadeCy: 0.0,
+  fadeCy: 0.3,
 };
 
 function parseColor(input: string): [number, number, number] | null {
@@ -159,11 +195,7 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
         uR: { value: [1, 1] },
         uV: { value: [...D.flowSpeed] },
         uS: { value: D.scale },
-        uTw: { value: 50 },
-        uDe: { value: 200 },
-        uMs: { value: 2.5 },
         uB: { value: D.brightness },
-        uIt: { value: D.iterations },
         uColorLow: { value: [...D.colorLowA] },
         uColorHigh: { value: [...D.colorHighA] },
         uBgColor: { value: readBgColor(document.documentElement) },
@@ -229,7 +261,6 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
       p.uniforms.uV.value = [...(c.flowSpeed ?? D.flowSpeed)];
       p.uniforms.uS.value = c.scale ?? D.scale;
       p.uniforms.uB.value = c.brightness ?? D.brightness;
-      p.uniforms.uIt.value = c.iterations ?? D.iterations;
       p.uniforms.uColorLow.value = [...(c.colorLowA ?? D.colorLowA)];
       p.uniforms.uColorHigh.value = [...(c.colorHighA ?? D.colorHighA)];
       p.uniforms.uFadeShape.value = [
@@ -269,3 +300,4 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
     />
   );
 }
+

@@ -2,93 +2,232 @@
 
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { PortraitMorph } from "@/components/shared/PortraitMorph";
+import { useTheme } from "next-themes";
 
-const stats = [
-  { label: "Designation", value: "Software Architect" },
-  { label: "Base_Location", value: "Ho Chi Minh City, VN" },
-  { label: "Core_Directive", value: "Functional Aesthetics" },
-  { label: "System_Status", value: "Open for Innovation" },
-  { label: "Build_Stability", value: "Production-Grade" },
+const fiveRings = [
+  {
+    book: "EARTH [地]",
+    discipline: "Structural Foundation",
+    description: "Bulletproof system design, database resilience, and deep core backbones that stand like solid rock."
+  },
+  {
+    book: "WATER [水]",
+    discipline: "Fluid Interaction",
+    description: "Adaptive motion dynamics, seamless responsiveness, and user experiences that flow like pristine liquid."
+  },
+  {
+    book: "FIRE [火]",
+    discipline: "Performance & Combat",
+    description: "High-concurrency engineering, extreme low-latency tuning, and aggressive runtime optimizations under heavy stress."
+  },
+  {
+    book: "WIND [風]",
+    discipline: "Mastery of Style",
+    description: "Uncompromising clean code, global standards, and modular code structures refined through years of strategy."
+  },
+  {
+    book: "THE VOID [空]",
+    discipline: "Creative Emptiness",
+    description: "The ultimate peak. Removing all useless complexity, writing only what is of use, achieving absolute digital Zen."
+  }
 ];
 
 export const About = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme, theme } = useTheme();
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
   });
 
   const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [100, 0, 0, -100]);
+  const y = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [80, 0, 0, -80]);
 
   return (
     <section
       ref={containerRef}
       id="about"
-      className="relative py-40 md:py-60 bg-background overflow-hidden"
+      className="relative py-32 md:py-48 bg-background select-none z-20"
     >
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--separator-gray)] opacity-30" />
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[radial-gradient(var(--foreground)_1px,transparent_1px)] bg-[size:30px_30px]" />
+      {/* Majestic Double-Layered Jagged Torn Paper & Ink Brushstroke Section Transition */}
+      {/* Thick Jagged Hand-Torn Paper Sheet (Blends into Section 2 and masks the bottom of Hero) */}
+      <div
+        className="absolute top-[-30px] left-0 w-full h-[60px] bg-background z-20 pointer-events-none"
+        style={{ filter: "url(#about-torn-filter)" }}
+      />
 
-      <motion.div 
-        style={{ opacity, y }}
-        className="mx-auto max-w-[1400px] px-10 relative z-10"
+      {/* Rough Ink Brushstroke running exactly along the jagged paper tear */}
+      <div
+        className="absolute top-[-2px] left-0 w-full h-[3px] bg-foreground/20 z-30 pointer-events-none"
+        style={{ filter: "url(#about-torn-filter)" }}
+      />
+
+      {/* SVG filter definition for torn paper edge inside About - self-contained and bulletproof */}
+      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
+        <defs>
+          {/* Main frame filter for thick torn papers */}
+          <filter id="about-torn-filter" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+
+          {/* Line filter for thin ink-brushed horizontal lines */}
+          <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
+      {/* Giant Zen Calligraphy Kanji: 道 (Dō - The Way / The Path) behind the text scroll */}
+      <div
+        className="absolute right-[3%] bottom-[3%] font-serif font-black text-[320px] sm:text-[480px] select-none pointer-events-none text-foreground leading-none z-0"
+        style={{ opacity: 0.012, filter: "url(#about-torn-filter)" }}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 items-start">
-          
-          {/* Left Column: Title & Stats */}
-          <div className="lg:col-span-5">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="flex items-center font-mono text-accent">
-                <span className="text-[12px] tracking-[0.6em] uppercase font-bold">[ DATA_PROFILE ]</span>
-              </div>
-              <div className="h-px flex-1 bg-gradient-to-r from-accent/50 to-transparent" />
-            </div>
+        道
+      </div>
 
-            <h2 className="text-6xl md:text-8xl font-black italic uppercase text-foreground tracking-tighter leading-[0.8] mb-16">
-              THE <br />
-              <span className="text-transparent" style={{ WebkitTextStroke: "1px var(--text-stroke)" }}>ARCHITECT.</span>
-            </h2>
+      <motion.div
+        style={{ opacity, y }}
+        className="mx-auto max-w-[1400px] px-6 md:px-10 relative z-10"
+      >
+        {/* Dynamic Editorial Manga Double-Page Spread (5:7 Split) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-20 items-start">
 
-            <div className="space-y-6">
-              {stats.map((stat, idx) => (
-                <div key={idx} className="group border-b border-foreground/5 pb-4 transition-colors hover:border-accent/40">
-                  <div className="flex justify-between items-end">
-                    <span className="text-[10px] font-mono text-foreground/30 uppercase tracking-widest">{stat.label}</span>
-                    <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">{stat.value}</span>
-                  </div>
+          {/* Left Column (5 Cols): The Massive, Jagged Character Art Panel */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-start z-10 relative">
+            <div className="relative w-full max-w-[340px] sm:max-w-[380px] md:max-w-[420px] aspect-[4/5] rotate-[-3deg] transition-all duration-700 hover:rotate-[-1.5deg] group avatar-frame">
+
+              {/* Manga Drawing Sheet Border Guidelines (Pencil crop marks) */}
+              <div className="absolute top-[-15px] left-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
+              <div className="absolute top-[-15px] left-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
+              <div className="absolute bottom-[-15px] right-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
+              <div className="absolute bottom-[-15px] right-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
+
+              {/* Layer 1: Background backing paper (Double torn) */}
+              <div
+                className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[4deg] transition-all duration-700 group-hover:rotate-[5deg] group-hover:bg-foreground/[0.08] pointer-events-none"
+                style={{ filter: "url(#about-torn-filter)" }}
+              />
+
+              {/* Layer 2: Main photo screen */}
+              <div className="absolute inset-0 bg-background/20 backdrop-blur-sm rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.3)]">
+                <div className="relative w-full h-full overflow-hidden bg-card">
+                  <PortraitMorph
+                    srcA="/avatar.jpg"
+                    srcB="/avatar.jpg"
+                    alt="trhgatu Portrait"
+                    className="w-full h-full object-cover object-top scale-105 group-hover:scale-100 transition-transform duration-1000 grayscale contrast-125"
+                  />
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-[0.18] dark:opacity-[0.28] mix-blend-multiply dark:mix-blend-screen transition-opacity duration-500 group-hover:opacity-[0.12] dark:group-hover:opacity-[0.18]"
+                    style={{
+                      backgroundImage: "radial-gradient(currentColor 1.2px, transparent 1.2px)",
+                      backgroundSize: "3px 3px"
+                    }}
+                  />
                 </div>
-              ))}
+              </div>
+
+              {/* Layer 3: Torn Border Overlay (Physical washi edges) */}
+              <div
+                className="absolute inset-0 rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] pointer-events-none z-20"
+              >
+                {/* Background frame mask */}
+                <div
+                  className="absolute inset-[-12px] border-[24px] border-background"
+                  style={{ filter: "url(#about-torn-filter)" }}
+                />
+
+                {/* Drawn inner torn border */}
+                <div
+                  className="absolute inset-[10px] border border-foreground/25"
+                  style={{ filter: "url(#about-torn-filter)" }}
+                />
+
+                {/* Takehiko Inoue-style rough draft guide lines */}
+                <div className="absolute inset-[6px] border border-foreground/[0.04] rotate-[1.5deg]" />
+              </div>
             </div>
           </div>
+          <div className="lg:col-span-7 space-y-10 lg:pt-4">
 
-          {/* Right Column: Narrative */}
-          <div className="lg:col-span-7 lg:pt-32">
-            <div className="relative">
-              <div className="absolute -left-10 top-0 bottom-0 w-px bg-gradient-to-b from-accent/50 via-accent/5 to-transparent hidden lg:block" />
-              
-              <div className="space-y-8 max-w-2xl">
-                <p className="text-2xl md:text-3xl font-light text-foreground/80 leading-snug tracking-tight">
-                  I specialize in crafting digital ecosystems where <span className="text-foreground font-medium underline decoration-accent/40 underline-offset-8">high-performance engineering</span> meets intentional design. 
-                </p>
-                
-                <p className="text-lg md:text-xl text-foreground/40 leading-relaxed font-light">
-                  With a background rooted in architectural precision, I approach software not just as code, but as a structure that must be resilient, scalable, and visually compelling. My mission is to bridge the gap between complex backend logic and seamless frontend experiences.
-                </p>
+            {/* Title Block */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[9px] tracking-[0.5em] text-foreground/50 uppercase font-bold">[ CHAPTER I : THE RONIN ARCHITECT ]</span>
+                <div className="h-[1px] flex-1 bg-foreground/10" style={{ filter: "url(#line-torn-filter)" }} />
+              </div>
 
-                <div className="pt-8 grid grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <div className="text-[10px] font-mono text-accent uppercase tracking-widest">Philosophy</div>
-                    <div className="text-sm text-foreground/60 leading-relaxed font-light">Simple is not easy. It is the result of deep complexity refined to its purest form.</div>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-serif font-light text-foreground uppercase tracking-tight leading-[0.9]">
+                THE WAY OF <span className="font-caveat text-3xl sm:text-4xl md:text-5xl text-foreground/60 tracking-normal lowercase block sm:inline">the sword & code</span>
+              </h2>
+            </div>
+
+            {/* Narrative text */}
+            <div className="space-y-6 text-foreground/90">
+              <p className="text-xl md:text-2xl font-light leading-snug tracking-tight">
+                I master the two swords of digital craftsmanship: wielding <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">robust, battle-tested engineering</span> and <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">razor-sharp Zen aesthetics</span> in perfect, fluid unison.
+              </p>
+
+              <p className="text-xs md:text-sm text-foreground/50 leading-relaxed font-light">
+                Inspired by the discipline of Musashi&apos;s Niten Ichi-ryū, I treat software architecture as a lifelong martial strategy. A digital system must be built resilient to extreme conditions, structurally elegant, and present a quiet, distraction-free interface. My mission is to bridge complex systems with high-fidelity sensory experiences.
+              </p>
+            </div>
+
+            {/* The Five Rings of Mastery (Go Rin No Sho) */}
+            <div className="space-y-6 pt-4">
+              <div className="flex items-center gap-4">
+                <span className="font-mono text-[9px] tracking-widest text-foreground/50 uppercase">Go Rin No Sho — The Five Rings of Software Mastery</span>
+                <div className="h-[2px] flex-1 bg-foreground/10" style={{ filter: "url(#line-torn-filter)" }} />
+              </div>
+
+              <div className="space-y-4">
+                {fiveRings.map((ring, idx) => (
+                  <div key={idx} className="group relative pb-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-baseline gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[9px] text-foreground/40 font-bold">{idx + 1}.</span>
+                        <span className="font-serif text-sm font-semibold tracking-wide text-foreground/90 group-hover:text-foreground transition-colors duration-300">{ring.book}</span>
+                      </div>
+                      <span className="text-[9px] font-mono text-foreground/50 uppercase tracking-widest">{ring.discipline}</span>
+                    </div>
+                    <p className="text-xs text-foreground/45 mt-1.5 leading-relaxed font-light group-hover:text-foreground/60 transition-colors duration-300">
+                      {ring.description}
+                    </p>
+                    {/* Sumi-e brushed line divider */}
+                    <div
+                      className="absolute bottom-0 left-0 w-full h-[1px] bg-foreground/10 group-hover:bg-foreground/20 transition-colors duration-300"
+                      style={{ filter: "url(#line-torn-filter)" }}
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <div className="text-[10px] font-mono text-accent uppercase tracking-widest">Methodology</div>
-                    <div className="text-sm text-foreground/60 leading-relaxed font-light">Modular, iterative, and always driven by the end-user's sensory experience.</div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Quote & Philosophy */}
+            <div className="relative pt-6">
+              <div
+                className="absolute top-0 left-0 w-full h-[3px] bg-foreground/10"
+                style={{ filter: "url(#line-torn-filter)" }}
+              />
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <div className="text-[9px] font-mono text-foreground/50 uppercase tracking-widest">Philosophy</div>
+                  <div className="font-caveat text-lg sm:text-xl text-foreground/80 leading-snug italic">
+                    &quot;Do nothing which is of no use.&quot; — Miyamoto Musashi (Go Rin No Sho)
+                  </div>
+                </div>
+                <div className="space-y-1 text-left sm:text-right">
+                  <div className="text-[9px] font-mono text-foreground/50 uppercase tracking-widest">Methodology</div>
+                  <div className="text-xs text-foreground/50 leading-relaxed font-light">
+                    Modular, silent, driven by zen sensory clarity.
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
 
         </div>
@@ -96,3 +235,5 @@ export const About = () => {
     </section>
   );
 };
+
+

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Rock_Salt, Caveat } from "next/font/google";
 import "@/app/globals.css";
 import { Navbar } from "@/components/shared/Navbar";
 import { CustomCursor } from "@/components/shared/CustomCursor";
@@ -13,6 +13,17 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const rockSalt = Rock_Salt({
+  weight: "400",
+  variable: "--font-rock-salt",
+  subsets: ["latin"],
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
   subsets: ["latin"],
 });
 
@@ -33,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-accent selection:text-black`}
+        className={`${geistSans.variable} ${geistMono.variable} ${rockSalt.variable} ${caveat.variable} antialiased selection:bg-accent selection:text-black`}
       >
         <ThemeProvider
           attribute="class"
@@ -54,3 +65,4 @@ export default function RootLayout({
     </html>
   );
 }
+

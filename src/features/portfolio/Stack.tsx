@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import {
   motion,
@@ -13,108 +13,62 @@ import {
 } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import gsap from "@/lib/gsap";
+import { useTheme } from "next-themes";
 
 const wrap = (min: number, max: number, v: number) => {
   const rangeSize = max - min;
   return ((((v - min) % rangeSize) + rangeSize) % rangeSize) + min;
 };
 
-const TECH_LANGS = ["TypeScript", "JavaScript", "Golang"];
-const TECH_VISUALS = ["React", "NextJS", "Angular", "HTML", "CSS", "Sass", "Tailwind", "Vite", "GSAP", "ThreeJS"];
-const TECH_FOUNDATION = ["NodeJS", "Express", "NestJS", "MongoDB", "MySQL", "PostgreSQL", "Prisma", "Redis", "Firebase", "GraphQL", "Supabase"];
-const TECH_WORKSHOP = ["Git", "Github", "Docker", "Kubernetes", "Grafana", "Figma", "Postman", "VScode", "Vercel"];
+const TECH_LANGS = ["TypeScript", "JavaScript", "Golang", "Rust", "Python"];
+const TECH_VISUALS = ["React", "NextJS", "Tailwind", "Vite", "GSAP", "ThreeJS", "Framer", "CSS", "Sass", "HTML"];
+const TECH_FOUNDATION = ["NodeJS", "Express", "NestJS", "PostgreSQL", "MongoDB", "Redis", "Prisma", "Supabase", "Firebase", "GraphQL"];
+const TECH_WORKSHOP = ["Git", "Github", "Docker", "Kubernetes", "VScode", "Vercel", "Figma", "Postman", "Grafana"];
 
 const TechCard = ({ name }: { name: string }) => {
   return (
-    <div className="flex-shrink-0 w-56 h-16 md:w-72 md:h-20 mx-2 md:mx-4 relative overflow-hidden border border-foreground/5 bg-foreground/[0.01] rounded-[2px] p-4 md:p-5 group hover:border-accent/30 transition-all duration-500 flex items-center justify-between backdrop-blur-xl cursor-none group">
-      <style jsx>{`
-        @keyframes glitch {
-          0% { transform: translate(0); }
-          20% { transform: translate(-2px, 2px); }
-          40% { transform: translate(-2px, -2px); }
-          60% { transform: translate(2px, 2px); }
-          80% { transform: translate(2px, -2px); }
-          100% { transform: translate(0); }
-        }
-        @keyframes resonance {
-          0%, 100% { height: 30%; }
-          50% { height: 100%; }
-        }
-        .resonance-bar {
-          animation: resonance 1.2s infinite ease-in-out;
-          animation-play-state: paused;
-        }
-        .group:hover .resonance-bar {
-          animation-play-state: running;
-        }
-        .glitch-hover {
-          display: none;
-        }
-        .group:hover .glitch-hover {
-          display: block;
-          animation: glitch 0.2s iherit infinite;
-        }
-        .chromatic-aberration {
-          transition: filter 0.3s ease;
-        }
-        .group:hover .chromatic-aberration {
-          filter: drop-shadow(-2px 0px 0px #ff000080) drop-shadow(2px 0px 0px #00ffff80);
-          animation: glitch 0.3s infinite;
-        }
-      `}</style>
+    <div className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] mx-2 md:mx-4 relative overflow-hidden border border-foreground/20 bg-background/50 rounded-none p-4 group transition-all duration-700 flex items-center justify-between cursor-none">
 
-      {/* Background Noise & Grid */}
-      <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
-      
-      {/* Laser Border Effect */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
-      <div className="absolute bottom-0 right-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent translate-x-[100%] group-hover:translate-x-[-100%] transition-transform duration-1000 ease-in-out" />
+      {/* Torn Edge Washi Paper Filter applied to border */}
+      <div
+        className="absolute inset-0 border border-foreground/10 z-10 pointer-events-none group-hover:border-foreground/30 transition-colors duration-700"
+        style={{ filter: "url(#line-torn-filter)" }}
+      />
 
-      <div className="relative z-10 flex items-center gap-3 md:gap-6">
-        <div className="w-8 h-8 md:w-12 md:h-12 relative flex items-center justify-center">
-          <div className="chromatic-aberration relative w-full h-full flex items-center justify-center">
-            <Image
-              src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
-              alt={name}
-              width={32}
-              height={32}
-              className="transition-all duration-500 scale-100 group-hover:scale-110 md:w-[40px] md:h-[40px]"
-              unoptimized
-            />
-          </div>
+      {/* Ink brush sweep on hover */}
+      <div className="absolute top-0 left-0 w-0 h-full bg-foreground/[0.04] group-hover:w-full transition-all duration-1000 ease-out z-0" />
+
+      <div className="relative z-10 flex items-center gap-4">
+        <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center opacity-60 grayscale contrast-125 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-95 group-hover:scale-110">
+          <Image
+            src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
+            alt={name}
+            width={36}
+            height={36}
+            className="w-full h-full"
+            unoptimized
+          />
         </div>
-        
-        <div className="relative">
-          <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-tighter group-hover:text-accent transition-all duration-500 relative inline-block">
-            {name}
-            <span className="absolute inset-0 text-accent/20 group-hover:translate-x-[2px] group-hover:translate-y-[-1px] transition-transform pointer-events-none glitch-hover">
-              {name}
-            </span>
-          </h3>
-        </div>
+
+        <h3 className="text-sm md:text-base font-serif font-semibold text-foreground/70 uppercase tracking-widest group-hover:text-foreground transition-all duration-700">
+          {name}
+        </h3>
       </div>
 
-      <div className="relative z-10 flex flex-col items-end justify-center gap-1">
-        <div className="flex items-end gap-[2px] h-3 md:h-4">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div
-              key={i}
-              className="resonance-bar w-[1.5px] md:w-[2px] bg-foreground/10 group-hover:bg-accent/60 transition-colors"
-              style={{
-                height: `${20 + (i * 15)}%`,
-                animationDelay: `${i * 0.1}s`
-              }}
-            />
-          ))}
-        </div>
+      {/* Tiny Japanese Calligraphy Accent (Meaning: Tool/Weapon/Art - Jutsu) */}
+      <div className="relative z-10 text-foreground/20 font-serif font-bold text-lg md:text-xl group-hover:text-foreground/40 transition-colors duration-700">
+        術
       </div>
     </div>
   );
 };
 
 const DataLine = ({ text }: { text: string }) => (
-  <div className="flex-shrink-0 mx-4 md:mx-8 text-[7px] md:text-[8px] font-mono text-foreground/5 uppercase tracking-[0.6em] md:tracking-[0.8em] whitespace-nowrap italic transition-colors duration-700 py-2">
-    {text} {" // "} {text}
+  <div className="flex-shrink-0 mx-6 md:mx-10 text-[10px] md:text-xs font-serif text-foreground/40 uppercase tracking-[0.4em] md:tracking-[0.6em] whitespace-nowrap italic py-2 md:py-4 flex items-center gap-6">
+    <span>{text}</span>
+    <div className="w-12 md:w-16 h-[1px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+    <span>{text}</span>
+    <div className="w-12 md:w-16 h-[1px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
   </div>
 );
 
@@ -128,7 +82,7 @@ const KineticMarquee = ({ children, baseVelocity = 1 }: MarqueeProps) => {
   const { scrollY } = useScroll();
   const scrollVelocity = useVelocity(scrollY);
   const smoothVelocity = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
-  const velocityFactor = useTransform(smoothVelocity, [0, 1000], [0, 5], { clamp: false });
+  const velocityFactor = useTransform(smoothVelocity, [0, 1000], [0, 3], { clamp: false });
   const x = useTransform(baseX, (v) => `${wrap(-25, -50, v)}%`);
 
   useAnimationFrame((t, delta) => {
@@ -139,7 +93,7 @@ const KineticMarquee = ({ children, baseVelocity = 1 }: MarqueeProps) => {
   });
 
   return (
-    <div className="flex overflow-hidden whitespace-nowrap flex-nowrap py-1 md:py-2 border-y border-border [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
+    <div className="flex overflow-hidden whitespace-nowrap flex-nowrap py-2 md:py-3 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
       <motion.div className="flex whitespace-nowrap flex-nowrap items-center" style={{ x }}>
         {children}{children}{children}{children}
       </motion.div>
@@ -149,12 +103,19 @@ const KineticMarquee = ({ children, baseVelocity = 1 }: MarqueeProps) => {
 
 export const Stack = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme, theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   useGSAP(() => {
     if (!containerRef.current) return;
 
     gsap.to(".tech-title-1", {
-      x: -50,
+      x: -30,
       ease: "none",
       scrollTrigger: {
         trigger: containerRef.current,
@@ -164,7 +125,7 @@ export const Stack = () => {
       }
     });
     gsap.to(".tech-title-2", {
-      x: 50,
+      x: 30,
       ease: "none",
       scrollTrigger: {
         trigger: containerRef.current,
@@ -174,98 +135,110 @@ export const Stack = () => {
       }
     });
 
-    const phaseLabel = document.querySelector(".phase-label-02");
-    const fullText = "[ PHASE_02 // THE_ELEMENTS ]";
-    const scrambleChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]//_!@#$%^&*";
-
-    gsap.to({}, {
-      duration: 3,
+    gsap.from(".stack-reveal-top", {
+      y: -20,
+      opacity: 0,
+      duration: 1.2,
+      stagger: 0.15,
+      ease: "power3.out",
       scrollTrigger: {
         trigger: containerRef.current,
         start: "top 80%",
-        once: true
-      },
-      onUpdate: function () {
-        const progress = this.progress();
-        const currentLength = Math.floor(progress * fullText.length);
-        const revealedText = fullText.slice(0, currentLength);
-        if (phaseLabel) {
-          phaseLabel.textContent = progress < 1
-            ? revealedText + scrambleChars[Math.floor(Math.random() * scrambleChars.length)]
-            : fullText;
-        }
       }
     });
   }, { scope: containerRef });
 
+  const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
+
   return (
     <section
       ref={containerRef}
-      id="essence"
-      className="relative py-24 md:py-40 lg:py-80 bg-background overflow-hidden"
+      id="stack"
+      className="relative py-28 md:py-48 lg:py-60 bg-background overflow-hidden select-none z-10"
     >
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-[var(--separator-gray)] opacity-30" />
-      <div className="absolute inset-0 -rotate-6 scale-150 pointer-events-none">
-        <div
-          className="absolute inset-0 bg-[linear-gradient(to_right,var(--foreground),transparent_1px),linear-gradient(to_bottom,var(--foreground),transparent_1px)] bg-[size:20px_20px] md:bg-[size:40px_40px] opacity-10 md:opacity-15"
-          style={{ maskImage: 'radial-gradient(circle at center, black, transparent 90%)', WebkitMaskImage: 'radial-gradient(circle at center, black, transparent 90%)' }}
-        />
-      </div>
+      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
+        <defs>
+          <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
 
       <div className="relative z-20">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10 mb-24 md:mb-40 text-left">
-          <div className="flex items-center gap-4 mb-8 w-full">
-            <div className="flex items-center font-mono text-accent">
-              <span className="text-[10px] md:text-[12px] tracking-[0.4em] md:tracking-[0.6em] uppercase phase-label-02 font-bold">
-              </span>
-              <span className="text-[12px] animate-pulse">_</span>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-accent/50 to-transparent" />
+        <div className="mx-auto max-w-[1400px] px-6 md:px-10 mb-20 md:mb-32 text-left relative">
+          <div
+            className="hidden md:block absolute right-[2%] lg:right-[5%] top-[-20%] lg:top-[-30%] w-[350px] lg:w-[500px] h-[500px] lg:h-[700px] opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none stack-reveal-top z-0"
+            style={{ filter: isDark ? "invert(1)" : "invert(0)" }}
+          >
+            <Image
+              src="/images/samurai.png"
+              alt="Ronin Samurai"
+              fill
+              className="object-contain object-right-top"
+              priority
+            />
           </div>
 
-          <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-[-0.08em] text-foreground uppercase italic leading-[0.85] lg:leading-[0.8] overflow-visible">
-            <span className="inline-block tech-title-1">THE ENGINE OF</span> <br />
-            <span className="inline-block tech-title-2 text-transparent ml-[5%] md:ml-[20%]" style={{ WebkitTextStroke: "1px var(--text-stroke)" }}>
-              CREATION.
+          <div className="flex items-center gap-4 mb-8 w-full stack-reveal-top relative z-10">
+            <div className="flex items-center font-mono text-foreground/75">
+              <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
+                [ CHAPTER III : THE ARSENAL ]
+              </span>
+            </div>
+            <div className="h-[2px] flex-1 bg-foreground/15" style={{ filter: "url(#line-torn-filter)" }} />
+          </div>
+
+          <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible stack-reveal-top">
+            <span className="inline-block tech-title-1">RONIN&apos;S</span> <br />
+            <span className="inline-block tech-title-2 text-transparent ml-[5%] md:ml-[15%]" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>
+              ARMORY.
             </span>
           </h2>
 
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start justify-between mt-12">
-            <p className="text-xl md:text-3xl font-light text-foreground/40 max-w-2xl leading-tight tracking-tight">
-              A precise distillation of modern primitives. Harnessing the <span className="text-accent italic">purest elements</span> of logic to build resilient digital systems.
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start justify-between mt-12 stack-reveal-top">
+            <p className="text-xl md:text-3xl font-light text-foreground/45 max-w-2xl leading-tight tracking-tight">
+              A master requires no specific sword, but intimately understands every blade. A disciplined mastery of <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">modern architectural tools</span>.
             </p>
           </div>
         </div>
-        <div className="relative -rotate-6 scale-110 md:scale-110 py-6 md:py-10">
-          <div className="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background via-background/80 to-transparent z-20 pointer-events-none" />
 
-          <div className="flex flex-col gap-2 md:gap-3 relative z-10">
-            <KineticMarquee baseVelocity={-0.6}>
+        {/* The Marquee Arsenal Section - Slightly tilted like a calligraphy scroll */}
+        <div className="relative rotate-[-2deg] scale-105 md:scale-105 py-6 md:py-10 bg-foreground/[0.02]">
+          {/* Apply filter only to the border background layer to prevent text/logo distortion */}
+          <div
+            className="absolute inset-0 border-y border-foreground/10 pointer-events-none"
+            style={{ filter: "url(#line-torn-filter)" }}
+          />
+          <div className="absolute inset-y-0 left-0 w-1/6 bg-gradient-to-r from-background via-background/80 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-1/6 bg-gradient-to-l from-background via-background/80 to-transparent z-20 pointer-events-none" />
+
+          <div className="flex flex-col gap-2 md:gap-4 relative z-10">
+            <KineticMarquee baseVelocity={-0.5}>
               {TECH_LANGS.map((t) => <TechCard key={t} name={t} />)}
             </KineticMarquee>
 
-            <KineticMarquee baseVelocity={1.2}>
-              <DataLine text="SYNCHRONIZING_CORE_NODES_ACTIVE_PROTOCOL_ESTABLISHED_CONNECTION" />
+            <KineticMarquee baseVelocity={1.0}>
+              <DataLine text="POLISH THE BLADE TEN THOUSAND DAYS TO PERFECT THE ART" />
             </KineticMarquee>
 
-            <KineticMarquee baseVelocity={-0.4}>
+            <KineticMarquee baseVelocity={-0.3}>
               {TECH_VISUALS.map((t) => <TechCard key={t} name={t} />)}
             </KineticMarquee>
 
             <KineticMarquee baseVelocity={0.8}>
-              <DataLine text="DECENTRALIZED_STRUCTURE_VERIFIED_ENCRYPTION_STABLE_FLUX_LOG" />
+              <DataLine text="PERCEPTION IS STRONG, SIGHT IS WEAK — FOCUS BEYOND THE SURFACE" />
             </KineticMarquee>
 
-            <KineticMarquee baseVelocity={-0.8}>
+            <KineticMarquee baseVelocity={-0.6}>
               {TECH_FOUNDATION.map((t) => <TechCard key={t} name={t} />)}
             </KineticMarquee>
 
-            <KineticMarquee baseVelocity={1.5}>
-              <DataLine text="SYSTEM_DIAGNOSTICS_COMPLETED_SUCCESS_VOLTAGE_NOMINAL_SYNC" />
+            <KineticMarquee baseVelocity={1.2}>
+              <DataLine text="PRACTICE A THOUSAND DAYS TO FORGE THE SPIRIT" />
             </KineticMarquee>
 
-            <KineticMarquee baseVelocity={-0.5}>
+            <KineticMarquee baseVelocity={-0.4}>
               {TECH_WORKSHOP.map((t) => <TechCard key={t} name={t} />)}
             </KineticMarquee>
           </div>
@@ -274,3 +247,4 @@ export const Stack = () => {
     </section>
   );
 };
+

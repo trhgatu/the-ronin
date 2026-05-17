@@ -201,3 +201,4 @@ export function TechGrid({
 
   return <div ref={ref} className={className ?? "absolute inset-0 z-0"} />;
 }
+

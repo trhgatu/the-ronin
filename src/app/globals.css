@@ -27,6 +27,8 @@
   --color-accent-secondary: var(--accent-secondary);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-rock-salt: var(--font-rock-salt), cursive;
+  --font-caveat: var(--font-caveat), cursive;
 }
 
 body {

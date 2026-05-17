@@ -6,7 +6,7 @@ import gsap from 'gsap';
 export const CustomCursor = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
   const followerRef = useRef<HTMLDivElement>(null);
-  const labelRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
   const [cursorText, setCursorText] = useState('');
   const [isMobile, setIsMobile] = useState(false);
 
@@ -44,7 +44,7 @@ export const CustomCursor = () => {
       yCursor(mouseY);
     };
 
-    // Animation loop for the follower (smoother than direct events)
+    // Animation loop for the follower
     const tick = () => {
       followerX += (mouseX - followerX) * 0.15;
       followerY += (mouseY - followerY) * 0.15;
@@ -60,22 +60,26 @@ export const CustomCursor = () => {
 
       if (interactive) {
         gsap.to(follower, {
-          scale: 2.5,
-          backgroundColor: 'rgba(251, 191, 36, 0.1)',
-          borderColor: 'rgba(251, 191, 36, 0.5)',
-          borderRadius: '50%',
+          scale: 1.5,
+          backgroundColor: 'rgba(0, 0, 0, 0.03)',
+          borderColor: 'var(--foreground)',
+          borderWidth: '0.5px',
           duration: 0.4,
           ease: 'power2.out'
         });
 
-        if (target.closest('.project-item')) {
-          setCursorText('VIEW');
+        if (target.closest('.project-item') || target.closest('a') || target.closest('button')) {
+          setCursorText('見'); // 'Ken' - See/View
           gsap.to(follower, {
-            scale: 4,
-            backgroundColor: '#fbbf24',
-            borderRadius: '50%',
-            mixBlendMode: 'normal',
+            scale: 2.5,
+            backgroundColor: 'var(--foreground)',
+            borderColor: 'transparent',
+            mixBlendMode: 'difference',
             duration: 0.4,
+          });
+          gsap.to(cursor, {
+            scale: 0,
+            duration: 0.2
           });
         }
       }
@@ -90,10 +94,15 @@ export const CustomCursor = () => {
         gsap.to(follower, {
           scale: 1,
           backgroundColor: 'transparent',
-          borderColor: 'rgba(251, 191, 36, 1)',
-          mixBlendMode: 'difference',
+          borderColor: 'var(--foreground)',
+          borderWidth: '1px',
+          mixBlendMode: 'normal',
           duration: 0.4,
           ease: 'power2.out'
+        });
+        gsap.to(cursor, {
+          scale: 1,
+          duration: 0.2
         });
       }
     };
@@ -117,15 +126,15 @@ export const CustomCursor = () => {
     <>
       <div
         ref={cursorRef}
-        className="fixed top-0 left-0 w-1.5 h-1.5 bg-accent rounded-full pointer-events-none z-[100001] -translate-x-1/2 -translate-y-1/2 hidden lg:block"
+        className="fixed top-0 left-0 w-1.5 h-1.5 bg-foreground rounded-full pointer-events-none z-[100001] -translate-x-1/2 -translate-y-1/2 hidden lg:block transition-transform"
       />
       <div
         ref={followerRef}
-        className="fixed top-0 left-0 w-8 h-8 border border-accent rounded-full pointer-events-none z-[100000] -translate-x-1/2 -translate-y-1/2 mix-blend-difference items-center justify-center overflow-hidden hidden lg:flex"
+        className="fixed top-0 left-0 w-8 h-8 border border-foreground/40 rounded-full pointer-events-none z-[100000] -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden hidden lg:flex transition-colors"
       >
         <span
           ref={labelRef}
-          className="text-[6px] font-black text-black opacity-100 transition-opacity"
+          className="text-[10px] font-serif font-light text-background opacity-100 transition-opacity"
         >
           {cursorText}
         </span>
@@ -133,3 +142,4 @@ export const CustomCursor = () => {
     </>
   );
 };
+

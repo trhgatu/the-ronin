@@ -154,14 +154,19 @@ export function PortraitMorph({
     const loadImage = (src: string, target: Texture): Promise<void> =>
       new Promise((resolve, reject) => {
         const img = new Image();
-        img.crossOrigin = "anonymous";
+        if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("//")) {
+          img.crossOrigin = "anonymous";
+        }
         img.onload = () => {
           target.image = img;
           imageSize[0] = img.naturalWidth;
           imageSize[1] = img.naturalHeight;
           resolve();
         };
-        img.onerror = reject;
+        img.onerror = (err) => {
+          console.error("PortraitMorph image load error for src:", src, err);
+          reject(err);
+        };
         img.src = src;
       });
 
@@ -232,7 +237,8 @@ export function PortraitMorph({
         last = performance.now();
         tick();
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("PortraitMorph: Failed to load textures. Falling back to static image.", err);
         setReady(false);
       });
 
@@ -307,7 +313,7 @@ export function PortraitMorph({
       role="img"
       aria-label={alt}
       className={className}
-      style={{ position: "relative", width: "100%", height: "100%", filter: "grayscale(100%)" }}
+      style={{ position: "relative", width: "100%", height: "100%" }}
     >
       {!ready ? (
         <img
@@ -320,3 +326,4 @@ export function PortraitMorph({
     </div>
   );
 }
+

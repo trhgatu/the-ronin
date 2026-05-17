@@ -14,3 +14,4 @@ export const SmoothScroll = ({ children }: SmoothScrollProps) => {
     </ReactLenis>
   );
 };
+
