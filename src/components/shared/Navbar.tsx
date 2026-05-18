@@ -83,44 +83,48 @@ export const Navbar = () => {
 
   return (
     <>
-      {/* SVG filter definition for Navbar tools */}
-      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
-        <defs>
-          <filter id="line-torn-filter-nav" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
-
       {/* 1. Global Branding & Top Bar Controls (Left/Right corners) */}
-      <header className="fixed top-6 left-0 w-full z-[9999] px-6 md:px-8 pointer-events-none flex justify-between items-center">
-        {/* Top-Left Branding */}
-        <div
-          className="flex items-center gap-3 h-10 px-4 bg-background/50 border border-foreground/15 backdrop-blur-md rounded-sm pointer-events-auto shadow-sm text-foreground/90 font-serif text-[11px] tracking-[0.3em] font-black select-none group relative overflow-hidden"
-          style={{ filter: "url(#line-torn-filter-nav)" }}
+      <header className="fixed top-8 left-6 md:left-10 right-6 md:right-10 z-[9999] pointer-events-none flex justify-between items-start">
+        {/* Top-Left Branding (Premium Hanko Stamp Logo) */}
+        <a 
+          href="#hero"
+          onClick={(e) => { e.preventDefault(); handleNavClick("#hero"); }}
+          className="flex items-center gap-4 pointer-events-auto group cursor-pointer outline-none"
         >
-          <span className="font-serif text-base leading-none mt-[-2px] opacity-70 group-hover:opacity-100 transition-opacity duration-500">侍</span>
-          <span className="border-l border-foreground/20 pl-3 flex items-center h-full">TRHGATU</span>
-        </div>
+          {/* Hanko-style Logo Mark */}
+          <div className="w-10 h-10 border border-foreground/20 flex items-center justify-center relative overflow-hidden transition-colors duration-500 bg-background/50 backdrop-blur-sm group-hover:border-foreground/60 shadow-sm">
+            <span className="font-serif text-lg font-black text-foreground relative z-10 transition-colors duration-500 translate-y-[-1px] group-hover:scale-110">
+              侍
+            </span>
+          </div>
+          {/* Logo Type */}
+          <div className="flex flex-col mt-0.5">
+            <span className="font-serif text-[13px] md:text-[14px] tracking-[0.35em] font-black text-foreground uppercase leading-none">
+              TRHGATU
+            </span>
+            <span className="font-mono text-[9px] md:text-[10px] tracking-[0.25em] text-foreground/50 uppercase mt-1.5 font-bold">
+              Software Architect
+            </span>
+          </div>
+        </a>
 
         {/* Top-Right Toggle & Mobile menu trigger */}
-        <div className="flex items-center gap-2 h-9 px-2 bg-background/40 border border-foreground/5 backdrop-blur-md rounded-full pointer-events-auto shadow-md">
+        <div className="flex items-center gap-2 pointer-events-auto">
           <ThemeToggle />
 
           {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden flex items-center justify-center w-7 h-7 rounded-full hover:bg-foreground/5 transition-colors text-foreground/70"
+            className="lg:hidden w-10 h-10 border border-foreground/20 flex items-center justify-center hover:border-foreground/50 transition-colors duration-500 bg-background/50 backdrop-blur-sm text-foreground/70 hover:text-foreground outline-none"
             aria-label="Toggle Menu"
           >
-            {isMobileMenuOpen ? <X size={14} /> : <Menu size={14} />}
+            {isMobileMenuOpen ? <X size={16} strokeWidth={1.5} /> : <Menu size={16} strokeWidth={1.5} />}
           </button>
         </div>
       </header>
 
       {/* 2. Desktop Premium Floating Typography Navigation (Left Side) */}
-      <nav className="fixed left-6 md:left-8 top-1/2 -translate-y-1/2 z-[9998] hidden lg:flex flex-col items-start gap-5 pointer-events-auto select-none">
+      <nav className="fixed left-6 md:left-10 top-1/2 -translate-y-1/2 z-[9998] hidden lg:flex flex-col items-start gap-5 pointer-events-auto select-none">
         {navItems.map((item) => {
           const isActive = activeSection === item.id;
           return (
@@ -142,9 +146,8 @@ export const Navbar = () => {
               {isActive && (
                 <motion.span
                   layoutId="navActiveIndicatorDash"
-                  className="w-2 h-[1.5px] bg-foreground mr-2"
+                  className="w-3 h-[1.5px] bg-foreground mr-3"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  style={{ filter: "url(#line-torn-filter-nav)" }}
                 />
               )}
 
