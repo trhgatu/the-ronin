@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import {
   motion,
+  AnimatePresence,
   useScroll,
   useTransform,
   useSpring,
@@ -13,6 +14,7 @@ import {
 } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import gsap from "@/lib/gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "next-themes";
 
 const wrap = (min: number, max: number, v: number) => {
@@ -20,15 +22,44 @@ const wrap = (min: number, max: number, v: number) => {
   return ((((v - min) % rangeSize) + rangeSize) % rangeSize) + min;
 };
 
-const TECH_LANGS = ["TypeScript", "JavaScript", "Golang", "Rust", "Python"];
-const TECH_VISUALS = ["React", "NextJS", "Tailwind", "Vite", "GSAP", "ThreeJS", "Framer", "CSS", "Sass", "HTML"];
-const TECH_FOUNDATION = ["NodeJS", "Express", "NestJS", "PostgreSQL", "MongoDB", "Redis", "Prisma", "Supabase", "Firebase", "GraphQL"];
-const TECH_WORKSHOP = ["Git", "Github", "Docker", "Kubernetes", "VScode", "Vercel", "Figma", "Postman", "Grafana"];
+const BOOKS = [
+  {
+    id: "earth",
+    kanji: "地",
+    title: "The Book of Earth",
+    subtitle: "Foundations & Core Platforms",
+    description: "Bulletproof system design, database resilience, and deep core backbones that stand like solid rock.",
+    techs: ["Golang", "Rust", "TypeScript", "JavaScript", "Python"],
+  },
+  {
+    id: "water",
+    kanji: "水",
+    title: "The Book of Water",
+    subtitle: "Fluid Interaction & Motion",
+    description: "Adaptive motion dynamics, seamless responsiveness, and user experiences that flow like pristine liquid.",
+    techs: ["React", "NextJS", "Tailwind", "Vite", "GSAP", "ThreeJS", "Framer", "CSS", "HTML"],
+  },
+  {
+    id: "fire",
+    kanji: "火",
+    title: "The Book of Fire",
+    subtitle: "Concurrency, Scaling & Infra Forge",
+    description: "High-concurrency engineering, extreme low-latency tuning, and aggressive runtime optimizations under heavy stress.",
+    techs: ["NestJS", "NodeJS", "Express", "PostgreSQL", "MongoDB", "Redis", "Prisma", "Supabase", "GraphQL"],
+  },
+  {
+    id: "wind",
+    kanji: "風",
+    title: "The Book of Wind",
+    subtitle: "Stealth Automation & Arsenal",
+    description: "Uncompromising clean code, automated container pipelines, and modular cloud architectures.",
+    techs: ["Git", "Github", "Docker", "Kubernetes", "Vercel", "Figma", "Postman", "Grafana"],
+  },
+];
 
 const TechCard = ({ name }: { name: string }) => {
   return (
-    <div className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] mx-2 md:mx-4 relative overflow-hidden border border-foreground/20 bg-background/50 rounded-none p-4 group transition-all duration-700 flex items-center justify-between cursor-none">
-
+    <div className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] relative overflow-hidden border border-foreground/20 bg-background/50 rounded-none p-4 group transition-all duration-700 flex items-center justify-between cursor-none">
       {/* Torn Edge Washi Paper Filter applied to border */}
       <div
         className="absolute inset-0 border border-foreground/10 z-10 pointer-events-none group-hover:border-foreground/30 transition-colors duration-700"
@@ -39,7 +70,7 @@ const TechCard = ({ name }: { name: string }) => {
       <div className="absolute top-0 left-0 w-0 h-full bg-foreground/[0.04] group-hover:w-full transition-all duration-1000 ease-out z-0" />
 
       <div className="relative z-10 flex items-center gap-4">
-        <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center opacity-60 grayscale contrast-125 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-95 group-hover:scale-110">
+        <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center opacity-95 group-hover:opacity-100 transition-all duration-700 scale-95 group-hover:scale-110">
           <Image
             src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
             alt={name}
@@ -54,8 +85,6 @@ const TechCard = ({ name }: { name: string }) => {
           {name}
         </h3>
       </div>
-
-      {/* Tiny Japanese Calligraphy Accent (Meaning: Tool/Weapon/Art - Jutsu) */}
       <div className="relative z-10 text-foreground/20 font-serif font-bold text-lg md:text-xl group-hover:text-foreground/40 transition-colors duration-700">
         術
       </div>
@@ -105,14 +134,24 @@ export const Stack = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [activeBook, setActiveBook] = useState<string>("earth");
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
+  // Sync GSAP measurements after height animations complete to prevent scroll jitter
+  useEffect(() => {
+    if (mounted) {
+      const timer = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 650); // Matches the Framer Motion transition duration perfectly
+      return () => clearTimeout(timer);
+    }
+  }, [activeBook, mounted]);
+
   useGSAP(() => {
-    if (!containerRef.current) return;
+    if (!mounted || !containerRef.current) return;
 
     gsap.to(".tech-title-1", {
       x: -30,
@@ -146,7 +185,24 @@ export const Stack = () => {
         start: "top 80%",
       }
     });
-  }, { scope: containerRef });
+
+    // Discrete Scroll-driven Triggers: perfectly stable, immune to layout shift feedback loops
+    const rows = gsap.utils.toArray<HTMLElement>(".book-row-trigger");
+    rows.forEach((row) => {
+      const bookId = row.id.replace("book-row-", "");
+      ScrollTrigger.create({
+        trigger: row,
+        start: "top 55%",
+        end: "bottom 55%",
+        onToggle: (self) => {
+          if (self.isActive) {
+            setActiveBook(bookId);
+          }
+        }
+      });
+    });
+
+  }, { scope: containerRef, dependencies: [mounted] });
 
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
@@ -166,6 +222,7 @@ export const Stack = () => {
       </svg>
 
       <div className="relative z-20">
+        {/* Header block: EXACTLY KEEPING PREVIOUS STYLING & SAMURAI IMAGE */}
         <div className="mx-auto max-w-[1400px] px-6 md:px-10 mb-20 md:mb-32 text-left relative">
           <div
             className="hidden md:block absolute right-[2%] lg:right-[5%] top-[-20%] lg:top-[-30%] w-[350px] lg:w-[500px] h-[500px] lg:h-[700px] opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none stack-reveal-top z-0"
@@ -203,48 +260,84 @@ export const Stack = () => {
           </div>
         </div>
 
-        {/* The Marquee Arsenal Section - Slightly tilted like a calligraphy scroll */}
-        <div className="relative rotate-[-2deg] scale-105 md:scale-105 py-6 md:py-10 bg-foreground/[0.02]">
-          {/* Apply filter only to the border background layer to prevent text/logo distortion */}
-          <div
-            className="absolute inset-0 border-y border-foreground/10 pointer-events-none"
-            style={{ filter: "url(#line-torn-filter)" }}
-          />
-          <div className="absolute inset-y-0 left-0 w-1/6 bg-gradient-to-r from-background via-background/80 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-1/6 bg-gradient-to-l from-background via-background/80 to-transparent z-20 pointer-events-none" />
+        {/* Custom interactive chapters accordion, scrolling down auto-expands them in sequence */}
+        <div className="mx-auto max-w-[1400px] px-6 md:px-10 space-y-6 relative z-10">
+          {BOOKS.map((book) => {
+            const isOpen = activeBook === book.id;
+            return (
+              <div
+                key={book.id}
+                id={`book-row-${book.id}`}
+                className="border-b border-foreground/10 pb-6 relative group overflow-hidden book-row-trigger"
+              >
+                {/* Subtle hover background highlight */}
+                <div className="absolute inset-0 bg-foreground/[0.005] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700 ease-out z-0 pointer-events-none" />
 
-          <div className="flex flex-col gap-2 md:gap-4 relative z-10">
-            <KineticMarquee baseVelocity={-0.5}>
-              {TECH_LANGS.map((t) => <TechCard key={t} name={t} />)}
-            </KineticMarquee>
+                <button
+                  onClick={() => setActiveBook(book.id)}
+                  className="w-full text-left flex justify-between items-center py-4 relative z-10 cursor-none pointer-events-auto group/btn"
+                >
+                  <div className="flex items-center gap-6">
+                    {/* Kanji element with scale highlight on select (strictly monochromatic) */}
+                    <span className={`font-serif text-3xl md:text-4xl lg:text-5xl transition-all duration-500 ${isOpen ? "text-foreground scale-110 font-bold" : "text-foreground/25 group-hover/btn:text-foreground/60"}`}>
+                      {book.kanji}
+                    </span>
+                    <div className="flex flex-col">
+                      <span className={`text-lg md:text-xl lg:text-2xl font-serif font-light uppercase tracking-wide transition-colors duration-500 ${isOpen ? "text-foreground font-semibold" : "text-foreground/60 group-hover/btn:text-foreground/90"}`}>
+                        {book.title}
+                      </span>
+                      <span className="text-[10px] font-mono tracking-widest text-foreground/40 mt-1 uppercase">
+                        {book.subtitle}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Minimalist interactive toggle indicator */}
+                  <div className={`w-8 h-8 rounded-none border flex items-center justify-center transition-all duration-500 ${isOpen ? "rotate-45 border-foreground text-foreground" : "border-foreground/15 group-hover/btn:border-foreground/35 text-foreground/40"}`}>
+                    <span className="text-xs font-light font-mono">+</span>
+                  </div>
+                </button>
 
-            <KineticMarquee baseVelocity={1.0}>
-              <DataLine text="POLISH THE BLADE TEN THOUSAND DAYS TO PERFECT THE ART" />
-            </KineticMarquee>
+                {/* Accordion content with butter-smooth easeOutQuart transition */}
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden relative z-10"
+                    >
+                      <div className="pt-4 pb-2 space-y-6">
+                        <p className="text-sm md:text-base font-serif font-light text-foreground/75 leading-relaxed pl-6 relative">
+                          {/* Hand-torn brushed left accent line */}
+                          <span className="absolute left-0 top-1 bottom-1 w-[2px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+                          {book.description}
+                        </p>
 
-            <KineticMarquee baseVelocity={-0.3}>
-              {TECH_VISUALS.map((t) => <TechCard key={t} name={t} />)}
-            </KineticMarquee>
+                        <div className="flex flex-wrap gap-4 pt-2">
+                          {book.techs.map((tech) => (
+                            <TechCard key={tech} name={tech} />
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
 
-            <KineticMarquee baseVelocity={0.8}>
-              <DataLine text="PERCEPTION IS STRONG, SIGHT IS WEAK — FOCUS BEYOND THE SURFACE" />
-            </KineticMarquee>
+        {/* Simplified, Silent Kinetic Marquee at the very bottom */}
+        <div className="mt-32 md:mt-48 relative border-y border-foreground/5 py-4 opacity-[0.4] bg-foreground/[0.005]">
+          <div className="absolute inset-y-0 left-0 w-1/12 bg-gradient-to-r from-background to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-1/12 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
 
-            <KineticMarquee baseVelocity={-0.6}>
-              {TECH_FOUNDATION.map((t) => <TechCard key={t} name={t} />)}
-            </KineticMarquee>
-
-            <KineticMarquee baseVelocity={1.2}>
-              <DataLine text="PRACTICE A THOUSAND DAYS TO FORGE THE SPIRIT" />
-            </KineticMarquee>
-
-            <KineticMarquee baseVelocity={-0.4}>
-              {TECH_WORKSHOP.map((t) => <TechCard key={t} name={t} />)}
-            </KineticMarquee>
-          </div>
+          <KineticMarquee baseVelocity={0.3}>
+            <DataLine text="POLISH THE BLADE TEN THOUSAND DAYS TO PERFECT THE ART // DO NOTHING WHICH IS OF NO USE" />
+          </KineticMarquee>
         </div>
       </div>
     </section>
   );
 };
-

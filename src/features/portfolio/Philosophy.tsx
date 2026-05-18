@@ -87,7 +87,6 @@ export const Philosophy = () => {
         toggleActions: "play none none none"
       },
       opacity: 1,
-      color: "var(--foreground)",
       filter: "blur(0px)",
       stagger: 0.012, // Beautiful rapid ink spread character-by-character
       duration: 0.8,
@@ -143,7 +142,7 @@ export const Philosophy = () => {
         />
       </div>
 
-      <div className="phil-musashi absolute left-[2%] md:left-[8%] bottom-[5%] md:bottom-[8%] w-48 md:w-[320px] h-96 md:h-[600px] pointer-events-none z-[1]"
+      <div className="phil-musashi absolute left-[2%] md:left-[8%] bottom-[5%] md:bottom-[8%] w-48 md:w-[320px] h-96 md:h-[600px] pointer-events-none z-0"
         style={{ filter: isDark ? "invert(1) grayscale(1)" : "invert(0) grayscale(0)" }}>
         <Image
           src="/images/musashi-samurai.png"
@@ -153,8 +152,6 @@ export const Philosophy = () => {
           priority
         />
       </div>
-
-      {/* Reusable Falling Sumi-e Leaves */}
       <SumiLeaves containerRef={containerRef} count={15} />
 
       <div className="relative z-10 mx-auto max-w-[1400px] px-6 md:px-10 w-full">
@@ -179,7 +176,6 @@ export const Philosophy = () => {
             <blockquote
               className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-light text-foreground leading-[1.3] lg:leading-[1.2] tracking-tight pr-6 md:pr-12 relative"
             >
-              {/* Brush stroke quote line */}
               <div className="absolute right-0 top-2 bottom-2 w-[4px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
               <div ref={quoteRef} className="inline">
                 {"Do nothing which is of no use. Code is not written for the machine, but for the soul. True architecture emerges only when the mind is empty of ego and full of intention.".split(" ").map((word, wordIndex) => (

@@ -202,8 +202,6 @@ export const Navbar = () => {
                 );
               })}
             </div>
-
-            {/* Mobile Menu Footer Info */}
             <div className="absolute bottom-8 left-8 right-8 flex justify-between items-center border-t border-foreground/15 pt-5 text-[10px] font-serif text-foreground/40 uppercase tracking-widest">
               <span>NITEN ICHI-RYŪ</span>
               <span>THE WAY OF THE RONIN</span>

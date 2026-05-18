@@ -12,9 +12,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 interface Project {
   id: string;
-  daiji: string; // Traditional Japanese numeral
+  daiji: string;
   title: string;
-  blade: string; // The Samurai Sword framing
+  blade: string;
   description: string;
   image: string;
   tags: string[];
@@ -92,7 +92,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       }
     });
 
-    // 2. Majestic Staggered Scroll Parallax for the entire text block (slides opposite to frame)
     if (textRef.current) {
       gsap.fromTo(textRef.current,
         { y: isEven ? 40 : -40 },
@@ -109,7 +108,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       );
     }
 
-    // 3. Kanji Watermark sliding slowly in the deep background
     if (watermarkRef.current) {
       gsap.to(watermarkRef.current, {
         y: isEven ? -50 : 50,
@@ -123,7 +121,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       });
     }
 
-    // 4. Backing Paper organic shift & rotation drift
     if (backingPaperRef.current) {
       gsap.to(backingPaperRef.current, {
         y: isEven ? -22 : 22,
@@ -138,7 +135,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       });
     }
 
-    // 5. Photo Screen organic counter-drift (creates majestic multi-layered separation)
     if (photoScreenRef.current) {
       gsap.to(photoScreenRef.current, {
         y: isEven ? 16 : -16,
@@ -153,7 +149,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       });
     }
 
-    // 6. Staggered fade and slide reveal for elements
     gsap.from(`.project-reveal-${index}`, {
       y: 50,
       opacity: 0,
@@ -190,19 +185,21 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
             className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[-2.5deg] transition-all duration-700 group-hover:rotate-[-4deg] group-hover:bg-foreground/[0.08] pointer-events-none"
             style={{ filter: "url(#line-torn-filter)" }}
           />
-          <div ref={photoScreenRef} className="absolute inset-0 bg-background/20 backdrop-blur-sm rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.25)]">
+          <div ref={photoScreenRef} className="absolute inset-0 bg-background/20 backdrop-blur-sm rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.25)] group-hover:shadow-[0_0_40px_rgba(239,68,68,0.25),0_12px_32px_rgba(0,0,0,0.25)] border border-transparent group-hover:border-orange-500/20">
             <div className="relative w-full h-full overflow-hidden bg-card">
-              <div ref={imageRef} className="absolute inset-0 h-[130%] -top-[15%]">
+              <div ref={imageRef} className="absolute -left-[5%] -right-[5%] w-[110%] h-[130%] -top-[15%]">
                 <PortraitMorph
                   srcA={project.image}
                   srcB={project.image}
                   alt={project.title}
-                  className="w-full h-full object-cover object-center scale-105 group-hover:scale-100 transition-all duration-1000 grayscale contrast-[1.25] opacity-80 group-hover:opacity-100 group-hover:contrast-[1.38]"
+                  className="w-full h-full object-cover object-center scale-105 group-hover:scale-100 transition-all duration-1000 grayscale contrast-[1.25] opacity-80 group-hover:opacity-100 group-hover:contrast-[1.38] group-hover:grayscale-0"
                 />
               </div>
 
               <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent opacity-60 pointer-events-none" />
-
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none z-30 transition-opacity duration-200 overflow-hidden">
+                <div className="absolute top-[-50%] left-[-50%] w-[35%] h-[200%] bg-gradient-to-r from-transparent via-white/80 to-transparent rotate-[35deg] translate-x-[-150%] group-hover:translate-x-[500%] transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              </div>
             </div>
           </div>
           <div
@@ -220,7 +217,7 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
           </div>
         </div>
       </div>
-      <div ref={textRef} className="flex-1 flex flex-col justify-center z-10 w-full px-2 md:px-0">
+      <div ref={textRef} className="flex-1 flex flex-col justify-center z-10 w-full px-2 md:px-0 relative">
         <div className={`flex items-center gap-4 mb-4 md:mb-5 mt-4 lg:mt-0 project-reveal-${index} project-reveal-tag`}>
           <span className="text-[10px] font-mono text-foreground/50 uppercase tracking-widest font-bold">
             {project.blade} {'//'} {project.year}
@@ -281,17 +278,32 @@ export const Artifacts = () => {
       }
     });
 
+    // Synchronized title parallax with ease: "none" matching Philosophy
     gsap.to(".artifacts-title-1", {
-      x: -40,
+      x: -30,
+      ease: "none",
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top bottom",
         end: "bottom top",
-        scrub: true,
+        scrub: true
       }
     });
     gsap.to(".artifacts-title-2", {
-      x: 40,
+      x: 30,
+      ease: "none",
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true
+      }
+    });
+
+    // Header ink image Parallax scroll (moves downwards slowly)
+    gsap.to(".artifacts-header-img", {
+      y: 80,
+      ease: "none",
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top bottom",
@@ -320,10 +332,26 @@ export const Artifacts = () => {
           </filter>
         </defs>
       </svg>
+      <div
+        className="artifacts-header-img absolute right-[4%] md:right-[6%] top-[3%] md:top-[3%] w-48 sm:w-[260px] md:w-[380px] lg:w-[460px] aspect-[3/4] pointer-events-none z-0 opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] transition-opacity duration-700"
+        style={{ filter: isDark ? "invert(1) grayscale(1)" : "invert(0) grayscale(0)" }}
+      >
+        <Image
+          src="/images/be-calm-stay-in-control.jpg"
+          alt="Be Calm Stay In Control Art"
+          fill
+          className="object-contain grayscale contrast-[1.15]"
+          style={{
+            maskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
+            maskComposite: "intersect",
+            WebkitMaskComposite: "source-in"
+          }}
+          priority
+        />
+      </div>
 
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 relative z-10">
-
-        {/* Editorial Artbook Header */}
         <div className="mb-24 md:mb-40 text-left">
           <div className="flex items-center gap-4 mb-8 w-full artifacts-reveal-top">
             <div className="flex items-center font-mono text-foreground/75">
@@ -331,7 +359,6 @@ export const Artifacts = () => {
                 [ CHAPTER II : CREATIONS ]
               </span>
             </div>
-            <div className="h-[2px] flex-1 bg-foreground/15" style={{ filter: "url(#line-torn-filter)" }} />
           </div>
 
           <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible artifacts-reveal-top">

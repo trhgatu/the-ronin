@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
 import { useTheme } from "next-themes";
+import Image from 'next/image';
 
 const EXPERIENCES = [
   {
@@ -110,9 +111,8 @@ export const Experience = () => {
   }, []);
 
   useGSAP(() => {
-    if (!containerRef.current) return;
+    if (!mounted || !containerRef.current) return;
 
-    // Title reveal
     gsap.from(".exp-reveal-top", {
       y: -20,
       opacity: 0,
@@ -125,49 +125,36 @@ export const Experience = () => {
       }
     });
 
-    // Titles Parallax
+    // Synchronized title parallax with ease: "none" matching Philosophy
     gsap.to(".exp-title-1", {
-      x: 30,
+      x: -30,
+      ease: "none",
       scrollTrigger: {
         trigger: containerRef.current,
         start: "top bottom",
         end: "bottom top",
-        scrub: true,
+        scrub: true
       }
     });
     gsap.to(".exp-title-2", {
-      x: -30,
+      x: 30,
+      ease: "none",
       scrollTrigger: {
         trigger: containerRef.current,
         start: "top bottom",
         end: "bottom top",
-        scrub: true,
+        scrub: true
       }
     });
 
-    // Ink entry fade reveal
     EXPERIENCES.forEach((_, i) => {
-      gsap.from(`.exp-card-reveal-${i}`, {
-        y: 40,
-        opacity: 0,
-        filter: "blur(8px)",
-        duration: 1.2,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: `.exp-entry-${i}`,
-          start: "top 75%",
-        }
-      });
-
-      // Bouncy, organic Zen footprint stamp reveal + dynamic OGL ink-bleed ripple
-      const isDarkTheme = resolvedTheme === 'dark' || theme === 'dark';
       gsap.fromTo(`.footprint-stamp-${i}`,
         {
           opacity: 0,
           scale: 1.7,
         },
         {
-          opacity: isDarkTheme ? 0.28 : 0.55,
+          opacity: 1,
           scale: 1.0,
           duration: 1.1,
           ease: "back.out(2)",
@@ -179,18 +166,8 @@ export const Experience = () => {
         }
       );
     });
-    gsap.to(".water-title-img", {
-      yPercent: 15,
-      ease: "none",
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: true,
-      }
-    });
 
-  }, { scope: containerRef, dependencies: [resolvedTheme, theme] });
+  }, { scope: containerRef, dependencies: [mounted] });
 
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
@@ -200,18 +177,11 @@ export const Experience = () => {
       id="experience"
       className="relative py-28 md:py-48 bg-background overflow-hidden"
     >
-      {/* Torn Edge Transition Separator */}
       <div
         className="absolute top-0 left-0 w-full h-[3px] bg-foreground/15 opacity-60"
         style={{ filter: "url(#line-torn-filter)" }}
       />
-
-
-
-      {/* Subtle Japanese Washi Paper Background Texture */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat z-0" />
-
-      {/* SVG filter definition for horizontal line tearing */}
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
         <defs>
           <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">
@@ -254,8 +224,8 @@ export const Experience = () => {
                 className={`exp-entry-${i} grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-4 relative pt-16 md:pt-0`}
               >
                 <div className="absolute left-6 md:left-1/2 md:-translate-x-1/2 top-0 bottom-0 w-8 md:w-24 flex items-start justify-center z-10 pointer-events-none">
-                  <div className={`footprint-stamp-${i} opacity-0 text-foreground transition-all duration-500`}>
-                    <FootprintSVG isLeft={i % 2 === 0} className="w-8 h-14 md:w-16 md:h-28 mt-4" />
+                  <div className={`footprint-stamp-${i} opacity-0 text-foreground`}>
+                    <FootprintSVG isLeft={i % 2 === 0} className="w-8 h-14 md:w-16 md:h-28 mt-4 opacity-[0.55] dark:opacity-[0.28] transition-opacity duration-500" />
                   </div>
                 </div>
                 {isEven ? (
@@ -266,10 +236,12 @@ export const Experience = () => {
                         {exp.period}
                       </span>
                       <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] aspect-[2/3] opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] overflow-hidden exp-reveal-top relative">
-                        <img
+                        <Image
                           src={exp.image}
                           alt="Zen Decor"
-                          className="w-full h-full object-cover grayscale contrast-[1.2] pointer-events-auto"
+                          width={1000}
+                          height={1500}
+                          className="h-full w-full object-cover grayscale contrast-[1.2] pointer-events-auto"
                           style={{
                             maskImage: "linear-gradient(to bottom, black 50%, transparent 100%), linear-gradient(to left, black 50%, transparent 100%)",
                             WebkitMaskImage: "linear-gradient(to bottom, black 50%, transparent 100%), linear-gradient(to left, black 50%, transparent 100%)",
@@ -279,11 +251,7 @@ export const Experience = () => {
                         />
                       </div>
                     </div>
-
-                    {/* Central stream space spacer */}
                     <div className="md:col-span-2 hidden md:block" />
-
-                    {/* Details (Right side on desktop) */}
                     <div className={`md:col-span-5 z-10 pl-14 md:pl-0 exp-card-reveal-${i}`}>
                       <div className="mb-6 md:mb-8">
                         <h3 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light text-foreground uppercase tracking-tighter mb-2 leading-tight">
@@ -300,7 +268,6 @@ export const Experience = () => {
                       </p>
 
                       <div className="flex flex-col gap-8">
-                        {/* Achievements */}
                         <div className="flex flex-col gap-4">
                           <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Chronicles of Battle //</span>
                           <ul className="space-y-4">
@@ -312,8 +279,6 @@ export const Experience = () => {
                             ))}
                           </ul>
                         </div>
-
-                        {/* Technologies / Arsenal */}
                         <div className="flex flex-col gap-4 w-full">
                           <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Arsenal & Weapons //</span>
                           {exp.techBooks ? (
@@ -401,7 +366,6 @@ export const Experience = () => {
                       </p>
 
                       <div className="flex flex-col gap-8">
-                        {/* Achievements */}
                         <div className="flex flex-col gap-4">
                           <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Chronicles of Battle //</span>
                           <ul className="space-y-4">
@@ -414,7 +378,6 @@ export const Experience = () => {
                           </ul>
                         </div>
 
-                        {/* Technologies / Arsenal */}
                         <div className="flex flex-col gap-4 w-full">
                           <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Arsenal & Weapons //</span>
                           {exp.techBooks ? (
@@ -484,10 +447,8 @@ export const Experience = () => {
                       </div>
                     </div>
 
-                    {/* Central stream space spacer */}
                     <div className="md:col-span-2 hidden md:block order-2" />
 
-                    {/* Period (Right side on desktop) */}
                     <div className="md:col-span-5 flex flex-col items-start justify-start z-10 md:pl-16 pl-14 md:pl-0 pt-4 order-1 md:order-3">
                       <span className="text-xl md:text-2xl font-serif font-light text-foreground/80 tracking-tight flex items-center gap-4">
                         <span className="w-8 h-[2px] bg-foreground/30 hidden md:block" style={{ filter: "url(#line-torn-filter)" }} />
@@ -495,9 +456,11 @@ export const Experience = () => {
                       </span>
 
                       <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] overflow-hidden exp-reveal-top relative">
-                        <img
+                        <Image
                           src={exp.image}
                           alt="Zen Decor"
+                          width={460}
+                          height={690}
                           className="w-full h-full object-cover grayscale contrast-[1.2] pointer-events-auto"
                           style={{
                             maskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
