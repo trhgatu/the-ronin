@@ -17,6 +17,8 @@ export const Hero = () => {
   }, []);
 
   useGSAP(() => {
+    if (!mounted) return;
+
     const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
 
     tl.from('.hero-reveal-top', {
@@ -30,14 +32,35 @@ export const Hero = () => {
         x: 30,
         opacity: 0,
         duration: 1.4,
-      }, '-=0.8')
-      .from('.hero-reveal-name', {
-        y: 100,
-        opacity: 0,
-        duration: 1.8,
-        stagger: 0.15,
-      }, '-=1.2');
-  }, { scope: containerRef });
+      }, '-=0.8');
+
+    // 1. Smooth scroll parallax for the background image
+    gsap.to('.hero-bg-img', {
+      yPercent: 18,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+      }
+    });
+
+    // 2. Smooth scroll fade and lift for texts
+    gsap.to('.hero-fade-out', {
+      opacity: 0,
+      y: -60,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+      }
+    });
+
+
+  }, { dependencies: [mounted], scope: containerRef });
 
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
@@ -66,7 +89,7 @@ export const Hero = () => {
         </div>
 
         <div
-          className="absolute inset-0 w-full h-full pointer-events-none select-none z-0"
+          className="absolute inset-0 w-full h-full pointer-events-none select-none z-0 hero-bg-img"
         >
           <img
             src="/images/vagabond_background_clean.png"
@@ -86,7 +109,7 @@ export const Hero = () => {
         </defs>
       </svg>
 
-      <div className="absolute inset-0 w-full h-full px-6 md:px-12 pointer-events-none select-none z-10">
+      <div className="absolute inset-0 w-full h-full px-6 md:px-12 pointer-events-none select-none z-10 hero-fade-out">
 
         <div className="absolute top-[135px] left-[6%] hero-reveal-top font-mono text-[9px] md:text-[10px] tracking-[0.4em] text-foreground/50 font-bold uppercase">
           NITEN ICHI-RYŪ
@@ -102,26 +125,7 @@ export const Hero = () => {
             </p>
           </div>
         </div>
-        <div className="absolute bottom-[4%] sm:bottom-[5%] lg:bottom-[6%] left-[5%] right-[5%] w-[90%] flex flex-col sm:flex-row justify-between items-baseline pointer-events-none select-none overflow-hidden z-10 gap-2 sm:gap-0">
-          <div className="overflow-hidden">
-            <h2
-              className="hero-reveal-name font-serif font-light text-transparent uppercase leading-[0.8] text-[11vw] sm:text-[9vw] tracking-tighter select-none"
-              style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.75)" : "1.5px rgba(0,0,0,0.75)" }}
-            >
-              TRAN HOANG
-            </h2>
-          </div>
 
-          <div className="overflow-hidden sm:text-right">
-            <h2
-              className="hero-reveal-name font-serif font-light text-transparent uppercase leading-[0.8] text-[11vw] sm:text-[9vw] tracking-tighter select-none"
-              style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.75)" : "1.5px rgba(0,0,0,0.75)" }}
-            >
-              ANH TU
-            </h2>
-          </div>
-
-        </div>
 
       </div>
     </section>

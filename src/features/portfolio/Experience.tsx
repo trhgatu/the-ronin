@@ -4,7 +4,6 @@ import { useRef, useState, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
 import { useTheme } from "next-themes";
-import { motion, AnimatePresence } from 'framer-motion';
 
 const EXPERIENCES = [
   {
@@ -54,7 +53,7 @@ const EXPERIENCES = [
         items: ["Clean Architecture", "Domain-Driven Design", "Event-Driven Architecture"]
       }
     ],
-    kanji: "錬"
+    image: "/images/musashi-3.jpg"
   },
   {
     company: "CyberSkill",
@@ -67,7 +66,7 @@ const EXPERIENCES = [
       "Built 'DPD' (Day Past Due) financial tracking backend using NestJS and GraphQL for rapid, highly-efficient data querying"
     ],
     tech: ["Ionic", "Angular", "NestJS", "GraphQL", "Django"],
-    kanji: "昇"
+    image: "/images/musashi-2.jpg"
   },
   {
     company: "HUIT (HCMC University of Industry and Trade)",
@@ -80,9 +79,25 @@ const EXPERIENCES = [
       "Acquired business analysis (BA) mastery, mapping enterprise workflows and system flows into comprehensive UML schemas"
     ],
     tech: ["C#", "Java", "MSSQL", "MongoDB", "Neo4j", "System Analysis"],
-    kanji: "基" // Ki - Foundation / Base
+    image: "/images/water.jpg"
   }
 ];
+
+const FootprintSVG = ({ isLeft, className }: { isLeft: boolean; className?: string }) => (
+  <svg
+    viewBox="0 0 100 180"
+    fill="currentColor"
+    className={`${className} ${isLeft ? "scale-x-[-1]" : ""}`}
+    style={{ filter: "url(#line-torn-filter)" }}
+  >
+    <path d="M 50,155 C 38,155 30,140 30,122 C 30,105 38,98 42,88 C 45,78 38,65 33,48 C 30,38 33,26 50,26 C 67,26 70,38 67,48 C 62,65 55,78 58,88 C 62,98 70,105 70,122 C 70,140 62,155 50,155 Z" />
+    <ellipse cx="48" cy="14" rx="9" ry="12" />
+    <ellipse cx="66" cy="18" rx="6.5" ry="9" />
+    <ellipse cx="79" cy="27" rx="5.5" ry="8" />
+    <ellipse cx="88" cy="40" rx="4.5" ry="7.5" />
+    <ellipse cx="93" cy="54" rx="3.5" ry="6.5" />
+  </svg>
+);
 
 export const Experience = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,7 +106,6 @@ export const Experience = () => {
   const [activeBook, setActiveBook] = useState('earth');
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -131,34 +145,52 @@ export const Experience = () => {
       }
     });
 
-    // Reveal for entries (Ink dropping effect)
-    gsap.from(".exp-entry", {
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top 50%",
-      },
-      y: 50,
-      opacity: 0,
-      filter: "blur(10px)",
-      duration: 1.5,
-      stagger: 0.4,
-      ease: "power2.out"
-    });
-
-    // Parallax for Kanji watermarks
-    gsap.utils.toArray<HTMLElement>(".kanji-watermark").forEach((el) => {
-      gsap.to(el, {
-        y: -100,
+    // Ink entry fade reveal
+    EXPERIENCES.forEach((_, i) => {
+      gsap.from(`.exp-card-reveal-${i}`, {
+        y: 40,
+        opacity: 0,
+        filter: "blur(8px)",
+        duration: 1.2,
+        ease: "power2.out",
         scrollTrigger: {
-          trigger: el.parentElement,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 1.5
+          trigger: `.exp-entry-${i}`,
+          start: "top 75%",
         }
       });
+
+      // Bouncy, organic Zen footprint stamp reveal + dynamic OGL ink-bleed ripple
+      const isDarkTheme = resolvedTheme === 'dark' || theme === 'dark';
+      gsap.fromTo(`.footprint-stamp-${i}`,
+        {
+          opacity: 0,
+          scale: 1.7,
+        },
+        {
+          opacity: isDarkTheme ? 0.28 : 0.55,
+          scale: 1.0,
+          duration: 1.1,
+          ease: "back.out(2)",
+          scrollTrigger: {
+            trigger: `.exp-entry-${i}`,
+            start: "top 62%",
+            once: true,
+          }
+        }
+      );
+    });
+    gsap.to(".water-title-img", {
+      yPercent: 15,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+      }
     });
 
-  }, { scope: containerRef });
+  }, { scope: containerRef, dependencies: [resolvedTheme, theme] });
 
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
@@ -174,8 +206,10 @@ export const Experience = () => {
         style={{ filter: "url(#line-torn-filter)" }}
       />
 
+
+
       {/* Subtle Japanese Washi Paper Background Texture */}
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat z-0" />
 
       {/* SVG filter definition for horizontal line tearing */}
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
@@ -188,11 +222,12 @@ export const Experience = () => {
       </svg>
 
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 relative z-10">
-        <div className="mb-32 md:mb-52 text-left">
+        <div className="mb-24 md:mb-40 text-left relative">
+
           <div className="flex items-center gap-4 mb-8 w-full exp-reveal-top">
             <div className="flex items-center font-mono text-foreground/75">
               <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
-                [ CHAPTER V : THE BATTLES ]
+                [ CHAPTER III : THE WATER PATH ]
               </span>
             </div>
             <div className="h-[2px] flex-1 bg-foreground/15" style={{ filter: "url(#line-torn-filter)" }} />
@@ -202,153 +237,284 @@ export const Experience = () => {
             <span className="inline-block exp-title-1 whitespace-nowrap">PATH OF THE</span> <br />
             <span className="inline-block exp-title-2 text-transparent ml-[5%] md:ml-[15%] whitespace-nowrap" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>WANDERER.</span>
           </h2>
+          <p className="mt-8 font-caveat text-2xl sm:text-3xl md:text-4xl text-foreground/60 tracking-wide font-normal max-w-2xl exp-reveal-top">
+            &quot;A journey of a thousand leagues begins beneath one&apos;s feet.&quot;
+          </p>
         </div>
 
-        <div className="flex flex-col gap-24 md:gap-40">
-          {EXPERIENCES.map((exp, i) => (
-            <div key={i} className="exp-entry grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-20 relative">
+        <div className="flex flex-col gap-24 md:gap-28 relative">
+          <div className="absolute left-6 top-4 bottom-4 w-[1px] bg-foreground/15 md:hidden z-0" style={{ filter: "url(#line-torn-filter)" }} />
+          <div className="absolute left-1/2 -translate-x-1/2 top-4 bottom-4 w-[1px] bg-foreground/20 hidden md:block z-0" style={{ filter: "url(#line-torn-filter)" }} />
 
-              {/* Giant Kanji Watermark */}
+          {EXPERIENCES.map((exp, i) => {
+            const isEven = i % 2 === 0;
+            return (
               <div
-                className="kanji-watermark absolute right-[-5%] md:right-[10%] top-[-20%] font-serif font-black text-[200px] md:text-[300px] select-none pointer-events-none text-foreground leading-none z-0"
-                style={{ opacity: 0.02, filter: "url(#line-torn-filter)" }}
+                key={i}
+                className={`exp-entry-${i} grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-4 relative pt-16 md:pt-0`}
               >
-                {exp.kanji}
-              </div>
-
-              {/* Timeline Period */}
-              <div className="md:col-span-3 flex flex-col items-start z-10">
-                <span className="text-xl md:text-2xl font-serif font-light text-foreground/80 mb-4 md:mb-0 tracking-tight flex items-center gap-4">
-                  <span className="w-8 h-[2px] bg-foreground/30" style={{ filter: "url(#line-torn-filter)" }} />
-                  {exp.period}
-                </span>
-              </div>
-
-              {/* Experience Details */}
-              <div className="md:col-span-9 z-10 relative">
-                <div className="mb-8 md:mb-12">
-                  <h3 className="text-4xl md:text-6xl font-serif font-light text-foreground uppercase tracking-tighter mb-4 leading-tight md:leading-none">
-                    {exp.role}
-                  </h3>
-                  <span className="text-sm md:text-base font-mono font-bold text-foreground/60 uppercase tracking-[0.3em]">{exp.company}</span>
-                </div>
-
-                <p className="text-lg md:text-2xl font-serif font-light text-foreground/70 mb-12 md:mb-16 leading-relaxed max-w-3xl relative pl-6 md:pl-10">
-                  <span className="absolute left-0 top-2 bottom-2 w-[3px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
-                  {exp.description}
-                </p>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
-                  {/* Achievements */}
-                  <div className="flex flex-col gap-6 lg:col-span-7">
-                    <span className="text-[10px] font-mono text-foreground/50 uppercase tracking-[0.4em] mb-2 font-bold">Chronicles of Battle //</span>
-                    <ul className="space-y-4 md:space-y-6">
-                      {exp.achievements.map((item, idx) => (
-                        <li key={idx} className="flex gap-4 items-start group">
-                          <span className="text-foreground/40 font-serif text-sm mt-1 group-hover:translate-x-2 transition-transform duration-500">一</span>
-                          <span className="text-sm md:text-base font-serif font-light text-foreground/60 group-hover:text-foreground transition-colors duration-500 leading-relaxed">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
+                <div className="absolute left-6 md:left-1/2 md:-translate-x-1/2 top-0 bottom-0 w-8 md:w-24 flex items-start justify-center z-10 pointer-events-none">
+                  <div className={`footprint-stamp-${i} opacity-0 text-foreground transition-all duration-500`}>
+                    <FootprintSVG isLeft={i % 2 === 0} className="w-8 h-14 md:w-16 md:h-28 mt-4" />
                   </div>
-                  <div className="flex flex-col gap-6 lg:col-span-5 w-full">
-                    <span className="text-[10px] font-mono text-foreground/50 uppercase tracking-[0.4em] mb-2 font-bold">Arsenal & Weapons //</span>
-                    {exp.techBooks ? (
-                      <div className="flex flex-col gap-6 w-full">
-                        <div className="grid grid-cols-5 gap-1 pb-3 relative">
-                          {exp.techBooks.map((book) => {
-                            const isSelected = activeBook === book.id;
-                            return (
-                              <button
-                                key={book.id}
-                                onClick={() => setActiveBook(book.id)}
-                                className="flex flex-col items-center gap-1 py-2 transition-all duration-300 relative group pointer-events-auto cursor-pointer"
-                              >
-                                <span
-                                  className={`
-                                    font-serif text-2xl transition-all duration-300
-                                    ${isSelected
-                                      ? "text-[#8b0000] font-bold scale-110"
-                                      : "text-foreground/30 group-hover:text-foreground/75 group-hover:scale-105"
-                                    }
-                                  `}
-                                >
-                                  {book.kanji}
-                                </span>
-                                <span
-                                  className={`
-                                    text-[7.5px] font-mono tracking-widest uppercase transition-colors duration-300
-                                    ${isSelected
-                                      ? "text-[#8b0000] font-black"
-                                      : "text-foreground/35 group-hover:text-foreground/60"
-                                    }
-                                  `}
-                                >
-                                  {book.id}
-                                </span>
+                </div>
+                {isEven ? (
+                  <>
+                    <div className="md:col-span-5 flex flex-col items-start md:items-end justify-start z-10 md:pr-16 pl-14 md:pl-0 pt-4">
+                      <span className="text-xl md:text-2xl font-serif font-light text-foreground/80 tracking-tight flex items-center md:flex-row-reverse gap-4">
+                        <span className="w-8 h-[2px] bg-foreground/30 hidden md:block" style={{ filter: "url(#line-torn-filter)" }} />
+                        {exp.period}
+                      </span>
+                      <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] aspect-[2/3] opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] overflow-hidden exp-reveal-top relative">
+                        <img
+                          src={exp.image}
+                          alt="Zen Decor"
+                          className="w-full h-full object-cover grayscale contrast-[1.2] pointer-events-auto"
+                          style={{
+                            maskImage: "linear-gradient(to bottom, black 50%, transparent 100%), linear-gradient(to left, black 50%, transparent 100%)",
+                            WebkitMaskImage: "linear-gradient(to bottom, black 50%, transparent 100%), linear-gradient(to left, black 50%, transparent 100%)",
+                            maskComposite: "intersect",
+                            WebkitMaskComposite: "source-in"
+                          }}
+                        />
+                      </div>
+                    </div>
 
-                                {isSelected && (
-                                  <motion.div
-                                    layoutId="activeBookUnderline"
-                                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#8b0000]"
-                                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                                    style={{ filter: "url(#line-torn-filter)" }}
-                                  />
-                                )}
-                              </button>
-                            );
-                          })}
+                    {/* Central stream space spacer */}
+                    <div className="md:col-span-2 hidden md:block" />
+
+                    {/* Details (Right side on desktop) */}
+                    <div className={`md:col-span-5 z-10 pl-14 md:pl-0 exp-card-reveal-${i}`}>
+                      <div className="mb-6 md:mb-8">
+                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light text-foreground uppercase tracking-tighter mb-2 leading-tight">
+                          {exp.role}
+                        </h3>
+                        <span className="text-[10px] md:text-xs font-mono font-bold text-foreground/60 uppercase tracking-[0.3em] block">
+                          {exp.company}
+                        </span>
+                      </div>
+
+                      <p className="text-base md:text-lg font-serif font-light text-foreground/75 mb-10 md:mb-12 leading-relaxed relative pl-6">
+                        <span className="absolute left-0 top-1 bottom-1 w-[2.5px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+                        {exp.description}
+                      </p>
+
+                      <div className="flex flex-col gap-8">
+                        {/* Achievements */}
+                        <div className="flex flex-col gap-4">
+                          <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Chronicles of Battle //</span>
+                          <ul className="space-y-4">
+                            {exp.achievements.map((item, idx) => (
+                              <li key={idx} className="flex gap-4 items-start group">
+                                <span className="text-foreground/30 font-serif text-sm mt-0.5 group-hover:translate-x-1 transition-transform duration-500">一</span>
+                                <span className="text-xs md:text-sm font-serif font-light text-foreground/60 group-hover:text-foreground transition-colors duration-500 leading-relaxed">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                        <div className="min-h-[100px]">
-                          <AnimatePresence mode="wait">
-                            {exp.techBooks.map((book) => {
-                              if (book.id !== activeBook) return null;
-                              return (
-                                <motion.div
-                                  key={book.id}
-                                  initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
-                                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                                  exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
-                                  transition={{ duration: 0.35, ease: "easeOut" }}
-                                  className="flex flex-col gap-3 w-full"
-                                >
-                                  <div className="flex flex-col">
-                                    <span className="text-[11px] font-serif font-black text-foreground uppercase tracking-[0.2em]">{book.title}</span>
-                                    <span className="text-[9px] font-serif text-foreground/40 italic tracking-wider mt-0.5">{book.subtitle}</span>
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {book.items.map((t) => (
-                                      <span key={t} className="px-3 py-1.5 border border-foreground/15 bg-background text-[9px] font-mono text-foreground/60 uppercase tracking-widest relative overflow-hidden group select-none">
-                                        <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
-                                        <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+
+                        {/* Technologies / Arsenal */}
+                        <div className="flex flex-col gap-4 w-full">
+                          <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Arsenal & Weapons //</span>
+                          {exp.techBooks ? (
+                            <div className="flex flex-col gap-4 w-full">
+                              <div className="grid grid-cols-5 gap-1 pb-2 border-b border-foreground/10 relative">
+                                {exp.techBooks.map((book) => {
+                                  const isSelected = activeBook === book.id;
+                                  return (
+                                    <button
+                                      key={book.id}
+                                      onClick={() => setActiveBook(book.id)}
+                                      className="flex flex-col items-center gap-1 py-1.5 transition-all duration-300 relative group pointer-events-auto cursor-pointer"
+                                    >
+                                      <span className={`font-serif text-xl transition-all duration-300 ${isSelected ? "text-[#8b0000] font-bold scale-110" : "text-foreground/30 group-hover:text-foreground/75"}`}>
+                                        {book.kanji}
                                       </span>
-                                    ))}
-                                  </div>
-                                </motion.div>
-                              );
-                            })}
-                          </AnimatePresence>
+                                      <span className={`text-[7px] font-mono tracking-widest uppercase transition-colors duration-300 ${isSelected ? "text-[#8b0000] font-black" : "text-foreground/35"}`}>
+                                        {book.id}
+                                      </span>
+
+                                      {isSelected && (
+                                        <div
+                                          className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#8b0000] animate-in slide-in-from-bottom-1 fade-in duration-300"
+                                          style={{ filter: "url(#line-torn-filter)" }}
+                                        />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="min-h-[90px]">
+                                {exp.techBooks.map((book) => {
+                                  if (book.id !== activeBook) return null;
+                                  return (
+                                    <div
+                                      key={book.id}
+                                      className="flex flex-col gap-2.5 w-full animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both"
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="text-[10px] font-serif font-black text-foreground uppercase tracking-[0.2em]">{book.title}</span>
+                                        <span className="text-[8px] font-serif text-foreground/40 italic tracking-wider mt-0.5">{book.subtitle}</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {book.items.map((t) => (
+                                          <span key={t} className="px-2 py-1 border border-foreground/15 bg-background text-[8px] font-mono text-foreground/50 uppercase tracking-widest relative overflow-hidden group select-none">
+                                            <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
+                                            <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {exp.tech?.map(t => (
+                                <span key={t} className="px-3 py-1.5 border border-foreground/15 bg-background text-[8px] font-mono text-foreground/50 uppercase tracking-widest relative overflow-hidden group select-none">
+                                  <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
+                                  <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-3">
-                        {exp.tech?.map(t => (
-                          <span key={t} className="px-4 py-2 border border-foreground/15 bg-background text-[10px] font-mono text-foreground/60 uppercase tracking-widest relative overflow-hidden group">
-                            <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
-                            <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
-                          </span>
-                        ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={`md:col-span-5 z-10 order-2 md:order-1 pl-14 md:pl-0 md:pr-12 md:text-right exp-card-reveal-${i}`}>
+                      <div className="mb-6 md:mb-8">
+                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light text-foreground uppercase tracking-tighter mb-2 leading-tight">
+                          {exp.role}
+                        </h3>
+                        <span className="text-[10px] md:text-xs font-mono font-bold text-foreground/60 uppercase tracking-[0.3em] block">
+                          {exp.company}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                </div>
+
+                      <p className="text-base md:text-lg font-serif font-light text-foreground/75 mb-10 md:mb-12 leading-relaxed relative pl-6">
+                        <span className="absolute left-0 top-1 bottom-1 w-[2.5px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+                        {exp.description}
+                      </p>
+
+                      <div className="flex flex-col gap-8">
+                        {/* Achievements */}
+                        <div className="flex flex-col gap-4">
+                          <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Chronicles of Battle //</span>
+                          <ul className="space-y-4">
+                            {exp.achievements.map((item, idx) => (
+                              <li key={idx} className="flex gap-4 items-start group">
+                                <span className="text-foreground/30 font-serif text-sm mt-0.5 group-hover:translate-x-1 transition-transform duration-500">一</span>
+                                <span className="text-xs md:text-sm font-serif font-light text-foreground/60 group-hover:text-foreground transition-colors duration-500 leading-relaxed">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Technologies / Arsenal */}
+                        <div className="flex flex-col gap-4 w-full">
+                          <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Arsenal & Weapons //</span>
+                          {exp.techBooks ? (
+                            <div className="flex flex-col gap-4 w-full">
+                              <div className="grid grid-cols-5 gap-1 pb-2 border-b border-foreground/10 relative">
+                                {exp.techBooks.map((book) => {
+                                  const isSelected = activeBook === book.id;
+                                  return (
+                                    <button
+                                      key={book.id}
+                                      onClick={() => setActiveBook(book.id)}
+                                      className="flex flex-col items-center gap-1 py-1.5 transition-all duration-300 relative group pointer-events-auto cursor-pointer"
+                                    >
+                                      <span className={`font-serif text-xl transition-all duration-300 ${isSelected ? "text-[#8b0000] font-bold scale-110" : "text-foreground/30 group-hover:text-foreground/75"}`}>
+                                        {book.kanji}
+                                      </span>
+                                      <span className={`text-[7px] font-mono tracking-widest uppercase transition-colors duration-300 ${isSelected ? "text-[#8b0000] font-black" : "text-foreground/35"}`}>
+                                        {book.id}
+                                      </span>
+
+                                      {isSelected && (
+                                        <div
+                                          className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#8b0000] animate-in slide-in-from-bottom-1 fade-in duration-300"
+                                          style={{ filter: "url(#line-torn-filter)" }}
+                                        />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="min-h-[90px]">
+                                {exp.techBooks.map((book) => {
+                                  if (book.id !== activeBook) return null;
+                                  return (
+                                    <div
+                                      key={book.id}
+                                      className="flex flex-col gap-2.5 w-full animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both"
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="text-[10px] font-serif font-black text-foreground uppercase tracking-[0.2em]">{book.title}</span>
+                                        <span className="text-[8px] font-serif text-foreground/40 italic tracking-wider mt-0.5">{book.subtitle}</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {book.items.map((t) => (
+                                          <span key={t} className="px-2 py-1 border border-foreground/15 bg-background text-[8px] font-mono text-foreground/50 uppercase tracking-widest relative overflow-hidden group select-none">
+                                            <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
+                                            <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {exp.tech?.map(t => (
+                                <span key={t} className="px-3 py-1.5 border border-foreground/15 bg-background text-[8px] font-mono text-foreground/50 uppercase tracking-widest relative overflow-hidden group select-none">
+                                  <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
+                                  <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Central stream space spacer */}
+                    <div className="md:col-span-2 hidden md:block order-2" />
+
+                    {/* Period (Right side on desktop) */}
+                    <div className="md:col-span-5 flex flex-col items-start justify-start z-10 md:pl-16 pl-14 md:pl-0 pt-4 order-1 md:order-3">
+                      <span className="text-xl md:text-2xl font-serif font-light text-foreground/80 tracking-tight flex items-center gap-4">
+                        <span className="w-8 h-[2px] bg-foreground/30 hidden md:block" style={{ filter: "url(#line-torn-filter)" }} />
+                        {exp.period}
+                      </span>
+
+                      <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] overflow-hidden exp-reveal-top relative">
+                        <img
+                          src={exp.image}
+                          alt="Zen Decor"
+                          className="w-full h-full object-cover grayscale contrast-[1.2] pointer-events-auto"
+                          style={{
+                            maskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
+                            WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
+                            maskComposite: "intersect",
+                            WebkitMaskComposite: "source-in"
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
   );
 };
-
-

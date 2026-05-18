@@ -72,6 +72,10 @@ const PROJECTS: Project[] = [
 const ProjectCard = ({ project, index, isDark }: { project: Project, index: number, isDark: boolean }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const watermarkRef = useRef<HTMLSpanElement>(null);
+  const backingPaperRef = useRef<HTMLDivElement>(null);
+  const photoScreenRef = useRef<HTMLDivElement>(null);
   const isEven = index % 2 === 0;
 
   useGSAP(() => {
@@ -88,6 +92,68 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       }
     });
 
+    // 2. Majestic Staggered Scroll Parallax for the entire text block (slides opposite to frame)
+    if (textRef.current) {
+      gsap.fromTo(textRef.current,
+        { y: isEven ? 40 : -40 },
+        {
+          y: isEven ? -40 : 40,
+          ease: "none",
+          scrollTrigger: {
+            trigger: cardRef.current,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true
+          }
+        }
+      );
+    }
+
+    // 3. Kanji Watermark sliding slowly in the deep background
+    if (watermarkRef.current) {
+      gsap.to(watermarkRef.current, {
+        y: isEven ? -50 : 50,
+        ease: "none",
+        scrollTrigger: {
+          trigger: cardRef.current,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true
+        }
+      });
+    }
+
+    // 4. Backing Paper organic shift & rotation drift
+    if (backingPaperRef.current) {
+      gsap.to(backingPaperRef.current, {
+        y: isEven ? -22 : 22,
+        rotate: isEven ? -5.5 : -1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: cardRef.current,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true
+        }
+      });
+    }
+
+    // 5. Photo Screen organic counter-drift (creates majestic multi-layered separation)
+    if (photoScreenRef.current) {
+      gsap.to(photoScreenRef.current, {
+        y: isEven ? 16 : -16,
+        rotate: isEven ? 3 : -0.5,
+        ease: "none",
+        scrollTrigger: {
+          trigger: cardRef.current,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true
+        }
+      });
+    }
+
+    // 6. Staggered fade and slide reveal for elements
     gsap.from(`.project-reveal-${index}`, {
       y: 50,
       opacity: 0,
@@ -107,6 +173,7 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       className={`relative w-full flex flex-col ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 md:gap-16 lg:gap-24 mb-32 md:mb-48 items-center`}
     >
       <span
+        ref={watermarkRef}
         className={`absolute text-[22vw] lg:text-[26vw] font-serif font-black text-foreground select-none pointer-events-none leading-none z-0 opacity-[0.012] ${isEven ? 'right-[5%] lg:right-[8%]' : 'left-[5%] lg:left-[8%]'}`}
         style={{ filter: "url(#line-torn-filter)" }}
       >
@@ -119,35 +186,28 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
           <div className="absolute bottom-[-12px] right-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
           <div className="absolute bottom-[-12px] right-[-12px] w-[1px] h-[20px] bg-foreground/20 pointer-events-none" />
           <div
+            ref={backingPaperRef}
             className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[-2.5deg] transition-all duration-700 group-hover:rotate-[-4deg] group-hover:bg-foreground/[0.08] pointer-events-none"
             style={{ filter: "url(#line-torn-filter)" }}
           />
-          <div className="absolute inset-0 bg-background/20 backdrop-blur-sm rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.25)]">
+          <div ref={photoScreenRef} className="absolute inset-0 bg-background/20 backdrop-blur-sm rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.25)]">
             <div className="relative w-full h-full overflow-hidden bg-card">
               <div ref={imageRef} className="absolute inset-0 h-[130%] -top-[15%]">
                 <PortraitMorph
                   srcA={project.image}
                   srcB={project.image}
                   alt={project.title}
-                  className="w-full h-full object-cover object-center scale-105 group-hover:scale-100 transition-all duration-1000 grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100"
+                  className="w-full h-full object-cover object-center scale-105 group-hover:scale-100 transition-all duration-1000 grayscale contrast-[1.25] opacity-80 group-hover:opacity-100 group-hover:contrast-[1.38]"
                 />
               </div>
 
-              <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent opacity-60" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent opacity-60 pointer-events-none" />
 
-              <div
-                className="absolute inset-0 pointer-events-none opacity-[0.15] dark:opacity-[0.25] mix-blend-multiply dark:mix-blend-screen transition-opacity duration-500 group-hover:opacity-[0.08]"
-                style={{
-                  backgroundImage: "radial-gradient(currentColor 1.2px, transparent 1.2px)",
-                  backgroundSize: "3px 3px"
-                }}
-              />
             </div>
           </div>
           <div
             className="absolute inset-0 rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] pointer-events-none z-20"
           >
-            {/* Background frame mask */}
             <div
               className="absolute inset-[-12px] border-[24px] border-background"
               style={{ filter: "url(#project-torn-mask)" }}
@@ -160,25 +220,23 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
           </div>
         </div>
       </div>
-
-      {/* Right / Left Narrative Info Block */}
-      <div className="flex-1 flex flex-col justify-center z-10 w-full px-2 md:px-0">
-        <div className="flex items-center gap-4 mb-4 md:mb-5 mt-4 lg:mt-0 project-reveal-index project-reveal-tag">
+      <div ref={textRef} className="flex-1 flex flex-col justify-center z-10 w-full px-2 md:px-0">
+        <div className={`flex items-center gap-4 mb-4 md:mb-5 mt-4 lg:mt-0 project-reveal-${index} project-reveal-tag`}>
           <span className="text-[10px] font-mono text-foreground/50 uppercase tracking-widest font-bold">
             {project.blade} {'//'} {project.year}
           </span>
           <div className="h-[2px] w-8 md:w-12 bg-foreground/15" style={{ filter: "url(#line-torn-filter)" }} />
         </div>
 
-        <h3 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light text-foreground uppercase tracking-tight mb-4 md:mb-6 leading-tight project-reveal-index">
+        <h3 className={`text-3xl md:text-4xl lg:text-5xl font-serif font-light text-foreground uppercase tracking-tight mb-4 md:mb-6 leading-tight project-reveal-${index}`}>
           {project.title}
         </h3>
 
-        <p className="text-sm md:text-base font-light text-foreground/45 leading-relaxed mb-6 md:mb-8 max-w-xl project-reveal-index">
+        <p className={`text-sm md:text-base font-light text-foreground/45 leading-relaxed mb-6 md:mb-8 max-w-xl project-reveal-${index}`}>
           {project.description}
         </p>
 
-        <div className="flex flex-wrap gap-2 md:gap-3 mb-8 md:mb-10 project-reveal-index">
+        <div className={`flex flex-wrap gap-2 md:gap-3 mb-8 md:mb-10 project-reveal-${index}`}>
           {project.tags.map((tag: string) => (
             <span
               key={tag}
@@ -188,9 +246,7 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
             </span>
           ))}
         </div>
-
-        {/* Technical Metallurgy details resembling custom sword inscriptions */}
-        <div className="pt-6 border-t border-foreground/10 flex flex-col gap-2 relative project-reveal-index">
+        <div className={`pt-6 border-t border-foreground/10 flex flex-col gap-2 relative project-reveal-${index}`}>
           <div className="absolute top-0 left-0 w-full h-[1px] bg-foreground/10" style={{ filter: "url(#line-torn-filter)" }} />
           <span className="text-[9px] font-mono text-foreground/40 uppercase tracking-widest">METALLURGY: {project.protocol}</span>
           <span className="text-[9px] font-mono text-foreground/40 uppercase tracking-widest">VERIFICATION: FORGED_STABLE</span>
@@ -207,7 +263,6 @@ export const Artifacts = () => {
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

@@ -6,6 +6,7 @@ import gsap from '@/lib/gsap';
 import Image from 'next/image';
 import { useTheme } from "next-themes";
 import { ShaderFlow } from '@/components/shared/ShaderFlow';
+import { SumiLeaves } from '@/components/shared/SumiLeaves';
 
 export const Philosophy = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,7 +20,7 @@ export const Philosophy = () => {
   }, []);
 
   useGSAP(() => {
-    if (!containerRef.current || !quoteRef.current) return;
+    if (!mounted || !containerRef.current || !quoteRef.current) return;
 
     // Parallax for standard titles
     gsap.to(".phil-title-1", {
@@ -43,6 +44,29 @@ export const Philosophy = () => {
       }
     });
 
+    gsap.to(".phil-sumi-tree", {
+      y: 60,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true
+      }
+    });
+
+    // Parallax for meditating Musashi (slight upwards push to create layered 3D depth)
+    gsap.to(".phil-musashi", {
+      y: -80,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true
+      }
+    });
+
     gsap.from(".phil-reveal-top", {
       y: -20,
       opacity: 0,
@@ -55,22 +79,21 @@ export const Philosophy = () => {
       }
     });
 
-    // Clean Character Reveal (Ink spreading effect)
+    // Clean Character Reveal (Ink spreading effect triggered once on entering viewport)
     gsap.to(".phil-char", {
       scrollTrigger: {
         trigger: quoteRef.current,
-        start: "top 85%",
-        end: "bottom 55%",
-        scrub: 1.5,
+        start: "top 80%",
+        toggleActions: "play none none none"
       },
       opacity: 1,
       color: "var(--foreground)",
       filter: "blur(0px)",
-      stagger: 0.05,
-      ease: "power1.inOut"
+      stagger: 0.012, // Beautiful rapid ink spread character-by-character
+      duration: 0.8,
+      ease: "power2.out"
     });
-
-  }, { scope: containerRef });
+  }, { dependencies: [mounted], scope: containerRef });
 
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
@@ -109,7 +132,7 @@ export const Philosophy = () => {
           className="absolute inset-0 h-full w-full grayscale"
         />
       </div>
-      <div className="absolute left-[-20%] md:left-[-15%] top-0 w-96 md:w-[900px] h-[800px] md:h-[1000px] pointer-events-none z-0"
+      <div className="phil-sumi-tree absolute left-[-20%] md:left-[-15%] top-0 w-96 md:w-[900px] h-[800px] md:h-[1000px] pointer-events-none z-[1]"
         style={{ filter: isDark ? "invert(1) grayscale(1)" : "invert(0) grayscale(0)" }}>
         <Image
           src="/images/sumi-tree.png"
@@ -119,6 +142,20 @@ export const Philosophy = () => {
           priority
         />
       </div>
+
+      <div className="phil-musashi absolute left-[2%] md:left-[8%] bottom-[5%] md:bottom-[8%] w-48 md:w-[320px] h-96 md:h-[600px] pointer-events-none z-[1]"
+        style={{ filter: isDark ? "invert(1) grayscale(1)" : "invert(0) grayscale(0)" }}>
+        <Image
+          src="/images/musashi-samurai.png"
+          alt="Musashi Meditating"
+          fill
+          className="object-contain object-left-bottom"
+          priority
+        />
+      </div>
+
+      {/* Reusable Falling Sumi-e Leaves */}
+      <SumiLeaves containerRef={containerRef} count={15} />
 
       <div className="relative z-10 mx-auto max-w-[1400px] px-6 md:px-10 w-full">
         <div className="mb-20 md:mb-40 text-right flex flex-col items-end">

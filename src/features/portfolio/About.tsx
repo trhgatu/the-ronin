@@ -36,6 +36,13 @@ const fiveRings = [
 export const About = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme, theme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
@@ -77,6 +84,12 @@ export const About = () => {
             <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
           </filter>
+
+          {/* Hanko seal filter for slight ink bleed/distress */}
+          <filter id="hanko-torn-filter" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.16" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
         </defs>
       </svg>
 
@@ -96,7 +109,7 @@ export const About = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-20 items-start">
 
           {/* Left Column (5 Cols): The Massive, Jagged Character Art Panel */}
-          <div className="lg:col-span-5 flex justify-center lg:justify-start z-10 relative">
+          <div className="lg:col-span-5 flex flex-col items-center lg:items-start z-10 relative">
             <div className="relative w-full max-w-[340px] sm:max-w-[380px] md:max-w-[420px] aspect-[4/5] rotate-[-3deg] transition-all duration-700 hover:rotate-[-1.5deg] group avatar-frame">
 
               {/* Manga Drawing Sheet Border Guidelines (Pencil crop marks) */}
@@ -120,13 +133,6 @@ export const About = () => {
                     alt="trhgatu Portrait"
                     className="w-full h-full object-cover object-top scale-105 group-hover:scale-100 transition-transform duration-1000 grayscale contrast-125"
                   />
-                  <div
-                    className="absolute inset-0 pointer-events-none opacity-[0.18] dark:opacity-[0.28] mix-blend-multiply dark:mix-blend-screen transition-opacity duration-500 group-hover:opacity-[0.12] dark:group-hover:opacity-[0.18]"
-                    style={{
-                      backgroundImage: "radial-gradient(currentColor 1.2px, transparent 1.2px)",
-                      backgroundSize: "3px 3px"
-                    }}
-                  />
                 </div>
               </div>
 
@@ -145,9 +151,45 @@ export const About = () => {
                   className="absolute inset-[10px] border border-foreground/25"
                   style={{ filter: "url(#about-torn-filter)" }}
                 />
-
-                {/* Takehiko Inoue-style rough draft guide lines */}
                 <div className="absolute inset-[6px] border border-foreground/[0.04] rotate-[1.5deg]" />
+              </div>
+            </div>
+
+            {/* Alchemical Stamp & Metadata Panel (Under the avatar) */}
+            <div className="mt-12 w-full max-w-[340px] sm:max-w-[380px] md:max-w-[420px] flex items-center justify-between border-t border-foreground/10 pt-8 pl-4 pr-2 font-mono text-[10px] md:text-[11px] tracking-widest text-foreground/50 leading-relaxed relative">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-[9px] text-foreground/30 block uppercase tracking-[0.2em] mb-1">STANCE</span>
+                  <span className="text-foreground/80 font-bold">TWO SWORDS (CODE & ART)</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-foreground/30 block uppercase tracking-[0.2em] mb-1">STRATEGY</span>
+                  <span className="text-foreground/80 font-bold">NITEN ICHI-RYŪ CORE</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-foreground/30 block uppercase tracking-[0.2em] mb-1">ORIGIN</span>
+                  <span className="text-foreground/80 font-bold">10.8231° N, 106.6297° E</span>
+                </div>
+              </div>
+
+              {/* Traditional Red Ink Hanko Seal (印) */}
+              <div className="relative group/seal cursor-pointer select-none">
+                {/* Outer glowing ink distress ring */}
+                <div className="absolute inset-[-4px] border border-red-600/30 rounded-sm scale-95 group-hover/seal:scale-105 transition-all duration-700 opacity-60 pointer-events-none" style={{ filter: "url(#hanko-torn-filter)" }} />
+                
+                {/* Main Stamp */}
+                <div
+                  className="w-14 h-14 border-2 border-red-600 flex items-center justify-center font-serif text-[20px] font-black text-red-600 tracking-tighter transition-all duration-500 group-hover/seal:rotate-[6deg] group-hover/seal:scale-105"
+                  style={{
+                    filter: "url(#hanko-torn-filter)",
+                    backgroundColor: "rgba(220, 38, 38, 0.03)",
+                    boxShadow: "inset 0 0 10px rgba(220, 38, 38, 0.1)"
+                  }}
+                >
+                  <span className="rotate-[-3deg] select-none uppercase font-bold text-center leading-none text-red-600">
+                    英<br/>秀
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -160,12 +202,19 @@ export const About = () => {
                 <div className="h-[1px] flex-1 bg-foreground/10" style={{ filter: "url(#line-torn-filter)" }} />
               </div>
 
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-serif font-light text-foreground uppercase tracking-tight leading-[0.9]">
-                THE WAY OF <span className="font-caveat text-3xl sm:text-4xl md:text-5xl text-foreground/60 tracking-normal lowercase block sm:inline">the sword & code</span>
+              <h2 className="text-5xl sm:text-6xl md:text-7xl font-serif font-light text-foreground uppercase tracking-tight leading-[0.9]">
+                TRAN HOANG <br />
+                <span
+                  className="text-transparent"
+                  style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}
+                >
+                  ANH TU.
+                </span>
               </h2>
+              <p className="font-caveat text-2xl md:text-3xl text-foreground/60 tracking-normal lowercase">
+                the ronin architect — the way of the sword & code
+              </p>
             </div>
-
-            {/* Narrative text */}
             <div className="space-y-6 text-foreground/90">
               <p className="text-xl md:text-2xl font-light leading-snug tracking-tight">
                 I master the two swords of digital craftsmanship: wielding <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">robust, battle-tested engineering</span> and <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">razor-sharp Zen aesthetics</span> in perfect, fluid unison.
@@ -176,7 +225,6 @@ export const About = () => {
               </p>
             </div>
 
-            {/* The Five Rings of Mastery (Go Rin No Sho) */}
             <div className="space-y-6 pt-4">
               <div className="flex items-center gap-4">
                 <span className="font-mono text-[9px] tracking-widest text-foreground/50 uppercase">Go Rin No Sho — The Five Rings of Software Mastery</span>
