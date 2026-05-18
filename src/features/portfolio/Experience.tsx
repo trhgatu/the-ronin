@@ -4,33 +4,70 @@ import { useRef, useState, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
 import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from 'framer-motion';
 
 const EXPERIENCES = [
   {
     company: "8eyond Infinite",
-    role: "Founder",
+    role: "Founder | The Alchemist",
     period: "2025 — PRESENT",
-    description: "Leading the architectural design of high-throughput real-time processing systems. Implementing Domain-Driven Design (DDD) and microservices orchestration.",
+    description: "Forging 'Vertical Infinity' through the alchemy of code. Establishing architectural paradigms that defy obsolescence, transmuting raw logic into immortal digital legacies.",
     achievements: [
-      "Optimized data ingestion pipeline, reducing latency by 45%",
-      "Engineered a scalable multi-tenant authentication protocol",
-      "Mentored junior engineers on high-performance Go practices"
+      "Architecting production-grade, multi-stack core ecosystems (Go, NestJS, Next.js, Angular)",
+      "Distilling system chaos into elegant Clean Architecture, DDD, and Event-Driven cosmos",
+      "Engineering advanced starter templates and CLI tools to transcend conventional development limits"
     ],
-    tech: ["Golang", "Kubernetes", "Redis", "PostgreSQL"],
-    kanji: "戦"
+    techBooks: [
+      {
+        id: "earth",
+        kanji: "地",
+        title: "The Book of Earth",
+        subtitle: "Foundations & Core Platforms",
+        items: ["Go", "TypeScript", "JavaScript", "NestJS", "Next.js", "Angular", "React Native", "Turborepo"]
+      },
+      {
+        id: "water",
+        kanji: "水",
+        title: "The Book of Water",
+        subtitle: "Fluid Dynamics & Visual Mastery",
+        items: ["Three.js", "OGL", "Canvas", "8eyond UI"]
+      },
+      {
+        id: "fire",
+        kanji: "火",
+        title: "The Book of Fire",
+        subtitle: "Scaling, Monitoring & Infra Forge",
+        items: ["Docker", "K8s", "Grafana", "Prometheus"]
+      },
+      {
+        id: "wind",
+        kanji: "風",
+        title: "The Book of Wind",
+        subtitle: "Empire Styling & Community Starters",
+        items: ["Advanced Starters", "8eyond CLI"]
+      },
+      {
+        id: "void",
+        kanji: "空",
+        title: "The Book of Void",
+        subtitle: "Obsolescence-Defying Paradigms",
+        items: ["Clean Architecture", "Domain-Driven Design", "Event-Driven Architecture"]
+      }
+    ],
+    kanji: "錬" // Ren - Alchemy / Forging
   },
   {
-    company: "Neural Dynamics",
-    role: "Fullstack Engineer",
-    period: "2020 — 2022",
-    description: "Developed AI-integrated dashboard systems with real-time data visualization. Focused on seamless bridge between complex backend logic and fluid frontend UX.",
+    company: "CyberSkill",
+    role: "Fullstack Developer (formerly Frontend Intern)",
+    period: "2024 — 2025",
+    description: "Began as a Frontend Developer Intern, rapidly advancing to a Fullstack Developer. Engineered high-impact client interfaces and optimized robust data architectures across multiple active production projects.",
     achievements: [
-      "Built a custom WebGL-based visualization engine for big data",
-      "Streamlined CI/CD workflows, improving deployment frequency by 3x",
-      "Integrated OpenAI models for predictive user analytics"
+      "Engineered 'Colvemat' hybrid mobile platform utilizing Ionic and Angular for seamless cross-platform performance",
+      "Architected the backend for 'NextPro' e-commerce solution, leveraging Django to drive flexible and scalable product structures",
+      "Built 'DPD' (Day Past Due) financial tracking backend using NestJS and GraphQL for rapid, highly-efficient data querying"
     ],
-    tech: ["Next.js", "Node.js", "Python", "Docker"],
-    kanji: "技"
+    tech: ["Ionic", "Angular", "NestJS", "GraphQL", "Django"],
+    kanji: "昇" // Shou - Rise / Ascend / Promotion
   },
   {
     company: "Cyber Core Guild",
@@ -51,6 +88,7 @@ export const Experience = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [activeBook, setActiveBook] = useState('earth');
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -213,26 +251,97 @@ export const Experience = () => {
                       ))}
                     </ul>
                   </div>
-
-                  {/* Arsenal (Tech Stack) */}
-                  <div className="flex flex-col gap-6 lg:col-span-5">
+                  <div className="flex flex-col gap-6 lg:col-span-5 w-full">
                     <span className="text-[10px] font-mono text-foreground/50 uppercase tracking-[0.4em] mb-2 font-bold">Arsenal & Weapons //</span>
-                    <div className="flex flex-wrap gap-3">
-                      {exp.tech.map(t => (
-                        <span key={t} className="px-4 py-2 border border-foreground/15 bg-background text-[10px] font-mono text-foreground/60 uppercase tracking-widest relative overflow-hidden group">
-                          {/* Ink hover effect inside tag */}
-                          <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
-                          <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
-                        </span>
-                      ))}
-                    </div>
+                    {exp.techBooks ? (
+                      <div className="flex flex-col gap-6 w-full">
+                        <div className="grid grid-cols-5 gap-1 pb-3 relative">
+                          {exp.techBooks.map((book) => {
+                            const isSelected = activeBook === book.id;
+                            return (
+                              <button
+                                key={book.id}
+                                onClick={() => setActiveBook(book.id)}
+                                className="flex flex-col items-center gap-1 py-2 transition-all duration-300 relative group pointer-events-auto cursor-pointer"
+                              >
+                                <span
+                                  className={`
+                                    font-serif text-2xl transition-all duration-300
+                                    ${isSelected
+                                      ? "text-[#8b0000] font-bold scale-110"
+                                      : "text-foreground/30 group-hover:text-foreground/75 group-hover:scale-105"
+                                    }
+                                  `}
+                                >
+                                  {book.kanji}
+                                </span>
+                                <span
+                                  className={`
+                                    text-[7.5px] font-mono tracking-widest uppercase transition-colors duration-300
+                                    ${isSelected
+                                      ? "text-[#8b0000] font-black"
+                                      : "text-foreground/35 group-hover:text-foreground/60"
+                                    }
+                                  `}
+                                >
+                                  {book.id}
+                                </span>
+
+                                {isSelected && (
+                                  <motion.div
+                                    layoutId="activeBookUnderline"
+                                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#8b0000]"
+                                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                    style={{ filter: "url(#line-torn-filter)" }}
+                                  />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="min-h-[100px]">
+                          <AnimatePresence mode="wait">
+                            {exp.techBooks.map((book) => {
+                              if (book.id !== activeBook) return null;
+                              return (
+                                <motion.div
+                                  key={book.id}
+                                  initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
+                                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                  exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+                                  transition={{ duration: 0.35, ease: "easeOut" }}
+                                  className="flex flex-col gap-3 w-full"
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="text-[11px] font-serif font-black text-foreground uppercase tracking-[0.2em]">{book.title}</span>
+                                    <span className="text-[9px] font-serif text-foreground/40 italic tracking-wider mt-0.5">{book.subtitle}</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {book.items.map((t) => (
+                                      <span key={t} className="px-3 py-1.5 border border-foreground/15 bg-background text-[9px] font-mono text-foreground/60 uppercase tracking-widest relative overflow-hidden group select-none">
+                                        <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
+                                        <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-3">
+                        {exp.tech?.map(t => (
+                          <span key={t} className="px-4 py-2 border border-foreground/15 bg-background text-[10px] font-mono text-foreground/60 uppercase tracking-widest relative overflow-hidden group">
+                            <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
+                            <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Torn Divider for next entry */}
-                {i < EXPERIENCES.length - 1 && (
-                  <div className="w-full h-[2px] bg-foreground/10 mt-24 md:mt-32" style={{ filter: "url(#line-torn-filter)" }} />
-                )}
               </div>
             </div>
           ))}
