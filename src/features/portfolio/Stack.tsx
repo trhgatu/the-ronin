@@ -60,13 +60,10 @@ const BOOKS = [
 const TechCard = ({ name }: { name: string }) => {
   return (
     <div className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] relative overflow-hidden border border-foreground/20 bg-background/50 rounded-none p-4 group transition-all duration-700 flex items-center justify-between cursor-none">
-      {/* Torn Edge Washi Paper Filter applied to border */}
       <div
         className="absolute inset-0 border border-foreground/10 z-10 pointer-events-none group-hover:border-foreground/30 transition-colors duration-700"
         style={{ filter: "url(#line-torn-filter)" }}
       />
-
-      {/* Ink brush sweep on hover */}
       <div className="absolute top-0 left-0 w-0 h-full bg-foreground/[0.04] group-hover:w-full transition-all duration-1000 ease-out z-0" />
 
       <div className="relative z-10 flex items-center gap-4">
@@ -275,7 +272,7 @@ export const Stack = () => {
 
                 <button
                   onClick={() => setActiveBook(book.id)}
-                  className="w-full text-left flex justify-between items-center py-4 relative z-10 cursor-none pointer-events-auto group/btn"
+                  className="w-full text-left flex items-center py-4 relative z-10 cursor-none pointer-events-auto group/btn"
                 >
                   <div className="flex items-center gap-6">
                     {/* Kanji element with scale highlight on select (strictly monochromatic) */}
@@ -290,10 +287,6 @@ export const Stack = () => {
                         {book.subtitle}
                       </span>
                     </div>
-                  </div>
-                  {/* Minimalist interactive toggle indicator */}
-                  <div className={`w-8 h-8 rounded-none border flex items-center justify-center transition-all duration-500 ${isOpen ? "rotate-45 border-foreground text-foreground" : "border-foreground/15 group-hover/btn:border-foreground/35 text-foreground/40"}`}>
-                    <span className="text-xs font-light font-mono">+</span>
                   </div>
                 </button>
 
