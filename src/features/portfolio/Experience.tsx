@@ -70,17 +70,17 @@ const EXPERIENCES = [
     kanji: "昇" // Shou - Rise / Ascend / Promotion
   },
   {
-    company: "Cyber Core Guild",
-    role: "Software Developer",
-    period: "2018 — 2020",
-    description: "Focused on core systems development and database optimization for enterprise-scale ERP solutions.",
+    company: "HUIT (HCMC University of Industry and Trade)",
+    role: "Information Systems Student",
+    period: "2020 — 2024",
+    description: "Studied Information Technology with a specialization in Information Systems. Developed foundational software engineering instincts, learning to map complex real-world business flows into clean technical blueprints.",
     achievements: [
-      "Refactored legacy monolithic systems into modular services",
-      "Reduced SQL query execution time by 60% through advanced indexing",
-      "Participated in the design of internal API documentation standards"
+      "Mastered core object-oriented software engineering foundations across C#, Java, and Web standard (HTML/CSS/JS) paradigms",
+      "Designed advanced data architectures utilizing relational databases (Microsoft SQL) and modern NoSQL models (MongoDB, Neo4j Graph DB)",
+      "Acquired business analysis (BA) mastery, mapping enterprise workflows and system flows into comprehensive UML schemas"
     ],
-    tech: ["Java", "Spring Boot", "MySQL", "AWS"],
-    kanji: "智"
+    tech: ["C#", "Java", "MSSQL", "MongoDB", "Neo4j", "System Analysis"],
+    kanji: "基" // Ki - Foundation / Base
   }
 ];
 
