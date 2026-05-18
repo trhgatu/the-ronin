@@ -54,7 +54,7 @@ const EXPERIENCES = [
         items: ["Clean Architecture", "Domain-Driven Design", "Event-Driven Architecture"]
       }
     ],
-    kanji: "錬" // Ren - Alchemy / Forging
+    kanji: "錬"
   },
   {
     company: "CyberSkill",
@@ -67,7 +67,7 @@ const EXPERIENCES = [
       "Built 'DPD' (Day Past Due) financial tracking backend using NestJS and GraphQL for rapid, highly-efficient data querying"
     ],
     tech: ["Ionic", "Angular", "NestJS", "GraphQL", "Django"],
-    kanji: "昇" // Shou - Rise / Ascend / Promotion
+    kanji: "昇"
   },
   {
     company: "HUIT (HCMC University of Industry and Trade)",

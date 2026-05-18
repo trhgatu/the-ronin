@@ -77,7 +77,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
   useGSAP(() => {
     if (!imageRef.current) return;
 
-    // Smooth Zen diagonal parallax image slide
     gsap.to(imageRef.current, {
       y: "12%",
       ease: "none",
@@ -89,7 +88,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       }
     });
 
-    // Elegant text slide up reveal
     gsap.from(`.project-reveal-${index}`, {
       y: 50,
       opacity: 0,
@@ -108,31 +106,22 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       ref={cardRef}
       className={`relative w-full flex flex-col ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 md:gap-16 lg:gap-24 mb-32 md:mb-48 items-center`}
     >
-      {/* Traditional Daiji Japanese Numeral Watermark behind the content */}
       <span
         className={`absolute text-[22vw] lg:text-[26vw] font-serif font-black text-foreground select-none pointer-events-none leading-none z-0 opacity-[0.012] ${isEven ? 'right-[5%] lg:right-[8%]' : 'left-[5%] lg:left-[8%]'}`}
         style={{ filter: "url(#line-torn-filter)" }}
       >
         {project.daiji}
       </span>
-
-      {/* Left / Right Manga Panel Image Frame */}
       <div className="flex-1 group cursor-none w-full z-10 relative flex justify-center items-center">
         <div className="relative w-full max-w-[480px] aspect-[16/10] rotate-[1.5deg] group-hover:rotate-[0.5deg] transition-all duration-700 avatar-frame">
-
-          {/* Manga Drawing Sheet Border Guidelines (Pencil crop marks) */}
           <div className="absolute top-[-12px] left-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
           <div className="absolute top-[-12px] left-[-12px] w-[1px] h-[20px] bg-foreground/20 pointer-events-none" />
           <div className="absolute bottom-[-12px] right-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
           <div className="absolute bottom-[-12px] right-[-12px] w-[1px] h-[20px] bg-foreground/20 pointer-events-none" />
-
-          {/* Layer 1: Background backing paper (Double torn) */}
           <div
             className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[-2.5deg] transition-all duration-700 group-hover:rotate-[-4deg] group-hover:bg-foreground/[0.08] pointer-events-none"
             style={{ filter: "url(#line-torn-filter)" }}
           />
-
-          {/* Layer 2: Main image screen */}
           <div className="absolute inset-0 bg-background/20 backdrop-blur-sm rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.25)]">
             <div className="relative w-full h-full overflow-hidden bg-card">
               <div ref={imageRef} className="absolute inset-0 h-[130%] -top-[15%]">
@@ -155,8 +144,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
               />
             </div>
           </div>
-
-          {/* Layer 3: Torn Border Overlay (Physical washi edges) */}
           <div
             className="absolute inset-0 rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] pointer-events-none z-20"
           >
@@ -165,14 +152,10 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
               className="absolute inset-[-12px] border-[24px] border-background"
               style={{ filter: "url(#project-torn-mask)" }}
             />
-
-            {/* Drawn inner torn border */}
             <div
               className="absolute inset-[10px] border border-foreground/20"
               style={{ filter: "url(#project-torn-mask)" }}
             />
-
-            {/* Takehiko Inoue-style rough draft guide lines */}
             <div className="absolute inset-[6px] border border-foreground/[0.03] rotate-[-1deg]" />
           </div>
         </div>
@@ -200,7 +183,6 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
             <span
               key={tag}
               className="px-2.5 py-1 border border-foreground/15 text-[9px] font-mono text-foreground/50 uppercase tracking-widest bg-foreground/[0.02]"
-              style={{ filter: "url(#line-torn-filter)" }}
             >
               {tag}
             </span>
@@ -232,7 +214,6 @@ export const Artifacts = () => {
   useGSAP(() => {
     if (!sectionRef.current) return;
 
-    // Elegant header reveal animation
     gsap.from(".artifacts-reveal-top", {
       y: -20,
       opacity: 0,
@@ -245,7 +226,6 @@ export const Artifacts = () => {
       }
     });
 
-    // Title Parallax sliding beautifully on scroll
     gsap.to(".artifacts-title-1", {
       x: -40,
       scrollTrigger: {
@@ -266,22 +246,19 @@ export const Artifacts = () => {
     });
   }, { scope: sectionRef });
 
-  
+
   return (
     <section
       ref={sectionRef}
       id="artifacts"
       className="relative py-28 md:py-44 bg-background overflow-hidden select-none"
     >
-      {/* SVG filter definition for horizontal line tearing & project card torn mask */}
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
         <defs>
           <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">
             <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
           </filter>
-
-          {/* Majestic project card torn mask filter */}
           <filter id="project-torn-mask" x="-10%" y="-10%" width="120%" height="120%">
             <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="4" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G" />
@@ -311,17 +288,8 @@ export const Artifacts = () => {
             <p className="text-xl md:text-3xl font-light text-foreground/45 max-w-2xl leading-tight tracking-tight">
               A grand exhibition of <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">architectural manifestations</span>. Each creation is a forged blade, balanced between high-precision logic and silent aesthetics.
             </p>
-            <div className="text-[9px] font-mono text-foreground/35 max-w-[220px] leading-relaxed opacity-60 uppercase border-l border-foreground/10 pl-6 hidden sm:block">
-              Volume: 03_THE_CREATIONS //
-              Status: SECURE //
-              Metal: STABLE_V2
-              <br /><br />
-              Swordsmith: trhgatu
-            </div>
           </div>
         </div>
-
-        {/* Project Card vertical stack */}
         <div className="flex flex-col">
           {PROJECTS.map((project, i) => (
             <ProjectCard key={project.id} project={project} index={i} isDark={isDark} />
