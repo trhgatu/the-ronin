@@ -137,12 +137,11 @@ export const Stack = () => {
     setMounted(true);
   }, []);
 
-  // Sync GSAP measurements after height animations complete to prevent scroll jitter
   useEffect(() => {
     if (mounted) {
       const timer = setTimeout(() => {
         ScrollTrigger.refresh();
-      }, 650); // Matches the Framer Motion transition duration perfectly
+      }, 650);
       return () => clearTimeout(timer);
     }
   }, [activeBook, mounted]);
@@ -183,21 +182,7 @@ export const Stack = () => {
       }
     });
 
-    // Discrete Scroll-driven Triggers: perfectly stable, immune to layout shift feedback loops
-    const rows = gsap.utils.toArray<HTMLElement>(".book-row-trigger");
-    rows.forEach((row) => {
-      const bookId = row.id.replace("book-row-", "");
-      ScrollTrigger.create({
-        trigger: row,
-        start: "top 55%",
-        end: "bottom 55%",
-        onToggle: (self) => {
-          if (self.isActive) {
-            setActiveBook(bookId);
-          }
-        }
-      });
-    });
+
 
   }, { scope: containerRef, dependencies: [mounted] });
 
@@ -219,7 +204,6 @@ export const Stack = () => {
       </svg>
 
       <div className="relative z-20">
-        {/* Header block: EXACTLY KEEPING PREVIOUS STYLING & SAMURAI IMAGE */}
         <div className="mx-auto max-w-[1400px] px-6 md:px-10 mb-20 md:mb-32 text-left relative">
           <div
             className="hidden md:block absolute right-[2%] lg:right-[5%] top-[-20%] lg:top-[-30%] w-[350px] lg:w-[500px] h-[500px] lg:h-[700px] opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none stack-reveal-top z-0"
@@ -256,8 +240,6 @@ export const Stack = () => {
             </p>
           </div>
         </div>
-
-        {/* Custom interactive chapters accordion, scrolling down auto-expands them in sequence */}
         <div className="mx-auto max-w-[1400px] px-6 md:px-10 space-y-6 relative z-10">
           {BOOKS.map((book) => {
             const isOpen = activeBook === book.id;
@@ -267,15 +249,12 @@ export const Stack = () => {
                 id={`book-row-${book.id}`}
                 className="border-b border-foreground/10 pb-6 relative group overflow-hidden book-row-trigger"
               >
-                {/* Subtle hover background highlight */}
                 <div className="absolute inset-0 bg-foreground/[0.005] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700 ease-out z-0 pointer-events-none" />
-
                 <button
-                  onClick={() => setActiveBook(book.id)}
-                  className="w-full text-left flex items-center py-4 relative z-10 cursor-none pointer-events-auto group/btn"
+                  onClick={() => setActiveBook(isOpen ? "" : book.id)}
+                  className="w-full text-left flex items-center py-4 relative z-10 cursor-pointer pointer-events-auto group/btn"
                 >
                   <div className="flex items-center gap-6">
-                    {/* Kanji element with scale highlight on select (strictly monochromatic) */}
                     <span className={`font-serif text-3xl md:text-4xl lg:text-5xl transition-all duration-500 ${isOpen ? "text-foreground scale-110 font-bold" : "text-foreground/25 group-hover/btn:text-foreground/60"}`}>
                       {book.kanji}
                     </span>
@@ -290,7 +269,6 @@ export const Stack = () => {
                   </div>
                 </button>
 
-                {/* Accordion content with butter-smooth easeOutQuart transition */}
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.div
@@ -302,7 +280,6 @@ export const Stack = () => {
                     >
                       <div className="pt-4 pb-2 space-y-6">
                         <p className="text-sm md:text-base font-serif font-light text-foreground/75 leading-relaxed pl-6 relative">
-                          {/* Hand-torn brushed left accent line */}
                           <span className="absolute left-0 top-1 bottom-1 w-[2px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
                           {book.description}
                         </p>
