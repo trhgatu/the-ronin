@@ -6,6 +6,7 @@ import gsap from '@/lib/gsap';
 import Image from 'next/image';
 import { useTheme } from "next-themes";
 import { ArrowUpRight } from "lucide-react";
+import { soundManager } from "@/lib/sound";
 
 const CONTACT_LINKS = [
   {
@@ -106,7 +107,6 @@ export const Contact = () => {
             <span className="font-mono text-[9px] tracking-[0.5em] text-foreground/50 uppercase font-bold">
               [ CHAPTER VI : THE SUMMONS ]
             </span>
-            <div className="h-[1px] flex-1 bg-foreground/10" style={{ filter: "url(#line-torn-filter-contact)" }} />
           </div>
         </div>
 
@@ -115,14 +115,7 @@ export const Contact = () => {
 
           {/* Left Column (5 Cols): The Real Manga Panel with going.jpg */}
           <div className="lg:col-span-5 flex flex-col items-center z-10 relative contact-reveal w-full">
-            <div className="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[100/160] rotate-[-3deg] transition-all duration-700 hover:rotate-[-0.5deg] group avatar-frame shadow-[0_16px_48px_rgba(0,0,0,0.3)] border border-foreground/10 p-2.5 bg-background">
-
-              {/* Manga Drawing Sheet Border Guidelines (Pencil crop marks) */}
-              <div className="absolute top-[-15px] left-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
-              <div className="absolute top-[-15px] left-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
-              <div className="absolute bottom-[-15px] right-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
-              <div className="absolute bottom-[-15px] right-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
-
+            <div className="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[100/160] rotate-[-3deg] transition-all duration-700 hover:rotate-[-0.5deg] group avatar-frame shadow-[0_16px_48px_rgba(0,0,0,0.3)] border border-foreground/10 p-2.5 bg-foreground">
               {/* Layer 1: Background backing paper (Double torn) */}
               <div
                 className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[4deg] transition-all duration-700 group-hover:rotate-[5deg] group-hover:bg-foreground/[0.08] pointer-events-none"
@@ -130,7 +123,7 @@ export const Contact = () => {
               />
 
               {/* Layer 2: Main photo screen with going.jpg / smile-more.jpg morph swap */}
-              <div className="absolute inset-0 bg-background rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden">
+              <div className="absolute inset-0 bg-foreground rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden">
                 <div
                   className="relative w-full h-full overflow-hidden bg-card grayscale transition-all duration-1000"
                   style={{ filter: isDark ? "invert(1) contrast(1.15)" : "invert(0) contrast(1.05)" }}
@@ -140,9 +133,9 @@ export const Contact = () => {
                     src="/images/going.jpg"
                     alt="Miyamoto Musashi - I'm going to meet someone very strong."
                     fill
-                    className={`object-cover object-center transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                      isHovered ? "opacity-0 scale-97" : "opacity-100 scale-100"
-                    }`}
+                    sizes="(max-width: 640px) 340px, 380px"
+                    className={`object-cover object-center transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isHovered ? "opacity-0 scale-97" : "opacity-100 scale-100"
+                      }`}
                     priority
                   />
 
@@ -151,9 +144,9 @@ export const Contact = () => {
                     src="/images/smile-more.jpg"
                     alt="Miyamoto Musashi - Smile more. Well then, see ya later..."
                     fill
-                    className={`object-cover object-center absolute inset-0 transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                      isHovered ? "opacity-100 scale-100" : "opacity-0 scale-103"
-                    }`}
+                    sizes="(max-width: 640px) 340px, 380px"
+                    className={`object-cover object-center absolute inset-0 transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isHovered ? "opacity-100 scale-100" : "opacity-0 scale-103"
+                      }`}
                     priority
                   />
                 </div>
@@ -165,7 +158,7 @@ export const Contact = () => {
               >
                 {/* Background frame mask */}
                 <div
-                  className="absolute inset-[-12px] border-[24px] border-background"
+                  className="absolute inset-[-12px] border-[24px] border-foreground"
                   style={{ filter: "url(#ink-bleed-filter-contact)" }}
                 />
 
@@ -194,8 +187,6 @@ export const Contact = () => {
                 A blade kept in the scabbard rusts. A vision unbuilt fades.
               </p>
             </div>
-
-            {/* The Architect's Contact Ledger list */}
             <div className="w-full border-t border-foreground/15 flex flex-col contact-reveal">
               {CONTACT_LINKS.map((link) => (
                 <a
@@ -248,7 +239,10 @@ export const Contact = () => {
               </div>
 
               {/* The Signature Hanko Seal - Identical to About section for perfect branding */}
-              <div className="relative group/seal cursor-pointer select-none">
+              <div
+                className="relative group/seal cursor-pointer select-none"
+                onMouseEnter={() => soundManager?.playStampThud()}
+              >
                 {/* Stamp Outer glow ring */}
                 <div className="absolute inset-[-4px] border border-red-600/30 rounded-sm scale-95 group-hover/seal:scale-105 transition-all duration-700 opacity-60 pointer-events-none" style={{ filter: "url(#hanko-torn-filter-contact)" }} />
 

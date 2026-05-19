@@ -46,7 +46,7 @@ export default function Home() {
   }, { scope: mainRef, dependencies: [] });
 
   return (
-    <main ref={mainRef} className="flex min-h-screen flex-col">
+    <main ref={mainRef} className="relative flex min-h-screen flex-col">
       <Hero />
       <About />
       <Artifacts />

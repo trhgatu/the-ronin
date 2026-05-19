@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { PortraitMorph } from "@/components/shared/PortraitMorph";
+import { soundManager } from "@/lib/sound";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,6 +21,7 @@ interface Project {
   tags: string[];
   protocol: string;
   year: string;
+  note: string;
 }
 
 const PROJECTS: Project[] = [
@@ -32,7 +34,8 @@ const PROJECTS: Project[] = [
     image: '/projects/ai-platform.png',
     tags: ['Rust', 'Wasm', 'K8s'],
     protocol: 'DISTRIBUTED_CORE_V1',
-    year: '2024'
+    year: '2024',
+    note: 'forged in the cold digital winter. its heavy edge slices through petabytes of raw event streams without losing its sharp focus...'
   },
   {
     id: '02',
@@ -43,7 +46,8 @@ const PROJECTS: Project[] = [
     image: '/projects/ecommerce.png',
     tags: ['Next.js', 'GSAP', 'Three.js'],
     protocol: 'VISUAL_SYSTEM_ALPHA',
-    year: '2023'
+    year: '2023',
+    note: 'perfectly balanced for instant draw. a razor-thin blade designed for absolute layout precision and frictionless micro-interactions...'
   },
   {
     id: '03',
@@ -54,7 +58,8 @@ const PROJECTS: Project[] = [
     image: '/projects/crypto.png',
     tags: ['React', 'Fiber', 'Python'],
     protocol: 'SENTIENT_LOGIC_HUB',
-    year: '2024'
+    year: '2024',
+    note: 'a lightweight, swift companion blade. dynamically tracks moving flows, casting immediate light on hidden patterns of state...'
   },
   {
     id: '04',
@@ -65,7 +70,8 @@ const PROJECTS: Project[] = [
     image: '/projects/ai-platform.png',
     tags: ['Go', 'Solidity', 'Wasm'],
     protocol: 'CRYPT_LAYER_OMEGA',
-    year: '2022'
+    year: '2022',
+    note: 'forged to be concealed, waiting in the dark. a short blade that remains completely unbreakable under extreme cryptographic pressure...'
   },
 ];
 
@@ -174,8 +180,11 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
       >
         {project.daiji}
       </span>
-      <div className="flex-1 group cursor-none w-full z-10 relative flex justify-center items-center">
-        <div className="relative w-full max-w-[480px] aspect-[16/10] rotate-[1.5deg] group-hover:rotate-[0.5deg] transition-all duration-700 avatar-frame">
+      <div
+        className="flex-1 group cursor-none w-full z-10 relative flex justify-center items-center"
+        onMouseEnter={() => soundManager?.playSwordWhoosh()}
+      >
+        <div className="relative w-full max-w-[480px] aspect-[16/10] rotate-[1.5deg] group-hover:rotate-[0.5deg] transition-all duration-700 avatar-frame border border-foreground/10 p-2.5 bg-foreground shadow-[0_16px_48px_rgba(0,0,0,0.3)]">
           <div className="absolute top-[-12px] left-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
           <div className="absolute top-[-12px] left-[-12px] w-[1px] h-[20px] bg-foreground/20 pointer-events-none" />
           <div className="absolute bottom-[-12px] right-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
@@ -185,7 +194,7 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
             className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[-2.5deg] transition-all duration-700 group-hover:rotate-[-4deg] group-hover:bg-foreground/[0.08] pointer-events-none"
             style={{ filter: "url(#line-torn-filter)" }}
           />
-          <div ref={photoScreenRef} className="absolute inset-0 bg-background/20 backdrop-blur-sm rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.25)] group-hover:shadow-[0_0_40px_rgba(239,68,68,0.25),0_12px_32px_rgba(0,0,0,0.25)] border border-transparent group-hover:border-orange-500/20">
+          <div ref={photoScreenRef} className="absolute inset-0 bg-foreground rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.25)] group-hover:shadow-[0_0_40px_rgba(239,68,68,0.25),0_12px_32px_rgba(0,0,0,0.25)] border border-transparent group-hover:border-orange-500/20">
             <div className="relative w-full h-full overflow-hidden bg-card">
               <div ref={imageRef} className="absolute -left-[5%] -right-[5%] w-[110%] h-[130%] -top-[15%]">
                 <PortraitMorph
@@ -206,7 +215,7 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
             className="absolute inset-0 rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] pointer-events-none z-20"
           >
             <div
-              className="absolute inset-[-20px] border-[44px] border-background"
+              className="absolute inset-[-20px] border-[44px] border-foreground"
               style={{ filter: "url(#project-torn-mask)" }}
             />
             <div
@@ -245,8 +254,9 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
         </div>
         <div className={`pt-6 border-t border-foreground/10 flex flex-col gap-2 relative project-reveal-${index}`}>
           <div className="absolute top-0 left-0 w-full h-[1px] bg-foreground/10" style={{ filter: "url(#line-torn-filter)" }} />
-          <span className="text-[9px] font-mono text-foreground/40 uppercase tracking-widest">METALLURGY: {project.protocol}</span>
-          <span className="text-[9px] font-mono text-foreground/40 uppercase tracking-widest">VERIFICATION: FORGED_STABLE</span>
+          <span className="font-caveat text-xl sm:text-2xl text-foreground/55 lowercase tracking-normal pl-1 leading-relaxed italic">
+            * {project.note}
+          </span>
         </div>
       </div>
     </div>
@@ -332,28 +342,29 @@ export const Artifacts = () => {
           </filter>
         </defs>
       </svg>
-      <div
-        className="artifacts-header-img absolute right-[4%] md:right-[6%] top-[3%] md:top-[3%] w-48 sm:w-[260px] md:w-[380px] lg:w-[460px] aspect-[3/4] pointer-events-none z-0 opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] transition-opacity duration-700"
-        style={{ filter: isDark ? "invert(1) grayscale(1)" : "invert(0) grayscale(0)" }}
-      >
-        <Image
-          src="/images/be-calm-stay-in-control.jpg"
-          alt="Be Calm Stay In Control Art"
-          fill
-          className="object-contain grayscale contrast-[1.15]"
-          style={{
-            maskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
-            maskComposite: "intersect",
-            WebkitMaskComposite: "source-in"
-          }}
-          priority
-        />
-      </div>
-
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 relative z-10">
-        <div className="mb-24 md:mb-40 text-left">
-          <div className="flex items-center gap-4 mb-8 w-full artifacts-reveal-top">
+        <div className="artifacts-title-trigger mb-24 md:mb-40 text-left relative z-10">
+          <div
+            className="hidden md:block absolute right-[2%] lg:right-[5%] top-[-20%] lg:top-[-30%] w-[350px] lg:w-[500px] h-[500px] lg:h-[700px] opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none artifacts-header-img z-0"
+            style={{ filter: isDark ? "invert(1)" : "invert(0)" }}
+          >
+            <Image
+              src="/images/be-calm-stay-in-control.jpg"
+              alt="Be Calm Stay In Control Art"
+              fill
+              sizes="(max-width: 768px) 0vw, (max-width: 1024px) 350px, 500px"
+              className="object-contain object-right-top"
+              style={{
+                maskImage: "linear-gradient(to bottom, transparent 0%, black 20%, black 85%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 20%, black 85%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
+                maskComposite: "intersect",
+                WebkitMaskComposite: "source-in"
+              }}
+              priority
+            />
+          </div>
+
+          <div className="flex items-center gap-4 mb-8 w-full artifacts-reveal-top relative z-10">
             <div className="flex items-center font-mono text-foreground/75">
               <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
                 [ CHAPTER II : CREATIONS ]
@@ -361,7 +372,7 @@ export const Artifacts = () => {
             </div>
           </div>
 
-          <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible artifacts-reveal-top">
+          <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible artifacts-reveal-top relative z-10">
             <span className="inline-block artifacts-title-1">FORGED</span> <br />
             <span className="inline-block artifacts-title-2 text-transparent" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>BLADES.</span>
           </h2>

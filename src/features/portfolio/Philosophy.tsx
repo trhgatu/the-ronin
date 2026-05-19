@@ -137,6 +137,7 @@ export const Philosophy = () => {
           src="/images/sumi-tree.png"
           alt="Sumi-e Tree Decoration"
           fill
+          sizes="(max-width: 768px) 384px, 900px"
           className="object-contain object-left-bottom"
           priority
         />
@@ -148,6 +149,7 @@ export const Philosophy = () => {
           src="/images/musashi-samurai.png"
           alt="Musashi Meditating"
           fill
+          sizes="(max-width: 768px) 192px, 320px"
           className="object-contain object-left-bottom"
           priority
         />
@@ -157,7 +159,6 @@ export const Philosophy = () => {
       <div className="relative z-10 mx-auto max-w-[1400px] px-6 md:px-10 w-full">
         <div className="mb-20 md:mb-40 text-right flex flex-col items-end">
           <div className="flex items-center gap-4 mb-8 w-full justify-end phil-reveal-top">
-            <div className="h-[2px] flex-1 bg-foreground/15" style={{ filter: "url(#line-torn-filter)" }} />
             <div className="flex items-center font-mono text-foreground/75">
               <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold text-right">
                 [ CHAPTER IV : THE VOID ]
@@ -176,7 +177,6 @@ export const Philosophy = () => {
             <blockquote
               className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-light text-foreground leading-[1.3] lg:leading-[1.2] tracking-tight pr-6 md:pr-12 relative"
             >
-              <div className="absolute right-0 top-2 bottom-2 w-[4px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
               <div ref={quoteRef} className="inline">
                 {"Do nothing which is of no use. Code is not written for the machine, but for the soul. True architecture emerges only when the mind is empty of ego and full of intention.".split(" ").map((word, wordIndex) => (
                   <span key={wordIndex} className="inline-block whitespace-nowrap mr-[0.25em]">

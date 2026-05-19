@@ -68,9 +68,7 @@ export const Hero = () => {
 
   }, { dependencies: [mounted], scope: containerRef });
 
-  const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
-
-  if (!mounted) return null;
+  const isDark = !mounted || (resolvedTheme === 'dark' || theme === 'dark');
 
   return (
     <section
@@ -81,12 +79,14 @@ export const Hero = () => {
       {/* 1. Meditative Wind Background (WebGL Fluid) */}
       <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden select-none">
         <div className="absolute inset-0 opacity-35 md:opacity-50">
-          <ShaderFlow
-            scale={3.0}
-            brightness={1.15}
-            flowSpeed={[0.2, 0.0]}
-            className="absolute inset-0 h-full w-full grayscale"
-          />
+          {mounted && (
+            <ShaderFlow
+              scale={3.0}
+              brightness={1.15}
+              flowSpeed={[0.2, 0.0]}
+              className="absolute inset-0 h-full w-full grayscale"
+            />
+          )}
         </div>
 
         {/* Grain Overlay */}

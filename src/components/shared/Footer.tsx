@@ -86,7 +86,6 @@ export const Footer = () => {
           </div>
         </div>
         <div className="pt-10 border-t-2 border-foreground/15 flex flex-col md:flex-row justify-between items-center gap-10 md:gap-8 relative">
-          <div className="absolute top-[-2px] left-0 w-full h-[3px] bg-background" style={{ filter: "url(#line-torn-filter)" }} />
           <div className="text-[10px] font-mono text-foreground/40 uppercase tracking-widest flex items-center gap-2">
             <span>COPYRIGHT</span>
             <span>© {currentYear} TRHGATU. ALL RIGHTS RESERVED.</span>

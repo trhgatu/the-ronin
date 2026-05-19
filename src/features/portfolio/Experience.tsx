@@ -87,16 +87,28 @@ const EXPERIENCES = [
 const FootprintSVG = ({ isLeft, className }: { isLeft: boolean; className?: string }) => (
   <svg
     viewBox="0 0 100 180"
-    fill="currentColor"
     className={`${className} ${isLeft ? "scale-x-[-1]" : ""}`}
-    style={{ filter: "url(#line-torn-filter)" }}
+    style={{ filter: "url(#footprint-ink-bleed)" }}
   >
-    <path d="M 50,155 C 38,155 30,140 30,122 C 30,105 38,98 42,88 C 45,78 38,65 33,48 C 30,38 33,26 50,26 C 67,26 70,38 67,48 C 62,65 55,78 58,88 C 62,98 70,105 70,122 C 70,140 62,155 50,155 Z" />
-    <ellipse cx="48" cy="14" rx="9" ry="12" />
-    <ellipse cx="66" cy="18" rx="6.5" ry="9" />
-    <ellipse cx="79" cy="27" rx="5.5" ry="8" />
-    <ellipse cx="88" cy="40" rx="4.5" ry="7.5" />
-    <ellipse cx="93" cy="54" rx="3.5" ry="6.5" />
+    {/* 1. Solid Background Mask in page background color at 100% opacity */}
+    <g className="text-background" fill="currentColor">
+      <path d="M 50,155 C 38,155 30,140 30,122 C 30,105 38,98 42,88 C 45,78 38,65 33,48 C 30,38 33,26 50,26 C 67,26 70,38 67,48 C 62,65 55,78 58,88 C 62,98 70,105 70,122 C 70,140 62,155 50,155 Z" />
+      <ellipse cx="48" cy="14" rx="9" ry="12" />
+      <ellipse cx="66" cy="18" rx="6.5" ry="9" />
+      <ellipse cx="79" cy="27" rx="5.5" ry="8" />
+      <ellipse cx="88" cy="40" rx="4.5" ry="7.5" />
+      <ellipse cx="93" cy="54" rx="3.5" ry="6.5" />
+    </g>
+
+    {/* 2. Translucent Foreground Ink Stamp on top */}
+    <g className="text-foreground opacity-[0.55] dark:opacity-[0.28]" fill="currentColor">
+      <path d="M 50,155 C 38,155 30,140 30,122 C 30,105 38,98 42,88 C 45,78 38,65 33,48 C 30,38 33,26 50,26 C 67,26 70,38 67,48 C 62,65 55,78 58,88 C 62,98 70,105 70,122 C 70,140 62,155 50,155 Z" />
+      <ellipse cx="48" cy="14" rx="9" ry="12" />
+      <ellipse cx="66" cy="18" rx="6.5" ry="9" />
+      <ellipse cx="79" cy="27" rx="5.5" ry="8" />
+      <ellipse cx="88" cy="40" rx="4.5" ry="7.5" />
+      <ellipse cx="93" cy="54" rx="3.5" ry="6.5" />
+    </g>
   </svg>
 );
 
@@ -192,6 +204,15 @@ export const Experience = () => {
             <feTurbulence type="fractalNoise" baseFrequency="0.16" numOctaves="3" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
           </filter>
+          <filter id="footprint-ink-bleed" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+            <feGaussianBlur in="displaced" stdDeviation="1.5" result="blurred" />
+            <feMerge>
+              <feMergeNode in="blurred" />
+              <feMergeNode in="displaced" />
+            </feMerge>
+          </filter>
         </defs>
       </svg>
 
@@ -201,10 +222,9 @@ export const Experience = () => {
           <div className="flex items-center gap-4 mb-8 w-full exp-reveal-top">
             <div className="flex items-center font-mono text-foreground/75">
               <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
-                [ CHAPTER III : THE WATER PATH ]
+                [ CHAPTER V : THE WATER PATH ]
               </span>
             </div>
-            <div className="h-[2px] flex-1 bg-foreground/15" style={{ filter: "url(#line-torn-filter)" }} />
           </div>
 
           <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible exp-reveal-top whitespace-nowrap">
@@ -229,7 +249,7 @@ export const Experience = () => {
               >
                 <div className="absolute left-6 md:left-1/2 md:-translate-x-1/2 top-0 bottom-0 w-8 md:w-24 flex items-start justify-center z-10 pointer-events-none">
                   <div className={`footprint-stamp-${i} opacity-0 text-foreground`}>
-                    <FootprintSVG isLeft={i % 2 === 0} className="w-8 h-14 md:w-16 md:h-28 mt-4 opacity-[0.55] dark:opacity-[0.28] transition-opacity duration-500" />
+                    <FootprintSVG isLeft={i % 2 === 0} className="w-8 h-14 md:w-16 md:h-28 mt-4 transition-opacity duration-500" />
                   </div>
                 </div>
                 {isEven ? (
@@ -252,12 +272,8 @@ export const Experience = () => {
                           height={1500}
                           className="h-full w-full object-cover grayscale contrast-[1.2] pointer-events-auto"
                           style={{
-                            maskImage: i === 2 
-                              ? "linear-gradient(to bottom, transparent 0%, black 20%, black 85%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)"
-                              : "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
-                            WebkitMaskImage: i === 2 
-                              ? "linear-gradient(to bottom, transparent 0%, black 20%, black 85%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)"
-                              : "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
+                            maskImage: "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
+                            WebkitMaskImage: "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
                             maskComposite: "intersect",
                             WebkitMaskComposite: "source-in"
                           }}
@@ -476,6 +492,7 @@ export const Experience = () => {
                           height={690}
                           className="w-full h-full object-cover grayscale contrast-[1.2] pointer-events-auto"
                           style={{
+                            height: "auto",
                             maskImage: "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to right, black 75%, transparent 100%)",
                             WebkitMaskImage: "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to right, black 75%, transparent 100%)",
                             maskComposite: "intersect",

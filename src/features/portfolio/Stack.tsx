@@ -83,13 +83,13 @@ const TechCard = ({ name }: { name: string }) => {
       <div className="absolute top-0 left-0 w-0 h-full bg-foreground/[0.04] group-hover:w-full transition-all duration-1000 ease-out z-0" />
 
       <div className="relative z-10 flex items-center gap-4">
-        <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center opacity-95 group-hover:opacity-100 transition-all duration-700 scale-95 group-hover:scale-110">
+        <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center transition-all duration-700 scale-95 group-hover:scale-110">
           <Image
             src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
             alt={name}
             width={36}
             height={36}
-            className="w-full h-full"
+            className="w-full h-full grayscale contrast-[1.15] opacity-55 dark:opacity-40 group-hover:grayscale-0 group-hover:contrast-100 group-hover:opacity-100 transition-all duration-700 ease-out"
             unoptimized
           />
         </div>
@@ -106,7 +106,7 @@ const TechCard = ({ name }: { name: string }) => {
 };
 
 const DataLine = ({ text }: { text: string }) => (
-  <div className="flex-shrink-0 mx-6 md:mx-10 text-[10px] md:text-xs font-serif text-foreground/40 uppercase tracking-[0.4em] md:tracking-[0.6em] whitespace-nowrap italic py-2 md:py-4 flex items-center gap-6">
+  <div className="flex-shrink-0 mx-6 md:mx-10 text-xl md:text-2xl font-caveat text-foreground/45 whitespace-nowrap py-2 md:py-3 flex items-center gap-6 lowercase">
     <span>{text}</span>
     <div className="w-12 md:w-16 h-[1px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
     <span>{text}</span>
@@ -223,10 +223,7 @@ export const Stack = () => {
       </svg>
 
       <div className="relative z-20">
-
-        {/* Header Section (Parallax base trigger class added) */}
         <div className="tech-title-trigger mx-auto max-w-[1400px] px-6 md:px-10 mb-20 md:mb-32 text-left relative z-20">
-          {/* Stationary Samurai Art Overlay - Restored to original position inside the container */}
           <div
             className="hidden md:block absolute right-[2%] lg:right-[5%] top-[-20%] lg:top-[-30%] w-[350px] lg:w-[500px] h-[500px] lg:h-[700px] opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none stack-reveal-top z-0"
             style={{ filter: isDark ? "invert(1)" : "invert(0)" }}
@@ -235,6 +232,7 @@ export const Stack = () => {
               src="/images/samurai.png"
               alt="Ronin Samurai"
               fill
+              sizes="(max-width: 768px) 0vw, (max-width: 1024px) 350px, 500px"
               className="object-contain object-right-top"
               priority
             />
@@ -246,7 +244,6 @@ export const Stack = () => {
                 [ CHAPTER III : THE ARSENAL ]
               </span>
             </div>
-            <div className="h-[2px] flex-1 bg-foreground/15" style={{ filter: "url(#line-torn-filter)" }} />
           </div>
 
           <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible stack-reveal-top">
@@ -256,9 +253,9 @@ export const Stack = () => {
             </span>
           </h2>
 
-            <p className="mt-8 font-caveat text-2xl sm:text-3xl md:text-4xl text-foreground/60 tracking-wide font-normal max-w-2xl stack-reveal-top">
-              &ldquo;A master requires no specific sword, but intimately understands every blade.&rdquo;
-            </p>
+          <p className="mt-8 font-caveat text-2xl sm:text-3xl md:text-4xl text-foreground/60 tracking-wide font-normal max-w-2xl stack-reveal-top">
+            &ldquo;A master requires no specific sword, but intimately understands every blade.&rdquo;
+          </p>
         </div>
 
         {/* The Tech Accordions */}
@@ -305,8 +302,6 @@ export const Stack = () => {
                       <span className="absolute left-0 top-1 bottom-1 w-[2px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
                       {book.description}
                     </p>
-
-                    {/* Katana Draw Stagger Motion Container */}
                     <motion.div
                       initial="hidden"
                       animate={isOpen ? "show" : "hidden"}
@@ -338,7 +333,7 @@ export const Stack = () => {
           <div className="absolute inset-y-0 right-0 w-1/12 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
 
           <KineticMarquee baseVelocity={0.3}>
-            <DataLine text="POLISH THE BLADE TEN THOUSAND DAYS TO PERFECT THE ART // DO NOTHING WHICH IS OF NO USE" />
+            <DataLine text="polish the blade ten thousand days to perfect the art // do nothing which is of no use" />
           </KineticMarquee>
         </div>
       </div>

@@ -4,9 +4,10 @@ import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
+import { soundManager } from "@/lib/sound";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -23,12 +24,14 @@ export function ThemeToggle() {
   }
 
   const toggleTheme = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const next = theme === "dark" ? "light" : "dark";
+    soundManager?.playWaterSplash();
+    const currentTheme = theme === "system" ? resolvedTheme : theme;
+    const next = currentTheme === "dark" ? "light" : "dark";
 
     const prefersReducedMotion =
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (!document.startViewTransition || prefersReducedMotion) {
+    if (prefersReducedMotion) {
       setTheme(next);
       return;
     }
@@ -36,24 +39,16 @@ export function ThemeToggle() {
     const rect = event.currentTarget.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    const radius = Math.hypot(
-      Math.max(cx, window.innerWidth - cx),
-      Math.max(cy, window.innerHeight - cy)
-    );
 
-    const root = document.documentElement;
-    root.style.setProperty("--theme-cx", `${cx}px`);
-    root.style.setProperty("--theme-cy", `${cy}px`);
-    root.style.setProperty("--theme-r", `${radius}px`);
-    root.dataset.themeAnim = "1";
-
-    const transition = document.startViewTransition(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("trigger-ink-transition", {
+          detail: { cx, cy, targetTheme: next },
+        })
+      );
+    } else {
       setTheme(next);
-    });
-
-    transition.finished.finally(() => {
-      delete root.dataset.themeAnim;
-    });
+    }
   };
 
   return (

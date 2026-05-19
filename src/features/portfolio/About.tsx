@@ -4,6 +4,7 @@ import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { PortraitMorph } from "@/components/shared/PortraitMorph";
 import { useTheme } from "next-themes";
+import { soundManager } from "@/lib/sound";
 
 const fiveRings = [
   {
@@ -110,22 +111,14 @@ export const About = () => {
 
           {/* Left Column (5 Cols): The Massive, Jagged Character Art Panel */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start z-10 relative">
-            <div className="relative w-full max-w-[340px] sm:max-w-[380px] md:max-w-[420px] aspect-[4/5] rotate-[-3deg] transition-all duration-700 hover:rotate-[-1.5deg] group avatar-frame">
-
-              {/* Manga Drawing Sheet Border Guidelines (Pencil crop marks) */}
-              <div className="absolute top-[-15px] left-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
-              <div className="absolute top-[-15px] left-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
-              <div className="absolute bottom-[-15px] right-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
-              <div className="absolute bottom-[-15px] right-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
-
-              {/* Layer 1: Background backing paper (Double torn) */}
+            <div className="relative w-full max-w-[340px] sm:max-w-[380px] md:max-w-[420px] aspect-[4/5] rotate-[-3deg] transition-all duration-700 hover:rotate-[-1.5deg] group avatar-frame shadow-[0_16px_48px_rgba(0,0,0,0.3)] border border-foreground/10 p-2.5 bg-foreground">
               <div
                 className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[4deg] transition-all duration-700 group-hover:rotate-[5deg] group-hover:bg-foreground/[0.08] pointer-events-none"
                 style={{ filter: "url(#about-torn-filter)" }}
               />
 
               {/* Layer 2: Main photo screen */}
-              <div className="absolute inset-0 bg-background/20 backdrop-blur-sm rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.3)]">
+              <div className="absolute inset-0 bg-foreground rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden">
                 <div className="relative w-full h-full overflow-hidden bg-card">
                   <PortraitMorph
                     srcA="/avatar.jpg"
@@ -142,7 +135,7 @@ export const About = () => {
               >
                 {/* Background frame mask */}
                 <div
-                  className="absolute inset-[-12px] border-[24px] border-background"
+                  className="absolute inset-[-12px] border-[24px] border-foreground"
                   style={{ filter: "url(#about-torn-filter)" }}
                 />
 
@@ -173,10 +166,13 @@ export const About = () => {
               </div>
 
               {/* Traditional Red Ink Hanko Seal (印) */}
-              <div className="relative group/seal cursor-pointer select-none">
+              <div
+                className="relative group/seal cursor-pointer select-none"
+                onMouseEnter={() => soundManager?.playStampThud()}
+              >
                 {/* Outer glowing ink distress ring */}
                 <div className="absolute inset-[-4px] border border-red-600/30 rounded-sm scale-95 group-hover/seal:scale-105 transition-all duration-700 opacity-60 pointer-events-none" style={{ filter: "url(#hanko-torn-filter)" }} />
-                
+
                 {/* Main Stamp */}
                 <div
                   className="w-14 h-14 border-2 border-red-600 flex items-center justify-center font-serif text-[20px] font-black text-red-600 tracking-tighter transition-all duration-500 group-hover/seal:rotate-[6deg] group-hover/seal:scale-105"
@@ -187,7 +183,7 @@ export const About = () => {
                   }}
                 >
                   <span className="rotate-[-3deg] select-none uppercase font-bold text-center leading-none text-red-600">
-                    英<br/>秀
+                    英<br />秀
                   </span>
                 </div>
               </div>
@@ -256,10 +252,6 @@ export const About = () => {
 
             {/* Bottom Quote & Philosophy */}
             <div className="relative pt-6">
-              <div
-                className="absolute top-0 left-0 w-full h-[3px] bg-foreground/10"
-                style={{ filter: "url(#line-torn-filter)" }}
-              />
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
                   <div className="text-[9px] font-mono text-foreground/50 uppercase tracking-widest">Philosophy</div>

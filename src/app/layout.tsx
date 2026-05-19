@@ -33,8 +33,10 @@ export const metadata: Metadata = {
 };
 
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
-
 import { PageBackdrop } from "@/components/shared/PageBackdrop";
+import { InkTransitionCanvas } from "@/components/shared/InkTransitionCanvas";
+import { Preloader } from "@/components/shared/Preloader";
+import { SoundToggle } from "@/components/shared/SoundToggle";
 
 export default function RootLayout({
   children,
@@ -43,6 +45,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (sessionStorage.getItem('preloader-seen') !== 'true') {
+                  document.documentElement.classList.add('is-loading');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${rockSalt.variable} ${caveat.variable} antialiased selection:bg-accent selection:text-black`}
       >
@@ -52,12 +67,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <Preloader />
+          <InkTransitionCanvas />
           <PageBackdrop />
           <div className="grain-overlay" />
           <SmoothScroll>
             <CustomCursor />
             <Navbar />
             {children}
+            <SoundToggle />
             <Analytics />
           </SmoothScroll>
         </ThemeProvider>
