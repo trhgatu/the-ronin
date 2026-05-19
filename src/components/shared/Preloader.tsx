@@ -4,11 +4,14 @@ import { useEffect, useState, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
 import { useTheme } from 'next-themes';
+import { soundManager } from '@/lib/sound';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Preloader = () => {
   const { resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [showEnter, setShowEnter] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const quoteRef = useRef<HTMLDivElement>(null);
   const circleRef = useRef<SVGPathElement>(null);
@@ -39,36 +42,7 @@ export const Preloader = () => {
   useGSAP(() => {
     if (!mounted || !isActive || !containerRef.current || !quoteRef.current || !circleRef.current) return;
 
-    const tl = gsap.timeline({
-      onComplete: () => {
-        // Trigger the OGL Ink Transition exactly from the center of the screen
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(
-            new CustomEvent("trigger-ink-transition", {
-              detail: { 
-                cx: window.innerWidth / 2, 
-                cy: window.innerHeight / 2, 
-                targetTheme: currentTheme,
-                preset: "mist"
-              },
-            })
-          );
-        }
-
-        // Hide the Preloader overlay exactly when the ink is at solid full coverage (550ms)
-        // This makes the unmounting completely invisible, followed by a gorgeous smoky ink dissolve!
-        setTimeout(() => {
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem('preloader-seen', 'true');
-            document.documentElement.classList.remove('is-loading');
-          }
-          document.body.style.overflow = '';
-          setIsActive(false);
-          // Dispatch event to kick off animations in Hero section
-          window.dispatchEvent(new Event('preloader-complete'));
-        }, 550);
-      }
-    });
+    const tl = gsap.timeline();
 
     // 1. Draw the Ensō Zen Circle (SVG stroke-dashoffset)
     tl.to(circleRef.current, {
@@ -87,20 +61,67 @@ export const Preloader = () => {
       ease: "power2.out"
     }, "-=1.1"); // overlap drawing of Ensō
 
-    // 3. Short tranquil hold
-    tl.to({}, { duration: 0.6 });
-
-    // 4. Poetic fade out and dissolve of the stamp and quote into the void
-    const stampWrapper = circleRef.current?.parentElement?.parentElement;
-    tl.to([stampWrapper, quoteRef.current], {
-      opacity: 0,
-      filter: "blur(12px)",
-      y: -20,
-      duration: 0.9,
-      ease: "power2.inOut"
+    // 3. Short tranquil hold, then fade in the Enter button
+    tl.to({}, { 
+      duration: 0.3,
+      onComplete: () => {
+        setShowEnter(true);
+      }
     });
 
-  }, { scope: containerRef, dependencies: [mounted, currentTheme] });
+  }, { scope: containerRef, dependencies: [mounted, isActive] });
+
+  const handleEnter = () => {
+    // 1. Play stamp thud sound and start the sound manager music smoothly!
+    if (soundManager) {
+      soundManager.toggle();
+      soundManager.playStampThud();
+    }
+
+    // 2. Animate out the elements remaining on the preloader
+    const targets = containerRef.current?.querySelectorAll('.preloader-content > *');
+    if (targets && targets.length > 0) {
+      gsap.to(targets, {
+        opacity: 0,
+        filter: "blur(12px)",
+        y: -30,
+        duration: 0.8,
+        stagger: 0.08,
+        ease: "power2.inOut",
+        onComplete: startTransition
+      });
+    } else {
+      startTransition();
+    }
+  };
+
+  const startTransition = () => {
+    // Trigger the OGL Ink Transition exactly from the center of the screen
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("trigger-ink-transition", {
+          detail: { 
+            cx: window.innerWidth / 2, 
+            cy: window.innerHeight / 2, 
+            targetTheme: currentTheme,
+            preset: "mist"
+          },
+        })
+      );
+    }
+
+    // Hide the Preloader overlay exactly when the ink is at solid full coverage (550ms)
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('preloader-seen', 'true');
+        document.documentElement.classList.remove('is-loading');
+      }
+      document.body.style.overflow = '';
+      setIsActive(false);
+      // Dispatch event to kick off animations in Hero section
+      window.dispatchEvent(new Event('preloader-complete'));
+    }, 550);
+  };
 
   if (!isActive) return null;
 
@@ -116,7 +137,17 @@ export const Preloader = () => {
       {/* Texture grain overlay */}
       <div className="absolute inset-0 opacity-[0.035] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat z-0" />
 
-      <div className="relative z-10 flex flex-col items-center gap-10">
+      {/* SVG torn line filter definition */}
+      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
+        <defs>
+          <filter id="line-torn-filter-preloader" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
+      <div className="relative z-10 flex flex-col items-center gap-10 preloader-content">
         {/* Ensō Zen Circle */}
         <div className="w-32 h-32 md:w-36 md:h-36 relative flex items-center justify-center opacity-70">
           <svg className="w-full h-full text-foreground" viewBox="0 0 100 100">
@@ -150,7 +181,30 @@ export const Preloader = () => {
             </span>
           ))}
         </div>
+
+        {/* Cinematic "Enter the Void" Button */}
+        <div className="h-12 flex items-center justify-center mt-2">
+          <AnimatePresence>
+            {showEnter && (
+              <motion.button
+                initial={{ opacity: 0, y: 15, filter: "blur(6px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                onClick={handleEnter}
+                className="px-8 py-3 border border-foreground/20 hover:border-foreground/50 bg-background/40 hover:bg-background/80 backdrop-blur-sm font-mono text-[9px] md:text-[10px] tracking-[0.35em] uppercase font-bold text-foreground/50 hover:text-foreground transition-all duration-500 cursor-none relative group focus:outline-none"
+              >
+                <div 
+                  className="absolute inset-0 border border-foreground/5 pointer-events-none group-hover:border-foreground/15 transition-colors duration-500" 
+                  style={{ filter: "url(#line-torn-filter-preloader)" }} 
+                />
+                [ Enter The Void ]
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
 };
+

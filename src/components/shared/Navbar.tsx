@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import gsap from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ThemeToggle } from "./ThemeToggle";
+import { SoundToggle } from "./SoundToggle";
 import { Menu, X } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -110,6 +111,7 @@ export const Navbar = () => {
 
         {/* Top-Right Toggle & Mobile menu trigger */}
         <div className="flex items-center gap-2 pointer-events-auto">
+          <SoundToggle />
           <ThemeToggle />
 
           {/* Mobile Menu Toggle Button */}

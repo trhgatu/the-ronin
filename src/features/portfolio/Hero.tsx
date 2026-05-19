@@ -88,9 +88,6 @@ export const Hero = () => {
             />
           )}
         </div>
-
-        {/* Grain Overlay */}
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
       </div>
 
       {/* 2. Self-contained SVG displacement filters for horizontal torn edges */}
