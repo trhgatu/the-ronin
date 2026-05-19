@@ -110,58 +110,80 @@ export const Contact = () => {
         </div>
 
         {/* Dynamic Editorial Manga Double-Page Spread (5:7 Split) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
           
-          {/* Left Column (5 Cols): The Structural Panel with Guideline Marks & Hand-Drawn Musashi */}
-          <div className="lg:col-span-5 flex flex-col items-center lg:items-start z-10 relative contact-reveal w-full">
-            <div className="relative w-full aspect-[4/5] border border-foreground/10 bg-foreground/[0.002] overflow-hidden flex flex-col justify-between p-8 md:p-10">
+          {/* Left Column (5 Cols): The Real Manga Panel with going.jpg */}
+          <div className="lg:col-span-5 flex flex-col items-center z-10 relative contact-reveal w-full">
+            <div className="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[100/160] rotate-[-3deg] transition-all duration-700 hover:rotate-[-0.5deg] group avatar-frame shadow-[0_16px_48px_rgba(0,0,0,0.3)] border border-foreground/10 p-2.5 bg-background">
               
               {/* Manga Drawing Sheet Border Guidelines (Pencil crop marks) */}
-              <div className="absolute top-[-10px] left-[-10px] w-6 h-[1px] bg-foreground/25 pointer-events-none" />
-              <div className="absolute top-[-10px] left-[-10px] w-[1px] h-6 bg-foreground/25 pointer-events-none" />
-              <div className="absolute bottom-[-10px] right-[-10px] w-6 h-[1px] bg-foreground/25 pointer-events-none" />
-              <div className="absolute bottom-[-10px] right-[-10px] w-[1px] h-6 bg-foreground/25 pointer-events-none" />
+              <div className="absolute top-[-15px] left-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
+              <div className="absolute top-[-15px] left-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
+              <div className="absolute bottom-[-15px] right-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
+              <div className="absolute bottom-[-15px] right-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
 
-              {/* Breathtaking Background Art: Musashi Sitting Peaceful in Manga Frame */}
-              <div 
-                className="absolute right-0 bottom-0 w-[80%] h-[75%] opacity-[0.85] mix-blend-multiply dark:mix-blend-screen pointer-events-none z-0 select-none"
-                style={{ filter: isDark ? "invert(1) opacity(0.6)" : "invert(0)" }}
+              {/* Layer 1: Background backing paper (Double torn) */}
+              <div
+                className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[4deg] transition-all duration-700 group-hover:rotate-[5deg] group-hover:bg-foreground/[0.08] pointer-events-none"
+                style={{ filter: "url(#ink-bleed-filter-contact)" }}
+              />
+
+              {/* Layer 2: Main photo screen with going.jpg */}
+              <div className="absolute inset-0 bg-background rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden">
+                <div 
+                  className="relative w-full h-full overflow-hidden bg-card grayscale transition-all duration-1000"
+                  style={{ filter: isDark ? "invert(1) contrast(1.15)" : "invert(0) contrast(1.05)" }}
+                >
+                  <Image
+                    src="/images/going.jpg"
+                    alt="Miyamoto Musashi - I'm going to meet someone very strong."
+                    fill
+                    className="object-cover object-center scale-105 group-hover:scale-100 transition-transform duration-1000"
+                    priority
+                  />
+                </div>
+              </div>
+
+              {/* Layer 3: Torn Border Overlay (Physical washi edges) */}
+              <div
+                className="absolute inset-0 rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] pointer-events-none z-20"
               >
-                <Image
-                  src="/images/musashi-sit.png"
-                  alt="Musashi Sitting calmly waiting"
-                  fill
-                  className="object-contain object-right-bottom grayscale contrast-125"
-                  priority
+                {/* Background frame mask */}
+                <div
+                  className="absolute inset-[-12px] border-[24px] border-background"
+                  style={{ filter: "url(#ink-bleed-filter-contact)" }}
                 />
-              </div>
 
-              <div className="relative z-10">
-                <h2 className="text-4xl sm:text-5xl md:text-6xl font-serif font-light uppercase leading-[0.9] tracking-tighter text-foreground">
-                  CALL THE <br />
-                  <span 
-                    className="text-transparent" 
-                    style={{ WebkitTextStroke: isDark ? "1.2px rgba(255,255,255,0.7)" : "1.2px rgba(0,0,0,0.7)" }}
-                  >
-                    RONIN.
-                  </span>
-                </h2>
-
-                <p className="text-base md:text-lg font-serif font-light text-foreground/70 leading-relaxed mt-6 max-w-[280px]">
-                  A blade kept in the scabbard rusts. <br />
-                  A vision unbuilt fades.
-                </p>
-              </div>
-              
-              <div className="relative z-10 text-[9px] font-mono tracking-widest text-foreground/45 mt-8 uppercase font-bold flex items-center gap-2">
-                <span>一</span>
-                <span>DISPATCH SCROLL TO SUMMON THE BLADE</span>
+                {/* Drawn inner torn border */}
+                <div
+                  className="absolute inset-[10px] border border-foreground/25"
+                  style={{ filter: "url(#ink-bleed-filter-contact)" }}
+                />
+                <div className="absolute inset-[6px] border border-foreground/[0.04] rotate-[1.5deg]" />
               </div>
             </div>
           </div>
 
-          {/* Right Column (7 Cols): The Architect's Contact Ledger list */}
-          <div className="lg:col-span-7 space-y-12 lg:pt-2 w-full">
+          {/* Right Column (7 Cols): Summons Header and Architect's Contact Ledger */}
+          <div className="lg:col-span-7 space-y-12 w-full">
+            
+            {/* Summons Header block */}
+            <div className="space-y-4 contact-reveal">
+              <h2 className="text-5xl sm:text-6xl md:text-7xl font-serif font-light text-foreground uppercase tracking-tight leading-[0.9]">
+                CALL THE <br />
+                <span 
+                  className="text-transparent" 
+                  style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}
+                >
+                  RONIN.
+                </span>
+              </h2>
+              <p className="font-caveat text-2xl md:text-3xl text-foreground/60 tracking-normal lowercase">
+                A blade kept in the scabbard rusts. A vision unbuilt fades.
+              </p>
+            </div>
+
+            {/* The Architect's Contact Ledger list */}
             <div className="w-full border-t border-foreground/15 flex flex-col contact-reveal">
               {CONTACT_LINKS.map((link) => (
                 <a 
