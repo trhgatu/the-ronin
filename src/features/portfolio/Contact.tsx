@@ -35,6 +35,7 @@ export const Contact = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -128,17 +129,31 @@ export const Contact = () => {
                 style={{ filter: "url(#ink-bleed-filter-contact)" }}
               />
 
-              {/* Layer 2: Main photo screen with going.jpg */}
+              {/* Layer 2: Main photo screen with going.jpg / smile-more.jpg morph swap */}
               <div className="absolute inset-0 bg-background rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden">
                 <div
                   className="relative w-full h-full overflow-hidden bg-card grayscale transition-all duration-1000"
                   style={{ filter: isDark ? "invert(1) contrast(1.15)" : "invert(0) contrast(1.05)" }}
                 >
+                  {/* Default Image: going.jpg */}
                   <Image
                     src="/images/going.jpg"
                     alt="Miyamoto Musashi - I'm going to meet someone very strong."
                     fill
-                    className="object-cover object-center scale-105 group-hover:scale-100 transition-transform duration-1000"
+                    className={`object-cover object-center transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      isHovered ? "opacity-0 scale-97" : "opacity-100 scale-100"
+                    }`}
+                    priority
+                  />
+
+                  {/* Hover Image: smile-more.jpg */}
+                  <Image
+                    src="/images/smile-more.jpg"
+                    alt="Miyamoto Musashi - Smile more. Well then, see ya later..."
+                    fill
+                    className={`object-cover object-center absolute inset-0 transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      isHovered ? "opacity-100 scale-100" : "opacity-0 scale-103"
+                    }`}
                     priority
                   />
                 </div>
@@ -188,6 +203,10 @@ export const Contact = () => {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                  onFocus={() => setIsHovered(true)}
+                  onBlur={() => setIsHovered(false)}
                   className="group relative flex flex-col md:flex-row md:items-center justify-between py-6 md:py-8 border-b border-foreground/10 overflow-hidden cursor-pointer gap-2 md:gap-0"
                 >
                   {/* Subtle Sumi-e ink background sweep */}
@@ -210,7 +229,7 @@ export const Contact = () => {
                   </div>
 
                   <div className="relative z-10 flex items-center gap-4 pr-2 self-end md:self-auto">
-                    <span className="hidden md:inline-block font-mono text-[9px] uppercase tracking-[0.3em] text-foreground/45">
+                    <span className="hidden md:inline-block font-serif italic text-xs tracking-wider text-foreground/35 lowercase">
                       {link.title}
                     </span>
                     <ArrowUpRight className="w-4 h-4 text-foreground/30 group-hover:text-foreground group-hover:scale-110 transition-all duration-500" strokeWidth={1.5} />
@@ -222,10 +241,10 @@ export const Contact = () => {
             {/* Premium Seal Signature block */}
             <div className="flex items-center justify-start lg:justify-end gap-6 pt-4 contact-reveal">
 
-              {/* Minimal Metadata Sign-off */}
-              <div className="text-[10px] font-mono text-foreground/40 text-left lg:text-right leading-relaxed uppercase tracking-[0.3em] font-bold">
-                <div>Status // <span className="text-foreground/70">BLADE_IS_READY</span></div>
-                <div className="mt-1">Location // <span className="text-foreground/70">GLOBAL_NEXUS</span></div>
+              {/* Minimal Metadata Sign-off - Sketchbook style hand-scribbled */}
+              <div className="font-caveat text-xl md:text-2xl text-foreground/50 text-left lg:text-right leading-none lowercase tracking-wide">
+                <div>* the blade is sharp, waiting for the summons...</div>
+                <div className="mt-2.5">dispatch from: a wandering dojo (global nexus)</div>
               </div>
 
               {/* The Signature Hanko Seal - Identical to About section for perfect branding */}

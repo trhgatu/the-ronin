@@ -188,6 +188,10 @@ export const Experience = () => {
             <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
           </filter>
+          <filter id="hanko-torn-filter-exp" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.16" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
         </defs>
       </svg>
 
@@ -234,6 +238,11 @@ export const Experience = () => {
                       <span className="text-xl md:text-2xl font-serif font-light text-foreground/80 tracking-tight flex items-center md:flex-row-reverse gap-4">
                         <span className="w-8 h-[2px] bg-foreground/30 hidden md:block" style={{ filter: "url(#line-torn-filter)" }} />
                         {exp.period}
+                        {i === 0 && (
+                          <span className="font-caveat text-xl md:text-2xl text-red-600/70 lowercase tracking-normal pl-2 md:pl-0 md:pr-2">
+                            * current domain
+                          </span>
+                        )}
                       </span>
                       <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] aspect-[2/3] opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] overflow-hidden exp-reveal-top relative">
                         <Image
@@ -267,7 +276,7 @@ export const Experience = () => {
                       </div>
 
                       <p className="text-base md:text-lg font-serif font-light text-foreground/75 mb-10 md:mb-12 leading-relaxed relative pl-6">
-                        <span className="absolute left-0 top-1 bottom-1 w-[2.5px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+                        <span className={`absolute left-0 top-1 bottom-1 w-[2.5px] ${i === 0 ? "bg-red-700/40" : "bg-foreground/20"}`} style={{ filter: "url(#line-torn-filter)" }} />
                         {exp.description}
                       </p>
 

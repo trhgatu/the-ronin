@@ -256,11 +256,9 @@ export const Stack = () => {
             </span>
           </h2>
 
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start justify-between mt-12 stack-reveal-top">
-            <p className="text-xl md:text-3xl font-light text-foreground/45 max-w-2xl leading-tight tracking-tight">
-              A master requires no specific sword, but intimately understands every blade. A disciplined mastery of <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">modern architectural tools</span>.
+            <p className="mt-8 font-caveat text-2xl sm:text-3xl md:text-4xl text-foreground/60 tracking-wide font-normal max-w-2xl stack-reveal-top">
+              &ldquo;A master requires no specific sword, but intimately understands every blade.&rdquo;
             </p>
-          </div>
         </div>
 
         {/* The Tech Accordions */}
@@ -286,7 +284,7 @@ export const Stack = () => {
                       <span className={`text-lg md:text-xl lg:text-2xl font-serif uppercase tracking-wide transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? "text-foreground font-semibold" : "text-foreground/50 font-light group-hover/btn:text-foreground/80"}`}>
                         {book.title}
                       </span>
-                      <span className="text-[10px] font-mono tracking-widest text-foreground/40 mt-1 uppercase">
+                      <span className="text-[11px] md:text-xs font-serif italic tracking-wide text-foreground/35 mt-1.5 normal-case">
                         {book.subtitle}
                       </span>
                     </div>
