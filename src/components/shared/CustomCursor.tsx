@@ -11,13 +11,10 @@ export const CustomCursor = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Detect mobile/touch device
     const checkMobile = () => {
-      setIsMobile(
-        window.innerWidth < 1024 || 
-        window.matchMedia('(pointer: coarse)').matches ||
-        'ontouchstart' in window
-      );
+      const ua = navigator.userAgent;
+      const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      setIsMobile(isMobileUA || window.innerWidth < 1024);
     };
 
     checkMobile();
@@ -27,7 +24,11 @@ export const CustomCursor = () => {
     const follower = followerRef.current;
 
     if (!cursor || !follower || isMobile) return;
-    
+
+    // Set percentage translations in GSAP to perfectly center the custom cursor
+    gsap.set(cursor, { xPercent: -50, yPercent: -50 });
+    gsap.set(follower, { xPercent: -50, yPercent: -50 });
+
     const xCursor = gsap.quickSetter(cursor, "x", "px");
     const yCursor = gsap.quickSetter(cursor, "y", "px");
     const xFollower = gsap.quickSetter(follower, "x", "px");
@@ -126,11 +127,11 @@ export const CustomCursor = () => {
     <>
       <div
         ref={cursorRef}
-        className="fixed top-0 left-0 w-1.5 h-1.5 bg-foreground rounded-full pointer-events-none z-[100001] -translate-x-1/2 -translate-y-1/2 hidden lg:block transition-transform"
+        className="fixed top-0 left-0 w-1.5 h-1.5 bg-foreground rounded-full pointer-events-none z-[100001] hidden lg:block"
       />
       <div
         ref={followerRef}
-        className="fixed top-0 left-0 w-8 h-8 border border-foreground/40 rounded-full pointer-events-none z-[100000] -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden hidden lg:flex transition-colors"
+        className="fixed top-0 left-0 w-8 h-8 border border-foreground/40 rounded-full pointer-events-none z-[100000] items-center justify-center overflow-hidden hidden lg:flex"
       >
         <span
           ref={labelRef}

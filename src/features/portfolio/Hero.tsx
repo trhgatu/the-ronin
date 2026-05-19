@@ -77,7 +77,7 @@ export const Hero = () => {
       className="relative w-full min-h-screen flex items-center bg-background overflow-hidden select-none py-28 lg:py-0"
     >
       {/* 1. Meditative Wind Background (WebGL Fluid) */}
-      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden select-none">
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
         <div className="absolute inset-0 opacity-35 md:opacity-50">
           {mounted && (
             <ShaderFlow
@@ -107,7 +107,7 @@ export const Hero = () => {
         </defs>
       </svg>
       <div
-        className="hero-ink-portrait absolute right-0 top-0 bottom-0 w-[46%] lg:w-[38%] h-full pointer-events-none select-none z-0"
+        className="hero-ink-portrait absolute right-0 top-0 bottom-0 w-[46%] lg:w-[38%] h-full pointer-events-none select-none z-[2]"
         style={{
           filter: isDark ? "invert(1) contrast(1.15)" : "invert(0) contrast(1.05)",
           WebkitMaskImage: "linear-gradient(to left, black 75%, transparent 100%)",
