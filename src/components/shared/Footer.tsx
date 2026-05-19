@@ -47,12 +47,13 @@ export const Footer = () => {
             </div>
             <ul className="space-y-5 md:space-y-4">
               {[
-                { label: 'Foundation', href: '#hero' },
-                { label: 'The Way', href: '#about' },
+                { label: 'Prologue', href: '#hero' },
+                { label: 'The Architect', href: '#about' },
                 { label: 'Artifacts', href: '#artifacts' },
                 { label: 'The Armory', href: '#stack' },
                 { label: 'The Void', href: '#philosophy' },
                 { label: 'The Battles', href: '#experience' },
+                { label: 'The Summons', href: '#contact' },
               ].map((item) => (
                 <li key={item.label}>
                   <Link
