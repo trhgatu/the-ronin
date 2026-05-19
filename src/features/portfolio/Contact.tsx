@@ -8,26 +8,26 @@ import { useTheme } from "next-themes";
 import { ArrowUpRight } from "lucide-react";
 
 const CONTACT_LINKS = [
-  { 
-    id: "01", 
-    title: "THE ARSENAL", 
-    value: "GITHUB", 
+  {
+    id: "01",
+    title: "THE ARSENAL",
+    value: "GITHUB",
     href: "https://github.com/trhgatu",
     annotation: "where the blades are forged..."
   },
-  { 
-    id: "02", 
-    title: "THE NETWORK", 
-    value: "LINKEDIN", 
+  {
+    id: "02",
+    title: "THE NETWORK",
+    value: "LINKEDIN",
     href: "https://linkedin.com/in/trhgatu",
-    annotation: "alliances across the digital lands..." 
+    annotation: "alliances across the digital lands..."
   },
-  { 
-    id: "03", 
-    title: "THE DIRECT SCROLL", 
-    value: "EMAIL", 
+  {
+    id: "03",
+    title: "THE DIRECT SCROLL",
+    value: "EMAIL",
     href: "mailto:trhgatu.dev@gmail.com",
-    annotation: "dispatch a raven directly to my dojo..." 
+    annotation: "dispatch a raven directly to my dojo..."
   },
 ];
 
@@ -61,18 +61,18 @@ export const Contact = () => {
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
   return (
-    <section 
+    <section
       id="contact"
       ref={containerRef}
       className="py-32 md:py-48 bg-background relative overflow-hidden select-none z-20"
     >
       {/* Torn Paper Edge Transition */}
-      <div 
-        className="absolute top-[-2px] left-0 w-full h-[3px] bg-foreground/20 z-30 pointer-events-none" 
+      <div
+        className="absolute top-[-2px] left-0 w-full h-[3px] bg-foreground/20 z-30 pointer-events-none"
         style={{ filter: "url(#line-torn-filter-contact)" }}
       />
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat z-0" />
-      
+
       {/* Self-contained SVG filters for torn lines and stamp */}
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
         <defs>
@@ -98,24 +98,24 @@ export const Contact = () => {
       >
         召
       </div>
-      
+
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 w-full relative z-10">
         <div className="mb-20">
-           <div className="flex items-center gap-3 mb-8 w-full contact-reveal">
-              <span className="font-mono text-[9px] tracking-[0.5em] text-foreground/50 uppercase font-bold">
-                [ CHAPTER VI : THE SUMMONS ]
-              </span>
-              <div className="h-[1px] flex-1 bg-foreground/10" style={{ filter: "url(#line-torn-filter-contact)" }} />
-           </div>
+          <div className="flex items-center gap-3 mb-8 w-full contact-reveal">
+            <span className="font-mono text-[9px] tracking-[0.5em] text-foreground/50 uppercase font-bold">
+              [ CHAPTER VI : THE SUMMONS ]
+            </span>
+            <div className="h-[1px] flex-1 bg-foreground/10" style={{ filter: "url(#line-torn-filter-contact)" }} />
+          </div>
         </div>
 
         {/* Dynamic Editorial Manga Double-Page Spread (5:7 Split) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
-          
+
           {/* Left Column (5 Cols): The Real Manga Panel with going.jpg */}
           <div className="lg:col-span-5 flex flex-col items-center z-10 relative contact-reveal w-full">
             <div className="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[100/160] rotate-[-3deg] transition-all duration-700 hover:rotate-[-0.5deg] group avatar-frame shadow-[0_16px_48px_rgba(0,0,0,0.3)] border border-foreground/10 p-2.5 bg-background">
-              
+
               {/* Manga Drawing Sheet Border Guidelines (Pencil crop marks) */}
               <div className="absolute top-[-15px] left-[-15px] w-[30px] h-[1px] bg-foreground/30 pointer-events-none" />
               <div className="absolute top-[-15px] left-[-15px] w-[1px] h-[30px] bg-foreground/30 pointer-events-none" />
@@ -130,7 +130,7 @@ export const Contact = () => {
 
               {/* Layer 2: Main photo screen with going.jpg */}
               <div className="absolute inset-0 bg-background rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden">
-                <div 
+                <div
                   className="relative w-full h-full overflow-hidden bg-card grayscale transition-all duration-1000"
                   style={{ filter: isDark ? "invert(1) contrast(1.15)" : "invert(0) contrast(1.05)" }}
                 >
@@ -164,15 +164,12 @@ export const Contact = () => {
             </div>
           </div>
 
-          {/* Right Column (7 Cols): Summons Header and Architect's Contact Ledger */}
           <div className="lg:col-span-7 space-y-12 w-full">
-            
-            {/* Summons Header block */}
             <div className="space-y-4 contact-reveal">
               <h2 className="text-5xl sm:text-6xl md:text-7xl font-serif font-light text-foreground uppercase tracking-tight leading-[0.9]">
                 CALL THE <br />
-                <span 
-                  className="text-transparent" 
+                <span
+                  className="text-transparent"
                   style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}
                 >
                   RONIN.
@@ -186,7 +183,7 @@ export const Contact = () => {
             {/* The Architect's Contact Ledger list */}
             <div className="w-full border-t border-foreground/15 flex flex-col contact-reveal">
               {CONTACT_LINKS.map((link) => (
-                <a 
+                <a
                   key={link.id}
                   href={link.href}
                   target="_blank"
@@ -224,7 +221,7 @@ export const Contact = () => {
 
             {/* Premium Seal Signature block */}
             <div className="flex items-center justify-start lg:justify-end gap-6 pt-4 contact-reveal">
-              
+
               {/* Minimal Metadata Sign-off */}
               <div className="text-[10px] font-mono text-foreground/40 text-left lg:text-right leading-relaxed uppercase tracking-[0.3em] font-bold">
                 <div>Status // <span className="text-foreground/70">BLADE_IS_READY</span></div>
@@ -235,7 +232,7 @@ export const Contact = () => {
               <div className="relative group/seal cursor-pointer select-none">
                 {/* Stamp Outer glow ring */}
                 <div className="absolute inset-[-4px] border border-red-600/30 rounded-sm scale-95 group-hover/seal:scale-105 transition-all duration-700 opacity-60 pointer-events-none" style={{ filter: "url(#hanko-torn-filter-contact)" }} />
-                
+
                 {/* Main red stamp */}
                 <div
                   className="w-14 h-14 border-2 border-red-600 flex items-center justify-center font-serif text-[20px] font-black text-red-600 tracking-tighter transition-all duration-500 group-hover/seal:rotate-[6deg] group-hover/seal:scale-105"
@@ -246,7 +243,7 @@ export const Contact = () => {
                   }}
                 >
                   <span className="rotate-[-3deg] uppercase font-bold text-center leading-none text-red-600">
-                    英<br/>秀
+                    英<br />秀
                   </span>
                 </div>
               </div>

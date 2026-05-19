@@ -243,8 +243,12 @@ export const Experience = () => {
                           height={1500}
                           className="h-full w-full object-cover grayscale contrast-[1.2] pointer-events-auto"
                           style={{
-                            maskImage: "linear-gradient(to bottom, black 50%, transparent 100%), linear-gradient(to left, black 50%, transparent 100%)",
-                            WebkitMaskImage: "linear-gradient(to bottom, black 50%, transparent 100%), linear-gradient(to left, black 50%, transparent 100%)",
+                            maskImage: i === 2 
+                              ? "linear-gradient(to bottom, transparent 0%, black 20%, black 85%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)"
+                              : "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
+                            WebkitMaskImage: i === 2 
+                              ? "linear-gradient(to bottom, transparent 0%, black 20%, black 85%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)"
+                              : "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
                             maskComposite: "intersect",
                             WebkitMaskComposite: "source-in"
                           }}
@@ -463,8 +467,8 @@ export const Experience = () => {
                           height={690}
                           className="w-full h-full object-cover grayscale contrast-[1.2] pointer-events-auto"
                           style={{
-                            maskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
-                            WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, black 40%, transparent 100%)",
+                            maskImage: "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to right, black 75%, transparent 100%)",
+                            WebkitMaskImage: "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to right, black 75%, transparent 100%)",
                             maskComposite: "intersect",
                             WebkitMaskComposite: "source-in"
                           }}

@@ -57,9 +57,25 @@ const BOOKS = [
   },
 ];
 
+const cardVariants = {
+  hidden: { opacity: 0, scale: 0.97 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "tween" as const,
+      ease: "easeOut" as const,
+      duration: 0.35
+    }
+  }
+};
+
 const TechCard = ({ name }: { name: string }) => {
   return (
-    <div className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] relative overflow-hidden border border-foreground/20 bg-background/50 rounded-none p-4 group transition-all duration-700 flex items-center justify-between cursor-none">
+    <motion.div
+      variants={cardVariants}
+      className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] relative overflow-hidden border border-foreground/20 bg-background/50 rounded-none p-4 group transition-all duration-700 flex items-center justify-between cursor-none"
+    >
       <div
         className="absolute inset-0 border border-foreground/10 z-10 pointer-events-none group-hover:border-foreground/30 transition-colors duration-700"
         style={{ filter: "url(#line-torn-filter)" }}
@@ -85,7 +101,7 @@ const TechCard = ({ name }: { name: string }) => {
       <div className="relative z-10 text-foreground/20 font-serif font-bold text-lg md:text-xl group-hover:text-foreground/40 transition-colors duration-700">
         術
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -95,6 +111,7 @@ const DataLine = ({ text }: { text: string }) => (
     <div className="w-12 md:w-16 h-[1px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
     <span>{text}</span>
     <div className="w-12 md:w-16 h-[1px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+    <span>{text}</span>
   </div>
 );
 
@@ -149,11 +166,13 @@ export const Stack = () => {
   useGSAP(() => {
     if (!mounted || !containerRef.current) return;
 
+    // FIX: Trigger scroll parallax specifically on the header wrapper elements which have FIXED height
+    // This stops the title from jumping/glitching when the accordion height changes below!
     gsap.to(".tech-title-1", {
       x: -30,
       ease: "none",
       scrollTrigger: {
-        trigger: containerRef.current,
+        trigger: ".tech-title-trigger",
         start: "top bottom",
         end: "bottom top",
         scrub: true
@@ -163,7 +182,7 @@ export const Stack = () => {
       x: 30,
       ease: "none",
       scrollTrigger: {
-        trigger: containerRef.current,
+        trigger: ".tech-title-trigger",
         start: "top bottom",
         end: "bottom top",
         scrub: true
@@ -182,11 +201,11 @@ export const Stack = () => {
       }
     });
 
-
-
   }, { scope: containerRef, dependencies: [mounted] });
 
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
+
+  if (!mounted) return null;
 
   return (
     <section
@@ -204,7 +223,10 @@ export const Stack = () => {
       </svg>
 
       <div className="relative z-20">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10 mb-20 md:mb-32 text-left relative">
+
+        {/* Header Section (Parallax base trigger class added) */}
+        <div className="tech-title-trigger mx-auto max-w-[1400px] px-6 md:px-10 mb-20 md:mb-32 text-left relative z-20">
+          {/* Stationary Samurai Art Overlay - Restored to original position inside the container */}
           <div
             className="hidden md:block absolute right-[2%] lg:right-[5%] top-[-20%] lg:top-[-30%] w-[350px] lg:w-[500px] h-[500px] lg:h-[700px] opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none stack-reveal-top z-0"
             style={{ filter: isDark ? "invert(1)" : "invert(0)" }}
@@ -240,7 +262,9 @@ export const Stack = () => {
             </p>
           </div>
         </div>
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10 space-y-6 relative z-10">
+
+        {/* The Tech Accordions */}
+        <div className="mx-auto max-w-[1400px] px-6 md:px-10 space-y-6 relative z-20">
           {BOOKS.map((book) => {
             const isOpen = activeBook === book.id;
             return (
@@ -255,11 +279,11 @@ export const Stack = () => {
                   className="w-full text-left flex items-center py-4 relative z-10 cursor-pointer pointer-events-auto group/btn"
                 >
                   <div className="flex items-center gap-6">
-                    <span className={`font-serif text-3xl md:text-4xl lg:text-5xl transition-all duration-500 ${isOpen ? "text-foreground scale-110 font-bold" : "text-foreground/25 group-hover/btn:text-foreground/60"}`}>
+                    <span className={`font-serif text-3xl md:text-4xl lg:text-5xl inline-block origin-left will-change-transform transition-[transform,color] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? "text-foreground scale-110 font-bold" : "text-foreground/25 scale-100 font-bold group-hover/btn:text-foreground/60"}`}>
                       {book.kanji}
                     </span>
                     <div className="flex flex-col">
-                      <span className={`text-lg md:text-xl lg:text-2xl font-serif font-light uppercase tracking-wide transition-colors duration-500 ${isOpen ? "text-foreground font-semibold" : "text-foreground/60 group-hover/btn:text-foreground/90"}`}>
+                      <span className={`text-lg md:text-xl lg:text-2xl font-serif uppercase tracking-wide transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? "text-foreground font-semibold" : "text-foreground/50 font-light group-hover/btn:text-foreground/80"}`}>
                         {book.title}
                       </span>
                       <span className="text-[10px] font-mono tracking-widest text-foreground/40 mt-1 uppercase">
@@ -269,30 +293,42 @@ export const Stack = () => {
                   </div>
                 </button>
 
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-                      className="overflow-hidden relative z-10"
-                    >
-                      <div className="pt-4 pb-2 space-y-6">
-                        <p className="text-sm md:text-base font-serif font-light text-foreground/75 leading-relaxed pl-6 relative">
-                          <span className="absolute left-0 top-1 bottom-1 w-[2px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
-                          {book.description}
-                        </p>
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{
+                    height: isOpen ? "auto" : 0,
+                    opacity: isOpen ? 1 : 0
+                  }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden relative z-10"
+                >
+                  <div className="pt-4 pb-2 space-y-6">
+                    <p className="text-sm md:text-base font-serif font-light text-foreground/75 leading-relaxed pl-6 relative">
+                      <span className="absolute left-0 top-1 bottom-1 w-[2px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+                      {book.description}
+                    </p>
 
-                        <div className="flex flex-wrap gap-4 pt-2">
-                          {book.techs.map((tech) => (
-                            <TechCard key={tech} name={tech} />
-                          ))}
-                        </div>
-                      </div>
+                    {/* Katana Draw Stagger Motion Container */}
+                    <motion.div
+                      initial="hidden"
+                      animate={isOpen ? "show" : "hidden"}
+                      variants={{
+                        hidden: { opacity: 0 },
+                        show: {
+                          opacity: 1,
+                          transition: {
+                            staggerChildren: 0.05
+                          }
+                        }
+                      }}
+                      className="flex flex-wrap gap-4 pt-2"
+                    >
+                      {book.techs.map((tech) => (
+                        <TechCard key={tech} name={tech} />
+                      ))}
                     </motion.div>
-                  )}
-                </AnimatePresence>
+                  </div>
+                </motion.div>
               </div>
             );
           })}
