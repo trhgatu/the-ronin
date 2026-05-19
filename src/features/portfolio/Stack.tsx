@@ -80,7 +80,6 @@ const TechCard = ({ name }: { name: string }) => {
         className="absolute inset-0 border border-foreground/10 z-10 pointer-events-none group-hover:border-foreground/30 transition-colors duration-700"
         style={{ filter: "url(#line-torn-filter)" }}
       />
-      <div className="absolute top-0 left-0 w-0 h-full bg-foreground/[0.04] group-hover:w-full transition-all duration-1000 ease-out z-0" />
 
       <div className="relative z-10 flex items-center gap-4">
         <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center transition-all duration-700 scale-95 group-hover:scale-110">
