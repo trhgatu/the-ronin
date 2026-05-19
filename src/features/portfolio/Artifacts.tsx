@@ -206,14 +206,14 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
             className="absolute inset-0 rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] pointer-events-none z-20"
           >
             <div
-              className="absolute inset-[-12px] border-[24px] border-background"
+              className="absolute inset-[-20px] border-[44px] border-background"
               style={{ filter: "url(#project-torn-mask)" }}
             />
             <div
-              className="absolute inset-[10px] border border-foreground/20"
+              className="absolute inset-[16px] border border-foreground/20"
               style={{ filter: "url(#project-torn-mask)" }}
             />
-            <div className="absolute inset-[6px] border border-foreground/[0.03] rotate-[-1deg]" />
+            <div className="absolute inset-[10px] border border-foreground/[0.03] rotate-[-1deg]" />
           </div>
         </div>
       </div>
