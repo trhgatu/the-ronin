@@ -74,15 +74,15 @@ const TechCard = ({ name }: { name: string }) => {
   return (
     <motion.div
       variants={cardVariants}
-      className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] relative overflow-hidden border border-foreground/20 bg-background/50 rounded-none p-4 group transition-all duration-700 flex items-center justify-between cursor-none"
+      className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] relative overflow-hidden border border-foreground/30 bg-background/50 rounded-none p-4 group flex items-center justify-between cursor-none"
     >
       <div
-        className="absolute inset-0 border border-foreground/10 z-10 pointer-events-none group-hover:border-foreground/30 transition-colors duration-700"
+        className="absolute inset-0 border border-foreground/20 z-10 pointer-events-none"
         style={{ filter: "url(#line-torn-filter)" }}
       />
 
       <div className="relative z-10 flex items-center gap-4">
-        <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center transition-all duration-700 scale-95 group-hover:scale-110">
+        <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center transition-all duration-700 scale-95 group-hover:scale-105">
           <Image
             src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
             alt={name}
@@ -93,11 +93,11 @@ const TechCard = ({ name }: { name: string }) => {
           />
         </div>
 
-        <h3 className="text-sm md:text-base font-serif font-semibold text-foreground/70 uppercase tracking-widest group-hover:text-foreground transition-all duration-700">
+        <h3 className="text-sm md:text-base font-serif font-semibold text-foreground/70 uppercase tracking-widest">
           {name}
         </h3>
       </div>
-      <div className="relative z-10 text-foreground/20 font-serif font-bold text-lg md:text-xl group-hover:text-foreground/40 transition-colors duration-700">
+      <div className="relative z-10 text-foreground/25 font-serif font-bold text-lg md:text-xl">
         術
       </div>
     </motion.div>
