@@ -16,6 +16,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "next-themes";
+import { soundManager } from "@/lib/sound";
 
 const wrap = (min: number, max: number, v: number) => {
   const rangeSize = max - min;
@@ -269,7 +270,10 @@ export const Stack = () => {
               >
                 <div className="absolute inset-0 bg-foreground/[0.005] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700 ease-out z-0 pointer-events-none" />
                 <button
-                  onClick={() => setActiveBook(isOpen ? "" : book.id)}
+                  onClick={() => {
+                    setActiveBook(isOpen ? "" : book.id);
+                    soundManager?.playBookOpen();
+                  }}
                   className="w-full text-left flex items-center py-4 relative z-10 cursor-pointer pointer-events-auto group/btn"
                 >
                   <div className="flex items-center gap-6">

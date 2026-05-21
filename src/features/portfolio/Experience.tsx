@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
 import { useTheme } from "next-themes";
 import Image from 'next/image';
+import { soundManager } from '@/lib/sound';
 
 const EXPERIENCES = [
   {
@@ -174,6 +175,9 @@ export const Experience = () => {
             trigger: `.exp-entry-${i}`,
             start: "top 62%",
             once: true,
+            onEnter: () => {
+              soundManager?.playFootstep();
+            }
           }
         }
       );
@@ -318,7 +322,10 @@ export const Experience = () => {
                                   return (
                                     <button
                                       key={book.id}
-                                      onClick={() => setActiveBook(book.id)}
+                                      onClick={() => {
+                                        setActiveBook(book.id);
+                                        soundManager?.playBookOpen();
+                                      }}
                                       className="flex flex-col items-center gap-1 py-1.5 transition-all duration-300 relative group pointer-events-auto cursor-pointer"
                                     >
                                       <span className={`font-serif text-xl transition-all duration-300 ${isSelected ? "text-[#8b0000] font-bold scale-110" : "text-foreground/30 group-hover:text-foreground/75"}`}>

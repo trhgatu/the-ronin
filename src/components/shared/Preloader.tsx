@@ -18,7 +18,7 @@ export const Preloader = () => {
 
   useEffect(() => {
     setMounted(true);
-    
+
     if (typeof window !== 'undefined') {
       const hasSeenPreloader = sessionStorage.getItem('preloader-seen');
       if (hasSeenPreloader === 'true') {
@@ -62,7 +62,7 @@ export const Preloader = () => {
     }, "-=1.1"); // overlap drawing of Ensō
 
     // 3. Short tranquil hold, then fade in the Enter button
-    tl.to({}, { 
+    tl.to({}, {
       duration: 0.3,
       onComplete: () => {
         setShowEnter(true);
@@ -100,9 +100,9 @@ export const Preloader = () => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(
         new CustomEvent("trigger-ink-transition", {
-          detail: { 
-            cx: window.innerWidth / 2, 
-            cy: window.innerHeight / 2, 
+          detail: {
+            cx: window.innerWidth / 2,
+            cy: window.innerHeight / 2,
             targetTheme: currentTheme,
             preset: "mist"
           },
@@ -181,8 +181,6 @@ export const Preloader = () => {
             </span>
           ))}
         </div>
-
-        {/* Cinematic "Enter the Void" Button */}
         <div className="h-12 flex items-center justify-center mt-2">
           <AnimatePresence>
             {showEnter && (
@@ -194,9 +192,9 @@ export const Preloader = () => {
                 onClick={handleEnter}
                 className="px-8 py-3 border border-foreground/20 hover:border-foreground/50 bg-background/40 hover:bg-background/80 backdrop-blur-sm font-mono text-[9px] md:text-[10px] tracking-[0.35em] uppercase font-bold text-foreground/50 hover:text-foreground transition-all duration-500 cursor-none relative group focus:outline-none"
               >
-                <div 
-                  className="absolute inset-0 border border-foreground/5 pointer-events-none group-hover:border-foreground/15 transition-colors duration-500" 
-                  style={{ filter: "url(#line-torn-filter-preloader)" }} 
+                <div
+                  className="absolute inset-0 border border-foreground/5 pointer-events-none group-hover:border-foreground/15 transition-colors duration-500"
+                  style={{ filter: "url(#line-torn-filter-preloader)" }}
                 />
                 [ Enter The Void ]
               </motion.button>

@@ -70,33 +70,54 @@ class SoundManager {
     }
 
     const ctx = this.ctx;
-    const duration = 0.35;
+    const duration = 0.38;
+
     const bufferSize = ctx.sampleRate * duration;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
-
     for (let i = 0; i < bufferSize; i++) {
       data[i] = Math.random() * 2 - 1;
     }
 
     const noise = ctx.createBufferSource();
     noise.buffer = buffer;
+
     const filter = ctx.createBiquadFilter();
     filter.type = "bandpass";
-    filter.Q.setValueAtTime(4.0, ctx.currentTime);
-    filter.frequency.setValueAtTime(280, ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(1900, ctx.currentTime + 0.3);
+    filter.Q.setValueAtTime(3.5, ctx.currentTime);
+    filter.frequency.setValueAtTime(320, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(2400, ctx.currentTime + 0.28);
+
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.045, ctx.currentTime + 0.06); // quiet, subtle swoosh
+    gain.gain.linearRampToValueAtTime(0.24, ctx.currentTime + 0.08); // Clearly audible swoosh
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
 
+    // 2. The Metallic Ring (High Sine Wave sweep - simulates steel friction in the air)
+    const ringDuration = 0.15;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(2800, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + ringDuration);
+
+    const ringGain = ctx.createGain();
+    ringGain.gain.setValueAtTime(0.015, ctx.currentTime); // Subtle steel ring
+    ringGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + ringDuration);
+
+    // Connections
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.connect(ringGain);
+    ringGain.connect(ctx.destination);
+
+    // Playback
     noise.start();
+    osc.start();
+
     noise.stop(ctx.currentTime + duration);
+    osc.stop(ctx.currentTime + ringDuration);
   }
 
   playStampThud() {
@@ -107,46 +128,67 @@ class SoundManager {
     }
 
     const ctx = this.ctx;
-    const duration = 0.15;
 
+    // 1. Deep Bass Body Thud (Sine)
+    const duration = 0.18;
     const osc = ctx.createOscillator();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(120, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(35, ctx.currentTime + duration);
+    osc.frequency.setValueAtTime(160, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + duration);
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.24, ctx.currentTime);
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
 
-    const bufferSize = ctx.sampleRate * 0.08;
+    // 2. Mid Wood Impact (Triangle - adds harmonic body audible on laptops)
+    const midDuration = 0.08;
+    const midOsc = ctx.createOscillator();
+    midOsc.type = "triangle";
+    midOsc.frequency.setValueAtTime(320, ctx.currentTime);
+    midOsc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + midDuration);
+
+    const midGain = ctx.createGain();
+    midGain.gain.setValueAtTime(0.18, ctx.currentTime);
+    midGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + midDuration);
+
+    // 3. Wood Contact Click (Highpass White Noise - transient snap)
+    const clickDuration = 0.02; // 20ms click
+    const bufferSize = ctx.sampleRate * clickDuration;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.05;
+      data[i] = Math.random() * 2 - 1;
     }
-
     const noise = ctx.createBufferSource();
     noise.buffer = buffer;
 
     const noiseFilter = ctx.createBiquadFilter();
-    noiseFilter.type = "lowpass";
-    noiseFilter.frequency.setValueAtTime(140, ctx.currentTime);
+    noiseFilter.type = "highpass";
+    noiseFilter.frequency.setValueAtTime(1200, ctx.currentTime);
 
     const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.09, ctx.currentTime);
-    noiseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.07);
+    noiseGain.gain.setValueAtTime(0.14, ctx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + clickDuration);
 
+    // Connections
     osc.connect(gain);
     gain.connect(ctx.destination);
+
+    midOsc.connect(midGain);
+    midGain.connect(ctx.destination);
 
     noise.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
     noiseGain.connect(ctx.destination);
 
+    // Playback
     osc.start();
+    midOsc.start();
     noise.start();
+
     osc.stop(ctx.currentTime + duration);
-    noise.stop(ctx.currentTime + duration);
+    midOsc.stop(ctx.currentTime + midDuration);
+    noise.stop(ctx.currentTime + clickDuration);
   }
 
   playWaterSplash() {
@@ -199,6 +241,147 @@ class SoundManager {
     noise.start();
     osc.stop(ctx.currentTime + 0.22);
     noise.stop(ctx.currentTime + 0.22);
+  }
+
+  playFootstep() {
+    if (this.isMuted || !this.ctx) return;
+
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+
+    const ctx = this.ctx;
+
+    const duration = 0.16;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(110, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + duration);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+    const squishDuration = 0.08;
+    const bufferSize = ctx.sampleRate * squishDuration;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.Q.setValueAtTime(5.5, ctx.currentTime);
+    filter.frequency.setValueAtTime(950, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + squishDuration);
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.038, ctx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + squishDuration);
+
+    // Connections
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    // Playback
+    osc.start();
+    noise.start();
+
+    osc.stop(ctx.currentTime + duration);
+    noise.stop(ctx.currentTime + squishDuration);
+  }
+
+  playBookOpen() {
+    if (this.isMuted || !this.ctx) return;
+
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+
+    const ctx = this.ctx;
+    
+    // 1. Tactile Woody Click (Tiếng cạch khớp gỗ đầu tiên - tạo phản hồi lực bấm rõ ràng)
+    const clickDuration = 0.06;
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(240, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(90, ctx.currentTime + clickDuration);
+
+    const clickGain = ctx.createGain();
+    clickGain.gain.setValueAtTime(0.18, ctx.currentTime);
+    clickGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + clickDuration);
+
+    // 2. Heavy Scroll / Bamboo Slide (Tiếng trượt cuộn tre / giấy da dày)
+    const slideDuration = 0.35;
+    const bufferSize = ctx.sampleRate * slideDuration;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.Q.setValueAtTime(2.5, ctx.currentTime);
+    filter.frequency.setValueAtTime(380, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + slideDuration);
+
+    const slideGain = ctx.createGain();
+    slideGain.gain.setValueAtTime(0, ctx.currentTime);
+    slideGain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + 0.06); // Clearly audible sliding friction
+    slideGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + slideDuration);
+
+    // 3. High-frequency Parchment Rustle (Tiếng sột soạt giấy da phụ)
+    const rustleDuration = 0.22;
+    const rustleBufferSize = ctx.sampleRate * rustleDuration;
+    const rustleBuffer = ctx.createBuffer(1, rustleBufferSize, ctx.sampleRate);
+    const rustleData = rustleBuffer.getChannelData(0);
+    for (let i = 0; i < rustleBufferSize; i++) {
+      rustleData[i] = Math.random() * 2 - 1;
+    }
+    const rustleNoise = ctx.createBufferSource();
+    rustleNoise.buffer = rustleBuffer;
+
+    const rustleFilter = ctx.createBiquadFilter();
+    rustleFilter.type = "bandpass";
+    rustleFilter.Q.setValueAtTime(4.0, ctx.currentTime);
+    rustleFilter.frequency.setValueAtTime(1600, ctx.currentTime);
+    rustleFilter.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + rustleDuration);
+
+    const rustleGain = ctx.createGain();
+    rustleGain.gain.setValueAtTime(0, ctx.currentTime + 0.04);
+    rustleGain.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 0.04 + 0.04);
+    rustleGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.04 + rustleDuration);
+
+    // Connections
+    osc.connect(clickGain);
+    clickGain.connect(ctx.destination);
+
+    noise.connect(filter);
+    filter.connect(slideGain);
+    slideGain.connect(ctx.destination);
+
+    rustleNoise.connect(rustleFilter);
+    rustleFilter.connect(rustleGain);
+    rustleGain.connect(ctx.destination);
+
+    // Playback
+    osc.start();
+    noise.start();
+    rustleNoise.start(ctx.currentTime + 0.04);
+
+    osc.stop(ctx.currentTime + clickDuration);
+    noise.stop(ctx.currentTime + slideDuration);
+    rustleNoise.stop(ctx.currentTime + 0.04 + rustleDuration);
   }
 }
 

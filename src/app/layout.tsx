@@ -28,8 +28,35 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "TRHGATU | Architectural Excellence",
-  description: "Transmuting the chaos of logic into the gold of legacy.",
+  title: "Tran Hoang Anh Tu — Software Architect & Creative Developer",
+  description: "Personal portfolio of Tran Hoang Anh Tu (TRHGATU). Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
+  keywords: [
+    "Trần Hoàng Anh Tú",
+    "TRHGATU",
+    "Software Architect",
+    "Fullstack Developer",
+    "Creative Coding",
+    "Next.js Portfolio",
+    "Three.js",
+    "Go Developer",
+    "NestJS Architect",
+    "Vietnam Developer"
+  ],
+  authors: [{ name: "Trần Hoàng Anh Tú", url: "https://thatu.dev" }],
+  creator: "Trần Hoàng Anh Tú",
+  openGraph: {
+    title: "Trần Hoàng Anh Tú — Software Architect & Creative Developer",
+    description: "Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
+    url: "https://thatu.dev",
+    siteName: "TRHGATU Portfolio",
+    locale: "vi_VN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Trần Hoàng Anh Tú — Software Architect & Creative Developer",
+    description: "Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
+  },
 };
 
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
