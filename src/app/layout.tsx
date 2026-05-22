@@ -63,7 +63,6 @@ import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { PageBackdrop } from "@/components/shared/PageBackdrop";
 import { InkTransitionCanvas } from "@/components/shared/InkTransitionCanvas";
 import { Preloader } from "@/components/shared/Preloader";
-import { SoundToggle } from "@/components/shared/SoundToggle";
 
 export default function RootLayout({
   children,
@@ -102,7 +101,6 @@ export default function RootLayout({
             <CustomCursor />
             <Navbar />
             {children}
-            <SoundToggle />
             <Analytics />
           </SmoothScroll>
         </ThemeProvider>
