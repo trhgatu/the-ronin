@@ -8,6 +8,8 @@ import { ThemeToggle } from "./ThemeToggle";
 import { SoundToggle } from "./SoundToggle";
 import { Menu, X } from "lucide-react";
 
+import Link from "next/link";
+
 gsap.registerPlugin(ScrollTrigger);
 
 const navItems = [
@@ -87,7 +89,7 @@ export const Navbar = () => {
       {/* 1. Global Branding & Top Bar Controls (Left/Right corners) */}
       <header className="fixed top-8 left-6 md:left-10 right-6 md:right-10 z-[9999] pointer-events-none flex justify-between items-start">
         {/* Top-Left Branding (Premium Hanko Stamp Logo) */}
-        <a 
+        <Link
           href="#hero"
           onClick={(e) => { e.preventDefault(); handleNavClick("#hero"); }}
           className="flex items-center gap-4 pointer-events-auto group cursor-pointer outline-none"
@@ -107,7 +109,7 @@ export const Navbar = () => {
               Software Architect
             </span>
           </div>
-        </a>
+        </Link>
 
         {/* Top-Right Toggle & Mobile menu trigger */}
         <div className="flex items-center gap-2 pointer-events-auto">
@@ -154,7 +156,7 @@ export const Navbar = () => {
               )}
 
               <div className="flex items-center transition-all duration-300">
-                <span className="font-bold">{item.roman}</span>
+                <span className="font-bold">{item.roman}.</span>
                 <span className={`
                   font-serif font-light tracking-[0.3em] transition-all duration-300 origin-left whitespace-nowrap
                   ${isActive
@@ -162,7 +164,7 @@ export const Navbar = () => {
                     : "opacity-0 max-w-0 scale-x-90 overflow-hidden inline-block group-hover:opacity-60 group-hover:max-w-[200px] group-hover:scale-x-100 group-hover:ml-2"
                   }
                 `}>
-                  一 {item.label}
+                  {item.label}
                 </span>
               </div>
             </a>

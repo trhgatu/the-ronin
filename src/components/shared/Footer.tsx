@@ -74,14 +74,14 @@ export const Footer = () => {
             </div>
             <div className="flex flex-col gap-6 md:gap-5 md:text-right w-full">
               {[
-                { label: 'LINKEDIN', href: 'https://linkedin.com', sub: 'Clan_Network' },
-                { label: 'GITHUB', href: 'https://github.com', sub: 'Dojo_Records' },
+                { label: 'LINKEDIN', href: 'https://linkedin.com/in/trhgatu1103', sub: '@trhgatu1103' },
+                { label: 'GITHUB', href: 'https://github.com/trhgatu', sub: '@trhgatu' },
                 { label: 'Instagram', href: 'https://instagram.com/th_atu/', sub: '@th_atu' }
               ].map((social) => (
-                <a key={social.label} href={social.href} className="group flex items-center md:justify-end gap-4 text-base md:text-sm font-serif font-bold uppercase text-foreground/40 hover:text-foreground transition-colors">
+                <Link key={social.label} href={social.href} className="group flex items-center md:justify-end gap-4 text-base md:text-sm font-serif font-bold uppercase text-foreground/40 hover:text-foreground transition-colors">
                   <span className="text-[9px] font-mono opacity-40 md:opacity-0 md:group-hover:opacity-100 transition-all tracking-[0.3em] text-foreground/50 translate-x-0 md:translate-x-2 md:group-hover:translate-x-0">{social.sub}</span>
                   {social.label}
-                </a>
+                </Link>
               ))}
             </div>
           </div>

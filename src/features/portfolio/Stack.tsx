@@ -38,7 +38,7 @@ const BOOKS = [
     title: "The Book of Water",
     subtitle: "Fluid Interaction & Motion",
     description: "Adaptive motion dynamics, seamless responsiveness, and user experiences that flow like pristine liquid.",
-    techs: ["React", "NextJS", "Tailwind", "Vite", "GSAP", "ThreeJS", "Framer", "CSS", "HTML"],
+    techs: ["React", "Next.js", "TailwindCSS", "Vite", "GSAP", "Three.js", "Framer", "CSS", "HTML"],
   },
   {
     id: "fire",
@@ -46,7 +46,7 @@ const BOOKS = [
     title: "The Book of Fire",
     subtitle: "Concurrency, Scaling & Infra Forge",
     description: "High-concurrency engineering, extreme low-latency tuning, and aggressive runtime optimizations under heavy stress.",
-    techs: ["NestJS", "NodeJS", "Express", "PostgreSQL", "MongoDB", "Redis", "Prisma", "Supabase", "GraphQL"],
+    techs: ["NestJS", "Node.js", "Express", "PostgreSQL", "MongoDB", "Redis", "Prisma", "Supabase", "GraphQL"],
   },
   {
     id: "wind",

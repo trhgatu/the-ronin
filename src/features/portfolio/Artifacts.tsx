@@ -28,14 +28,25 @@ const PROJECTS: Project[] = [
   {
     id: '01',
     daiji: '壹',
-    title: 'Nexus Data Engine',
+    title: 'ForgeOS - An Operating System for Thought, Growth & Creation',
     blade: 'THE NODACHI [大太刀]',
-    description: 'A high-throughput distributed data processing engine built with Rust and WebAssembly, forged to slice through massive real-time data streams.',
-    image: '/projects/ai-platform.png',
-    tags: ['Rust', 'Wasm', 'K8s'],
-    protocol: 'DISTRIBUTED_CORE_V1',
-    year: '2024',
-    note: 'forged in the cold digital winter. its heavy edge slices through petabytes of raw event streams without losing its sharp focus...'
+    description: 'A powerful personal operating system tailored for self-mastery, engineering track, and gamified growth, built on a robust Domain-Driven Design (DDD) & CQRS architecture.',
+    image: '/projects/forgeos.png',
+    tags: [
+      'TypeScript',
+      'Next.js',
+      'NestJS',
+      'Prisma',
+      'PostgreSQL',
+      'Redis',
+      'Socket.io',
+      'Turborepo',
+      'Docker',
+      'BullMQ',
+    ],
+    protocol: 'FORGE_CORE_SYSTEM_V1',
+    year: '2026',
+    note: 'forged from the ashes of past realities to master the present. a sanctuary for discipline, code synthesis, and deep existential tracking, slicing through raw personal metrics with unwavering focus.'
   },
   {
     id: '02',
