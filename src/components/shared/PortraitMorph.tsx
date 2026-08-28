@@ -9,6 +9,8 @@ export type PortraitMorphProps = {
   srcB: string;
   alt: string;
   className?: string;
+  /** Optional duotone recolor target (RGB, 0..1). Undefined = no tint (default look). */
+  tint?: [number, number, number];
 };
 
 const VERTEX_SHADER = `
@@ -31,6 +33,8 @@ uniform vec2 uResolution;
 uniform vec2 uImageSize;
 uniform vec2 uOrigin;
 uniform vec2 uDirection;
+uniform vec3 uTint;
+uniform float uTintStrength;
 
 varying vec2 vUv;
 
@@ -110,6 +114,11 @@ void main() {
   float darken = edgeBand * 0.35 * bell;
   color.rgb *= 1.0 - darken;
 
+  float lum = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+  vec3 gray = vec3(lum);
+  vec3 duotone = lum * uTint;
+  color.rgb = mix(gray, duotone, uTintStrength);
+
   gl_FragColor = color;
 }
 `;
@@ -119,6 +128,7 @@ export function PortraitMorph({
   srcB,
   alt,
   className,
+  tint,
 }: PortraitMorphProps): ReactNode {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [ready, setReady] = useState(false);
@@ -127,6 +137,16 @@ export function PortraitMorph({
   const originRef = useRef<[number, number]>([0.5, 0.5]);
   const directionRef = useRef<[number, number]>([1, 0]);
   const lastPointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
+
+  // Kept separate from the [srcA, srcB] effect below so hovering a ring (which
+  // changes `tint` every mouseenter/leave) never re-triggers a full texture reload.
+  const tintPropRef = useRef(tint);
+  const tintStrengthRef = useRef(0);
+  const tintColorRef = useRef<[number, number, number]>([1, 1, 1]);
+
+  useEffect(() => {
+    tintPropRef.current = tint;
+  }, [tint]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -183,6 +203,8 @@ export function PortraitMorph({
         uImageSize: { value: imageSize },
         uOrigin: { value: [0.5, 0.5] as [number, number] },
         uDirection: { value: [1, 0] as [number, number] },
+        uTint: { value: [1, 1, 1] as [number, number, number] },
+        uTintStrength: { value: 0 },
       },
       transparent: true,
     });
@@ -221,11 +243,24 @@ export function PortraitMorph({
       const k = 1 - Math.exp(-stiffness * dt);
       progressRef.current += (target - progressRef.current) * k;
 
+      const activeTint = tintPropRef.current;
+      const tintK = 1 - Math.exp(-3.0 * dt);
+      tintStrengthRef.current += ((activeTint ? 1 : 0) - tintStrengthRef.current) * tintK;
+      if (activeTint) {
+        tintColorRef.current = [
+          tintColorRef.current[0] + (activeTint[0] - tintColorRef.current[0]) * tintK,
+          tintColorRef.current[1] + (activeTint[1] - tintColorRef.current[1]) * tintK,
+          tintColorRef.current[2] + (activeTint[2] - tintColorRef.current[2]) * tintK,
+        ];
+      }
+
       program.uniforms.uTime.value = time;
       program.uniforms.uProgress.value = progressRef.current;
       program.uniforms.uOrigin.value = originRef.current;
       program.uniforms.uDirection.value = directionRef.current;
       program.uniforms.uImageSize.value = imageSize;
+      program.uniforms.uTint.value = tintColorRef.current;
+      program.uniforms.uTintStrength.value = tintStrengthRef.current;
 
       renderer.render({ scene });
       raf = requestAnimationFrame(tick);

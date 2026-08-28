@@ -16,6 +16,7 @@ interface Project {
   daiji: string;
   title: string;
   blade: string;
+  bladeCm: number;
   description: string;
   image: string;
   tags: string[];
@@ -30,6 +31,7 @@ const PROJECTS: Project[] = [
     daiji: '壹',
     title: 'ForgeOS - An Operating System for Thought, Growth & Creation',
     blade: 'THE NODACHI [大太刀]',
+    bladeCm: 110,
     description: 'A powerful personal operating system tailored for self-mastery, engineering track, and gamified growth, built on a robust Domain-Driven Design (DDD) & CQRS architecture.',
     image: '/projects/forgeos.png',
     tags: [
@@ -53,6 +55,7 @@ const PROJECTS: Project[] = [
     daiji: '貳',
     title: 'Aether Design System',
     blade: 'THE KATANA [刀]',
+    bladeCm: 75,
     description: 'An enterprise-scale design system focused on sharp layout precision and high-fidelity, fluid micro-interactions.',
     image: '/projects/ecommerce.png',
     tags: ['Next.js', 'GSAP', 'Three.js'],
@@ -65,6 +68,7 @@ const PROJECTS: Project[] = [
     daiji: '參',
     title: 'Sentience Analytics',
     blade: 'THE WAKIZASHI [脇差]',
+    bladeCm: 50,
     description: 'Full-stack AI-driven analytics dashboard with real-time 3D visualizations, swift and responsive like a companion blade.',
     image: '/projects/crypto.png',
     tags: ['React', 'Fiber', 'Python'],
@@ -77,6 +81,7 @@ const PROJECTS: Project[] = [
     daiji: '肆',
     title: 'Void Protocol',
     blade: 'THE TANTO [短刀]',
+    bladeCm: 28,
     description: 'High-performance cryptographic communication layer for the decentralized era, concealed, compact, and structurally unbreakable.',
     image: '/projects/ai-platform.png',
     tags: ['Go', 'Solidity', 'Wasm'],
@@ -86,6 +91,16 @@ const PROJECTS: Project[] = [
   },
 ];
 
+// The divider line beside each project's blade name is sized to that blade's
+// real-world length (Nodachi longest, Tanto shortest) — the "forged blade"
+// metaphor becomes an actual proportion instead of just being asserted in
+// copy. `BLADE_BAR_MIN_PX` keeps the shortest blade (Tanto) from shrinking
+// to an illegible sliver.
+const BLADE_BAR_MAX_PX = 96;
+const BLADE_BAR_MIN_PX = 22;
+const MAX_BLADE_CM = Math.max(...PROJECTS.map((p) => p.bladeCm));
+const bladeBarWidth = (cm: number) => Math.round(BLADE_BAR_MIN_PX + (cm / MAX_BLADE_CM) * (BLADE_BAR_MAX_PX - BLADE_BAR_MIN_PX));
+
 const ProjectCard = ({ project, index, isDark }: { project: Project, index: number, isDark: boolean }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
@@ -94,6 +109,10 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
   const backingPaperRef = useRef<HTMLDivElement>(null);
   const photoScreenRef = useRef<HTMLDivElement>(null);
   const isEven = index % 2 === 0;
+  // The flagship (first, biggest, newest) project gets its own case-study-
+  // style layout instead of joining the alternating left/right rhythm —
+  // otherwise all four cards read as one repeated formula at a glance.
+  const featured = index === 0;
 
   useGSAP(() => {
     if (!imageRef.current) return;
@@ -182,7 +201,7 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
   return (
     <div
       ref={cardRef}
-      className={`relative w-full flex flex-col ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 md:gap-16 lg:gap-24 mb-32 md:mb-48 items-center`}
+      className={`relative w-full flex flex-col ${featured ? 'gap-8 md:gap-10 mb-40 md:mb-56' : `${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 md:gap-16 lg:gap-24 mb-32 md:mb-48`} items-center`}
     >
       <span
         ref={watermarkRef}
@@ -192,10 +211,10 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
         {project.daiji}
       </span>
       <div
-        className="flex-1 group cursor-none w-full z-10 relative flex justify-center items-center"
+        className={`${featured ? 'w-full' : 'flex-1'} group cursor-none w-full z-10 relative flex justify-center items-center`}
         onMouseEnter={() => soundManager?.playSwordWhoosh()}
       >
-        <div className="relative w-full max-w-[480px] aspect-[16/10] rotate-[1.5deg] group-hover:rotate-[0.5deg] transition-all duration-700 avatar-frame border border-foreground/10 p-2.5 bg-foreground shadow-[0_16px_48px_rgba(0,0,0,0.3)]">
+        <div className={`relative w-full ${featured ? 'max-w-none aspect-[21/9]' : 'max-w-[480px] aspect-[16/10]'} rotate-[1.5deg] group-hover:rotate-[0.5deg] transition-all duration-700 avatar-frame border border-foreground/10 p-2.5 bg-foreground shadow-[0_16px_48px_rgba(0,0,0,0.3)]`}>
           <div className="absolute top-[-12px] left-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
           <div className="absolute top-[-12px] left-[-12px] w-[1px] h-[20px] bg-foreground/20 pointer-events-none" />
           <div className="absolute bottom-[-12px] right-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
@@ -237,19 +256,28 @@ const ProjectCard = ({ project, index, isDark }: { project: Project, index: numb
           </div>
         </div>
       </div>
-      <div ref={textRef} className="flex-1 flex flex-col justify-center z-10 w-full px-2 md:px-0 relative">
+      <div ref={textRef} className={`${featured ? 'w-full' : 'flex-1'} flex flex-col justify-center z-10 w-full px-2 md:px-0 relative`}>
         <div className={`flex items-center gap-4 mb-4 md:mb-5 mt-4 lg:mt-0 project-reveal-${index} project-reveal-tag`}>
+          {featured && (
+            <span className="text-[10px] font-mono text-foreground/40 uppercase tracking-widest font-bold">Flagship —</span>
+          )}
           <span className="text-[10px] font-mono text-foreground/50 uppercase tracking-widest font-bold">
             {project.blade} {'//'} {project.year}
           </span>
-          <div className="h-[2px] w-8 md:w-12 bg-foreground/15" style={{ filter: "url(#line-torn-filter)" }} />
+          {/* Length is proportional to the real blade's length (Nodachi
+              longest, Tanto shortest) — the metaphor as an actual measurement
+              rather than only asserted in the blade name. */}
+          <div
+            className="h-[2px] bg-foreground/15"
+            style={{ width: bladeBarWidth(project.bladeCm), filter: "url(#line-torn-filter)" }}
+          />
         </div>
 
-        <h3 className={`text-3xl md:text-4xl lg:text-5xl font-serif font-light text-foreground uppercase tracking-tight mb-4 md:mb-6 leading-tight project-reveal-${index}`}>
+        <h3 className={`${featured ? 'text-4xl md:text-6xl lg:text-7xl' : 'text-3xl md:text-4xl lg:text-5xl'} font-serif font-light text-foreground uppercase tracking-tight mb-4 md:mb-6 leading-tight project-reveal-${index}`}>
           {project.title}
         </h3>
 
-        <p className={`text-sm md:text-base font-light text-foreground/45 leading-relaxed mb-6 md:mb-8 max-w-xl project-reveal-${index}`}>
+        <p className={`${featured ? 'text-base md:text-xl max-w-3xl' : 'text-sm md:text-base max-w-xl'} font-light text-foreground/45 leading-relaxed mb-6 md:mb-8 project-reveal-${index}`}>
           {project.description}
         </p>
 
@@ -339,7 +367,7 @@ export const Artifacts = () => {
     <section
       ref={sectionRef}
       id="artifacts"
-      className="relative py-28 md:py-44 bg-background overflow-hidden select-none"
+      className="relative py-28 md:py-44 bg-background select-none"
     >
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
         <defs>
@@ -354,50 +382,65 @@ export const Artifacts = () => {
         </defs>
       </svg>
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 relative z-10">
-        <div className="artifacts-title-trigger mb-24 md:mb-40 text-left relative z-10">
-          <div
-            className="hidden md:block absolute right-[2%] lg:right-[5%] top-[-20%] lg:top-[-30%] w-[350px] lg:w-[500px] h-[500px] lg:h-[700px] opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none artifacts-header-img z-0"
-            style={{ filter: isDark ? "invert(1)" : "invert(0)" }}
-          >
-            <Image
-              src="/images/be-calm-stay-in-control.jpg"
-              alt="Be Calm Stay In Control Art"
-              fill
-              sizes="(max-width: 768px) 0vw, (max-width: 1024px) 350px, 500px"
-              className="object-contain object-right-top"
-              style={{
-                maskImage: "linear-gradient(to bottom, transparent 0%, black 20%, black 85%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
-                WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 20%, black 85%, transparent 100%), linear-gradient(to left, black 75%, transparent 100%)",
-                maskComposite: "intersect",
-                WebkitMaskComposite: "source-in"
-              }}
-              priority
-            />
-          </div>
+        <div className="lg:grid lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16 lg:items-start">
+          {/* The header stays put (CSS `sticky`, not a GSAP pin — same reasoning
+              as About's stage: no JS measurement, no containing-block edge
+              cases) while the project list scrolls past beside it, so "Chapter
+              II" orientation never disappears mid-browse. Desktop only — below
+              `lg` the header sits above the list in normal stacked flow. */}
+          <div className="lg:col-span-5 lg:sticky lg:top-28 artifacts-title-trigger mb-24 md:mb-32 lg:mb-0 text-left relative z-10">
+            {/* The decorative art sits in normal flow above all the header
+                text — big, but not behind or under any of it, so there's no
+                text-vs-image legibility trade-off to tune at all. */}
+            <div
+              className="hidden md:block relative w-full h-[320px] lg:h-[300px] mb-8 opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none artifacts-header-img z-0"
+              style={{ filter: isDark ? "invert(1)" : "invert(0)" }}
+            >
+              <Image
+                src="/images/be-calm-stay-in-control.jpg"
+                alt="Be Calm Stay In Control Art"
+                fill
+                sizes="(max-width: 1024px) 500px, 420px"
+                className="object-contain object-left-top"
+                style={{
+                  maskImage: "linear-gradient(to bottom, black 75%, transparent 100%)",
+                  WebkitMaskImage: "linear-gradient(to bottom, black 75%, transparent 100%)",
+                }}
+                priority
+              />
+            </div>
 
-          <div className="flex items-center gap-4 mb-8 w-full artifacts-reveal-top relative z-10">
-            <div className="flex items-center font-mono text-foreground/75">
-              <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
-                [ CHAPTER II : CREATIONS ]
-              </span>
+            <div className="flex items-center gap-4 mb-8 w-full artifacts-reveal-top relative z-10">
+              <div className="flex items-center font-mono text-foreground/75">
+                <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
+                  [ CHAPTER II : CREATIONS ]
+                </span>
+              </div>
+            </div>
+
+            <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-7xl xl:text-8xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] overflow-visible artifacts-reveal-top relative z-10">
+              <span className="inline-block artifacts-title-1">FORGED</span> <br />
+              <span className="inline-block artifacts-title-2 text-transparent" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>BLADES.</span>
+            </h2>
+
+            <div className="flex flex-col md:flex-row lg:flex-col gap-8 md:gap-12 lg:gap-0 items-start justify-between mt-10 md:mt-12 artifacts-reveal-top">
+              <p className="text-xl md:text-3xl lg:text-xl xl:text-2xl font-light text-foreground/45 max-w-2xl lg:max-w-md leading-tight tracking-tight">
+                A grand exhibition of <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">architectural manifestations</span>. Each creation is a forged blade, balanced between high-precision logic and silent aesthetics.
+              </p>
             </div>
           </div>
-
-          <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible artifacts-reveal-top relative z-10">
-            <span className="inline-block artifacts-title-1">FORGED</span> <br />
-            <span className="inline-block artifacts-title-2 text-transparent" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>BLADES.</span>
-          </h2>
-
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start justify-between mt-10 md:mt-12 artifacts-reveal-top">
-            <p className="text-xl md:text-3xl font-light text-foreground/45 max-w-2xl leading-tight tracking-tight">
-              A grand exhibition of <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">architectural manifestations</span>. Each creation is a forged blade, balanced between high-precision logic and silent aesthetics.
-            </p>
+          {/* `overflow-hidden` lives here (scoped to the list only) instead of
+              on the whole `<section>` — each card's giant daiji watermark can
+              bleed near the card's own edges and needs clipping, but putting
+              that overflow rule on an ancestor of the sticky header above
+              breaks `position: sticky` outright (a well-known CSS interaction:
+              any ancestor with overflow other than `visible` becomes sticky's
+              reference box). */}
+          <div className="lg:col-span-7 flex flex-col overflow-hidden">
+            {PROJECTS.map((project, i) => (
+              <ProjectCard key={project.id} project={project} index={i} isDark={isDark} />
+            ))}
           </div>
-        </div>
-        <div className="flex flex-col">
-          {PROJECTS.map((project, i) => (
-            <ProjectCard key={project.id} project={project} index={i} isDark={isDark} />
-          ))}
         </div>
       </div>
     </section>

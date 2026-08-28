@@ -14,6 +14,8 @@ export type ShaderFlowProps = {
   fadeRy?: number;
   fadeCx?: number;
   fadeCy?: number;
+  /** Cursor-reactive swirl intensity. 0 (default) disables mouse tracking entirely. */
+  mouseStrength?: number;
 };
 
 const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.,1.);}`;
@@ -28,6 +30,8 @@ uniform vec3 uColorLow;
 uniform vec3 uColorHigh;
 uniform vec3 uBgColor;
 uniform vec4 uFadeShape;
+uniform vec2 uMouse;
+uniform float uMouseStrength;
 
 // Simple 2D pseudo-random noise
 float hash(vec2 p) {
@@ -65,6 +69,12 @@ void main(){
   vec2 frag=gl_FragCoord.xy/uR;
   vec2 p=frag-0.5;
   p.x*=uR.x/uR.y;
+  // gl_FragCoord.y grows bottom-to-top; flip so +p.y means "down the screen",
+  // matching the top-left -> bottom-right drift the rotation/gust math below assumes.
+  p.y=-p.y;
+
+  vec2 ndc=vec2(frag.x, 1.0-frag.y);
+  float aspect=uR.x/uR.y;
 
   // 1. DYNAMIC ANGLE & GUST INTENSITY (Poetic, pseudo-random wind gusts swaying over time)
   // We use prime low frequencies so they don't sync up, creating a living organic gust behavior
@@ -90,6 +100,11 @@ void main(){
   float wave = sin(windP.x * 0.22 + uT * 0.15) * 0.18 * (1.0 + sin(uT * 0.03) * 0.5);
   windP.y += wave;
 
+  // 3.5 CURSOR-REACTIVE SWIRL (a no-op when uMouseStrength is 0, the default)
+  vec2 toMouse = vec2((ndc.x - uMouse.x) * aspect, ndc.y - uMouse.y);
+  float mouseFalloff = smoothstep(0.4, 0.0, length(toMouse));
+  windP += vec2(-toMouse.y, toMouse.x) * mouseFalloff * uMouseStrength;
+
   // 4. LAYERED FBM TURBULENCE (Wispy Sumi-e vertical-diagonal ink-smoke wind)
   vec2 e = vec2(0.08, 0.0); // Offset along the rotated wind direction
   float a = fbm(windP);
@@ -105,8 +120,6 @@ void main(){
   vec3 col = mix(uColorLow, uColorHigh, t) * uB;
 
   // 6. RADIAL FADE (To blend smoothly into background)
-  vec2 ndc=vec2(frag.x, 1.0-frag.y);
-  float aspect=uR.x/uR.y;
   float dx=((ndc.x-uFadeShape.x)*aspect)/uFadeShape.z;
   float dy=(ndc.y-uFadeShape.y)/uFadeShape.w;
   float fa=fadeAlpha(sqrt(dx*dx+dy*dy));
@@ -126,6 +139,7 @@ const D = {
   fadeRy: 0.9,
   fadeCx: 0.5,
   fadeCy: 0.3,
+  mouseStrength: 0,
 };
 
 function parseColor(input: string): [number, number, number] | null {
@@ -202,6 +216,8 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
         uFadeShape: {
           value: [D.fadeCx, D.fadeCy, D.fadeRx, D.fadeRy],
         },
+        uMouse: { value: [0.5, 0.5] },
+        uMouseStrength: { value: D.mouseStrength },
       },
     });
 
@@ -227,6 +243,17 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
     onResize();
     const ro = new ResizeObserver(onResize);
     ro.observe(el);
+
+    // Tracked on window (not `el`) since ShaderFlow is normally wrapped in a
+    // pointer-events-none ambient background layer, which would never receive
+    // element-level mouse events.
+    const mouse = { x: 0.5, y: 0.5 };
+    const onMouseMove = (e: MouseEvent): void => {
+      const rect = el.getBoundingClientRect();
+      mouse.x = (e.clientX - rect.left) / rect.width;
+      mouse.y = (e.clientY - rect.top) / rect.height;
+    };
+    window.addEventListener('mousemove', onMouseMove);
 
     let raf = 0;
     let visible = true;
@@ -269,6 +296,8 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
         c.fadeRx ?? D.fadeRx,
         c.fadeRy ?? D.fadeRy,
       ];
+      p.uniforms.uMouseStrength.value = c.mouseStrength ?? D.mouseStrength;
+      p.uniforms.uMouse.value = [mouse.x, mouse.y];
     };
 
     const tick = (): void => {
@@ -287,6 +316,7 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
       io.disconnect();
       themeObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener('mousemove', onMouseMove);
       if (gl.canvas.parentElement === el) el.removeChild(gl.canvas);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };

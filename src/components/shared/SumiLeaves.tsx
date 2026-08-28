@@ -60,7 +60,7 @@ export const SumiLeaves = ({ containerRef, count = 15 }: SumiLeavesProps) => {
       // 1. Initial random scatter across the full width of the screen on load
       gsap.set(leaf, {
         x: `random(0, ${w})`,
-        y: `random(80, ${h} - 120)`,
+        y: `random(80, ${h - 120})`,
         rotation: "random(0, 360)",
         rotationX: "random(0, 360)",
         rotationY: "random(0, 360)",
