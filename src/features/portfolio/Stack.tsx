@@ -204,6 +204,9 @@ export const Stack = () => {
   }, { scope: containerRef, dependencies: [mounted] });
 
   const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
+  // The ambient backdrop character — whichever book is open, or "道" (the
+  // Way) when every book is closed. Purely click-driven, no scroll tie-in.
+  const activeKanji = BOOKS.find((b) => b.id === activeBook)?.kanji ?? "道";
 
   if (!mounted) return null;
 
@@ -218,6 +221,10 @@ export const Stack = () => {
           <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">
             <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <filter id="stack-kanji-filter" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
       </svg>
@@ -260,6 +267,45 @@ export const Stack = () => {
 
         {/* The Tech Accordions */}
         <div className="mx-auto max-w-[1400px] px-6 md:px-10 space-y-6 relative z-20">
+          {/* Ambient mood kanji — crossfades to whichever book is open. Same
+              two-plane depth trick as About (a larger blurred glow behind a
+              crisper, ink-textured mark in front), but purely click-driven
+              here instead of scroll-driven — the accordion has no scroll
+              mechanic of its own to tie into. Scoped to this list specifically
+              (not the whole section, which also contains the header and the
+              marquee far below) so it actually overlaps the visible content. */}
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeKanji}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0"
+              >
+                {/* Centered on the accordion's own current height (not
+                    anchored to its top/bottom edge) — that height changes a
+                    lot as books open/close, and a fixed-edge anchor either
+                    scrolls out of view or sits in the wrong place depending
+                    on which book is open. Centering keeps it roughly where
+                    the user is looking regardless. */}
+                <span
+                  className="absolute right-[-4%] top-1/2 -translate-y-1/2 font-serif font-black text-foreground leading-none select-none"
+                  style={{ fontSize: "min(50vw, 520px)", opacity: 0.035, filter: "blur(20px)" }}
+                >
+                  {activeKanji}
+                </span>
+                <span
+                  className="absolute right-[1%] top-1/2 -translate-y-1/2 font-serif font-black text-foreground leading-none select-none"
+                  style={{ fontSize: "min(36vw, 380px)", opacity: 0.07, filter: "url(#stack-kanji-filter)" }}
+                >
+                  {activeKanji}
+                </span>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
           {BOOKS.map((book) => {
             const isOpen = activeBook === book.id;
             return (
