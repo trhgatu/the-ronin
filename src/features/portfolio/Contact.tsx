@@ -1,10 +1,7 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
-import { useGSAP } from '@gsap/react';
-import gsap from '@/lib/gsap';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { useTheme } from "next-themes";
 import { ArrowUpRight } from "lucide-react";
 import { soundManager } from "@/lib/sound";
 
@@ -34,33 +31,7 @@ const CONTACT_LINKS = [
 
 export const Contact = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme, theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  useGSAP(() => {
-    if (!mounted || !containerRef.current) return;
-
-    // Subtle fade in and float reveal
-    gsap.from('.contact-reveal', {
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: 'top 75%',
-      },
-      y: 40,
-      opacity: 0,
-      stagger: 0.12,
-      duration: 1.2,
-      ease: 'power3.out',
-    });
-  }, { scope: containerRef, dependencies: [mounted] });
-
-  const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
   return (
     <section
@@ -105,7 +76,7 @@ export const Contact = () => {
         <div className="mb-20">
           <div className="flex items-center gap-3 mb-8 w-full contact-reveal">
             <span className="font-mono text-[9px] tracking-[0.5em] text-foreground/50 uppercase font-bold">
-              [ CHAPTER VI : THE SUMMONS ]
+              [ CHAPTER V : THE SUMMONS ]
             </span>
           </div>
         </div>
@@ -126,7 +97,7 @@ export const Contact = () => {
               <div className="absolute inset-0 bg-foreground rotate-[-2deg] transition-all duration-700 group-hover:rotate-[-0.5deg] overflow-hidden">
                 <div
                   className="relative w-full h-full overflow-hidden bg-card grayscale transition-all duration-1000"
-                  style={{ filter: isDark ? "invert(1) contrast(1.15)" : "invert(0) contrast(1.05)" }}
+                  style={{ filter: "invert(0) contrast(1.05)" }}
                 >
                   {/* Default Image: going.jpg */}
                   <Image
@@ -178,7 +149,7 @@ export const Contact = () => {
                 CALL THE <br />
                 <span
                   className="text-transparent"
-                  style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}
+                  style={{ WebkitTextStroke: "1.5px rgba(0,0,0,0.7)" }}
                 >
                   RONIN.
                 </span>

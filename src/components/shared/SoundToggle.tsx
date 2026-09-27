@@ -29,7 +29,7 @@ export const SoundToggle = () => {
   return (
     <button
       onClick={() => soundManager?.toggle()}
-      className="relative w-10 h-10 flex items-center justify-center rounded-none bg-background/50 backdrop-blur-sm border border-foreground/20 hover:border-foreground/50 transition-colors focus:outline-none text-foreground/70 hover:text-foreground cursor-none"
+      className="relative w-10 h-10 flex items-center justify-center rounded-full bg-current/5 backdrop-blur-md border border-current/15 hover:border-current/40 hover:bg-current/10 transition-colors focus:outline-none cursor-none"
       aria-label="Toggle Soundscape"
     >
       <div className="flex items-end gap-[2px] h-3.5 w-4 justify-center">
@@ -39,7 +39,7 @@ export const SoundToggle = () => {
           return (
             <span
               key={bar}
-              className={`w-[2px] bg-foreground/60 rounded-none transition-all duration-300 origin-bottom ${heightClass}`}
+              className={`w-[2px] bg-current/60 rounded-none transition-all duration-300 origin-bottom ${heightClass}`}
               style={{
                 animationName: !isMuted ? 'soundWave' : 'none',
                 animationDuration: '1.2s',

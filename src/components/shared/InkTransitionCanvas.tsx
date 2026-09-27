@@ -2,7 +2,6 @@
 
 import { Mesh, Program, Renderer, Transform, Triangle } from "ogl";
 import { useEffect, useRef, useState } from "react";
-import { useTheme } from "next-themes";
 import gsap from "@/lib/gsap";
 
 const VS = `
@@ -93,17 +92,31 @@ void main() {
 }
 `;
 
+type TriggerDetail = {
+  cx: number;
+  cy: number;
+  /** 'mist' (default): already-covering ink that just evaporates — used by the Preloader's exit.
+   *  'sweep': ink spreads out from (cx, cy) to full coverage, fires onCovered at the peak
+   *  (swap the content underneath here, same instant the old ThemeToggle used to flip the theme),
+   *  then dissolves away to reveal the new state. */
+  preset?: "mist" | "sweep";
+  onCovered?: () => void;
+};
+
 export function InkTransitionCanvas() {
-  const { setTheme } = useTheme();
-  const setThemeRef = useRef(setTheme);
-
-  useEffect(() => {
-    setThemeRef.current = setTheme;
-  }, [setTheme]);
-
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+  // A monotonically increasing id, not a boolean — a second trigger that
+  // arrives while an earlier one is still animating (e.g. clicking the Hero
+  // swap button while the Preloader's own entrance mist is still dissolving)
+  // needs the effect below to re-run and pick up the NEW trigger's detail.
+  // With a boolean `isActive`, setIsActive(true) while already true is a
+  // no-op — React bails out without re-running the effect — so the second
+  // trigger's detail (and its onCovered callback) was silently dropped.
+  const [triggerId, setTriggerId] = useState(0);
+  // Purely cosmetic (the opacity className below) — the effect itself is
+  // driven by triggerId, not this.
   const [isActive, setIsActive] = useState(false);
-  const triggerRef = useRef<{ cx: number; cy: number; targetTheme: string } | null>(null);
+  const triggerRef = useRef<TriggerDetail | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -114,9 +127,9 @@ export function InkTransitionCanvas() {
     if (!mounted) return;
 
     const handleTrigger = (e: Event) => {
-      const customEvent = e as CustomEvent<{ cx: number; cy: number; targetTheme: string }>;
+      const customEvent = e as CustomEvent<TriggerDetail>;
       triggerRef.current = customEvent.detail;
-      setIsActive(true);
+      setTriggerId((n) => n + 1);
     };
 
     window.addEventListener("trigger-ink-transition", handleTrigger);
@@ -126,11 +139,12 @@ export function InkTransitionCanvas() {
   }, [mounted]);
 
   useEffect(() => {
-    if (!isActive || !triggerRef.current || !canvasContainerRef.current) return;
+    if (!triggerId || !triggerRef.current || !canvasContainerRef.current) return;
 
     const container = canvasContainerRef.current;
-    const { cx, cy, targetTheme, preset } = triggerRef.current as any;
+    const { cx, cy, preset = "mist", onCovered } = triggerRef.current;
     const isMist = preset === "mist";
+    setIsActive(true);
 
     // 1. Initialize OGL Context only during active transition
     const renderer = new Renderer({
@@ -146,11 +160,8 @@ export function InkTransitionCanvas() {
 
     const geometry = new Triangle(gl);
 
-    // Match exact background colors from globals.css to avoid color mismatch flicker!
-    // Dark Background Color: #020202 | Light Background Color: #fdfdfd
-    const inkColor = targetTheme === "dark"
-      ? [2 / 255, 2 / 255, 2 / 255]
-      : [253 / 255, 253 / 255, 253 / 255];
+    // Match the background color from globals.css to avoid a color mismatch flicker.
+    const inkColor = [253 / 255, 253 / 255, 253 / 255];
 
     // Normalized mouse click origin coordinates (invert Y for WebGL coords)
     const normalizedOrigin = [
@@ -196,7 +207,7 @@ export function InkTransitionCanvas() {
     };
     rafId = requestAnimationFrame(tick);
 
-    // 3. GSAP Timeline handling seamless page morphing
+    // 3. GSAP Timeline handling the transition
     const animState = { progress: isMist ? 1.0 : 0, dissolve: 0 };
     const tl = gsap.timeline({
       onUpdate: () => {
@@ -206,9 +217,6 @@ export function InkTransitionCanvas() {
     });
 
     if (isMist) {
-      // Apply theme instantly as viewport is already covered by solid ink color
-      setThemeRef.current(targetTheme);
-
       // Slow, poetic mist evaporation (3.8s) with sine ease for linear-decelerating fade
       tl.to(animState, {
         dissolve: 1.0,
@@ -219,16 +227,16 @@ export function InkTransitionCanvas() {
         }
       });
     } else {
-      // Classic Theme Toggle Ink Spreading Sweep (0.6s)
+      // Ink sweeps out from the trigger point to full coverage (0.6s)
       tl.to(animState, {
         progress: 1.0,
         duration: 0.6,
         ease: "power2.inOut",
         onComplete: () => {
-          // Theme toggle trigger precisely at 100% solid coverage
-          setThemeRef.current(targetTheme);
-          
-          // Creative Dev Master Technique: Artful Ink-Pool Rest Delay (150ms)
+          // Swap whatever's underneath exactly at full coverage
+          onCovered?.();
+
+          // Brief ink-pool rest (150ms) before evaporating to reveal the new state
           setTimeout(() => {
             gsap.to(animState, {
               dissolve: 1.0,
@@ -258,7 +266,7 @@ export function InkTransitionCanvas() {
         gl.getExtension("WEBGL_lose_context")?.loseContext();
       }, 100);
     };
-  }, [isActive]);
+  }, [triggerId]);
 
   if (!mounted) return null;
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useTheme } from 'next-themes';
 
 interface WindStrand {
   x: number;
@@ -22,7 +21,6 @@ interface WindStrand {
 export const WindFlow = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -80,8 +78,7 @@ export const WindFlow = () => {
 
     window.addEventListener('resize', resizeCanvas);
 
-    // Active tracking of theme colors
-    let windColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, ' : 'rgba(0, 0, 0, ';
+    const windColor = 'rgba(0, 0, 0, ';
 
     let time = 0;
     let isVisible = true;
@@ -105,9 +102,6 @@ export const WindFlow = () => {
 
       ctx.clearRect(0, 0, width, height);
       time += 0.5;
-
-      // Update theme color dynamically
-      windColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, ' : 'rgba(0, 0, 0, ';
 
       for (let i = 0; i < strands.length; i++) {
         const s = strands[i];
@@ -176,11 +170,11 @@ export const WindFlow = () => {
       cancelAnimationFrame(animationFrameId);
       observer.disconnect();
     };
-  }, [resolvedTheme]);
+  }, []);
 
   return (
     <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-none select-none overflow-hidden">
-      <canvas ref={canvasRef} className="w-full h-full opacity-65 md:opacity-85 mix-blend-multiply dark:mix-blend-screen" />
+      <canvas ref={canvasRef} className="w-full h-full opacity-65 md:opacity-85 mix-blend-multiply" />
     </div>
   );
 };

@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ThemeToggle } from "./ThemeToggle";
 import { SoundToggle } from "./SoundToggle";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Eye, EyeOff } from "lucide-react";
 
 import Link from "next/link";
 
@@ -16,21 +15,54 @@ const navItems = [
   { label: "Prologue", href: "#hero", id: "hero", roman: "序" },
   { label: "The Architect", href: "#about", id: "about", roman: "I" },
   { label: "Artifacts", href: "#artifacts", id: "artifacts", roman: "II" },
-  { label: "The Armory", href: "#stack", id: "stack", roman: "III" },
-  { label: "The Void", href: "#philosophy", id: "philosophy", roman: "IV" },
-  { label: "The Battles", href: "#experience", id: "experience", roman: "V" },
-  { label: "The Summons", href: "#contact", id: "contact", roman: "VI" },
+  { label: "The Void", href: "#philosophy", id: "philosophy", roman: "III" },
+  { label: "The Battles", href: "#experience", id: "experience", roman: "IV" },
+  { label: "The Summons", href: "#contact", id: "contact", roman: "V" },
 ];
 
 export const Navbar = () => {
   const [activeSection, setActiveSection] = useState("hero");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Hero owns this mode (it drives its own veil/3D-model visuals); Navbar
+  // just mirrors it to know which icon to show, the same way HeroScene's
+  // water ripple effect mirrors it — see the 'hero-swap-mode' listener
+  // below and Hero.tsx's matching dispatch.
+  const [heroSwapMode, setHeroSwapMode] = useState(false);
+  // Any other section that locally darkens its own background (Artifacts'
+  // scroll-into-black, see its own ScrollTrigger) dispatches this the same
+  // way Hero dispatches 'hero-swap-mode' — a plain window event, since a
+  // section's local CSS variable override can't reach this header (a DOM
+  // sibling, not a descendant).
+  const [darkSection, setDarkSection] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const onSwapMode = (e: Event) => {
+      setHeroSwapMode((e as CustomEvent<boolean>).detail);
+    };
+    window.addEventListener('hero-swap-mode', onSwapMode);
+    return () => window.removeEventListener('hero-swap-mode', onSwapMode);
+  }, []);
+
+  useEffect(() => {
+    const onDarkSection = (e: Event) => {
+      setDarkSection((e as CustomEvent<boolean>).detail);
+    };
+    window.addEventListener('dark-section', onDarkSection);
+    return () => window.removeEventListener('dark-section', onDarkSection);
+  }, []);
+
+  const requestHeroSwapToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    window.dispatchEvent(new CustomEvent('request-hero-swap-toggle', {
+      detail: { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2 },
+    }));
+  };
 
   // Bulletproof Active Section Tracking using precise bounding box calculations
   useEffect(() => {
@@ -83,103 +115,75 @@ export const Navbar = () => {
   };
 
   if (!mounted) return null;
+  // White text is only correct for Hero's own *dark, veiled* look. Swap mode
+  // flips Hero to a light background (heroSwapMode, mirrored from Hero via
+  // the same 'hero-swap-mode' event used for the Eye/EyeOff icon below) —
+  // isHero alone doesn't know about that, so it kept forcing white text
+  // over a now-light section.
+  const isHero = activeSection === "hero";
+  const showWhiteText = (isHero ? !heroSwapMode : (darkSection || activeSection === "artifacts")) && !isMobileMenuOpen;
 
   return (
     <>
-      {/* 1. Global Branding & Top Bar Controls (Left/Right corners) */}
-      <header className="fixed top-8 left-6 md:left-10 right-6 md:right-10 z-[9999] pointer-events-none flex justify-between items-start">
-        {/* Top-Left Branding (Premium Hanko Stamp Logo) */}
-        <Link
-          href="#hero"
-          onClick={(e) => { e.preventDefault(); handleNavClick("#hero"); }}
-          className="flex items-center gap-4 pointer-events-auto group cursor-pointer outline-none"
-        >
-          {/* Hanko-style Logo Mark */}
-          <div className="w-10 h-10 border border-foreground/20 flex items-center justify-center relative overflow-hidden transition-colors duration-500 bg-background/50 backdrop-blur-sm group-hover:border-foreground/60 shadow-sm">
-            <span className="font-serif text-lg font-black text-foreground relative z-10 transition-colors duration-500 translate-y-[-1px] group-hover:scale-110">
-              侍
-            </span>
-          </div>
-          {/* Logo Type */}
-          <div className="flex flex-col mt-0.5">
-            <span className="font-serif text-[13px] md:text-[14px] tracking-[0.35em] font-black text-foreground uppercase leading-none">
-              TRHGATU
-            </span>
-            <span className="font-mono text-[9px] md:text-[10px] tracking-[0.25em] text-foreground/50 uppercase mt-1.5 font-bold">
-              Software Architect
-            </span>
-          </div>
-        </Link>
-
-        {/* Top-Right Toggle & Mobile menu trigger */}
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <SoundToggle />
-          <ThemeToggle />
-
-          {/* Mobile Menu Toggle Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden w-10 h-10 border border-foreground/20 flex items-center justify-center hover:border-foreground/50 transition-colors duration-500 bg-background/50 backdrop-blur-sm text-foreground/70 hover:text-foreground outline-none"
-            aria-label="Toggle Menu"
+      {/* The menu overlay below now opens on every breakpoint (it used to be
+          mobile-only), and it's a light backdrop — so a header still forced
+          to isHero's white text (right for the dark Hero section behind it)
+          goes near-illegible floating on top of it. Once the menu is open,
+          the header's own color should follow that light overlay instead. */}
+      <header className={`fixed inset-x-0 top-0 z-[9999] px-5 py-5 transition-colors duration-500 md:px-8 ${showWhiteText ? "text-white" : "text-foreground"}`}>
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between">
+          <Link
+            href="#hero"
+            onClick={(e) => { e.preventDefault(); handleNavClick("#hero"); }}
+            className="outline-none"
           >
-            {isMobileMenuOpen ? <X size={16} strokeWidth={1.5} /> : <Menu size={16} strokeWidth={1.5} />}
-          </button>
+            <span className="font-serif text-2xl font-bold tracking-[-0.04em] text-current md:text-[28px]">THATU.</span>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <SoundToggle />
+            {/* Hero's veil/3D-model swap — grouped here with the rest of the
+                header's controls instead of floating alone over Hero (see
+                Hero.tsx's request-hero-swap-toggle listener). */}
+            {/* text-foreground here (rather than inheriting the header's own
+                isHero-driven white/dark color) would resolve to the SITE-WIDE
+                --foreground — Hero's own local override of that variable
+                doesn't reach this header, since it's a sibling in the DOM,
+                not a descendant, so custom-property cascade never crosses
+                that boundary. Leaving color unset lets these buttons inherit
+                whatever the header actually resolved to; border/bg tint off
+                currentColor (not `foreground`) for the same reason. */}
+            <button
+              onClick={requestHeroSwapToggle}
+              aria-label={heroSwapMode ? 'Switch to veiled reveal mode' : 'Switch to 3D-model-visible mode'}
+              aria-pressed={heroSwapMode}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-current/15 bg-current/5 backdrop-blur-md transition-colors duration-300 hover:border-current/40 hover:bg-current/10"
+            >
+              {heroSwapMode ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
+            </button>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-current/15 bg-current/5 backdrop-blur-md transition-colors duration-300 hover:border-current/40 hover:bg-current/10"
+              aria-label="Toggle Menu"
+            >
+              {isMobileMenuOpen ? <X size={17} strokeWidth={1.5} /> : <Menu size={17} strokeWidth={1.5} />}
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* 2. Desktop Premium Floating Typography Navigation (Left Side) */}
-      <nav className="fixed left-6 md:left-10 top-1/2 -translate-y-1/2 z-[9998] hidden lg:flex flex-col items-start gap-5 pointer-events-auto select-none">
-        {navItems.map((item) => {
-          const isActive = activeSection === item.id;
-          return (
-            <a
-              key={item.href}
-              href={item.href}
-              className={`
-                group flex items-center font-serif text-[11px] tracking-[0.2em] uppercase transition-all duration-300 cursor-pointer
-                ${isActive
-                  ? "text-foreground font-black translate-x-[4px]"
-                  : "text-foreground/40 hover:text-foreground hover:translate-x-[2px]"
-                }
-              `}
-              onClick={(e) => {
-                e.preventDefault();
-                handleNavClick(item.href);
-              }}
-            >
-              {isActive && (
-                <motion.span
-                  layoutId="navActiveIndicatorDash"
-                  className="w-3 h-[1.5px] bg-foreground mr-3"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-
-              <div className="flex items-center transition-all duration-300">
-                <span className="font-bold">{item.roman}.</span>
-                <span className={`
-                  font-serif font-light tracking-[0.3em] transition-all duration-300 origin-left whitespace-nowrap
-                  ${isActive
-                    ? "opacity-100 max-w-[200px] ml-2 inline-block"
-                    : "opacity-0 max-w-0 scale-x-90 overflow-hidden inline-block group-hover:opacity-60 group-hover:max-w-[200px] group-hover:scale-x-100 group-hover:ml-2"
-                  }
-                `}>
-                  {item.label}
-                </span>
-              </div>
-            </a>
-          );
-        })}
-      </nav>
-
-      {/* 3. Mobile Full-Screen Scroll Timeline Menu */}
+      {/* Full-Screen Scroll Timeline Menu — now the one and only nav on
+          every breakpoint, not just mobile. A laid-out desktop nav row (with
+          or without roman-numeral prefixes) was extra chrome sitting in the
+          header at all times; a single burger button plus this overlay
+          keeps the header itself down to just the wordmark. */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9990] bg-background/95 backdrop-blur-3xl lg:hidden flex flex-col justify-center px-8 md:px-16 overflow-hidden"
+            className="fixed inset-0 z-[9990] flex flex-col justify-center overflow-hidden bg-background/95 px-8 backdrop-blur-3xl md:px-16"
           >
             {/* Grain Noise Overlay */}
             <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />

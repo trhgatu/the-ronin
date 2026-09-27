@@ -1,450 +1,894 @@
 'use client';
 
 import { useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import gsap from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Image from "next/image";
-import { useTheme } from "next-themes";
-import { PortraitMorph } from "@/components/shared/PortraitMorph";
+import { Mesh, Program, Renderer, Transform, Triangle } from "ogl";
 import { soundManager } from "@/lib/sound";
+import { ProjectMistPortal, ProjectMistPortalHandle } from "@/components/shared/ProjectMistPortal";
+import { ProjectWaterReflection, ProjectWaterReflectionHandle } from "@/components/shared/ProjectWaterReflection";
+import { ArtifactsLakeBackground } from "@/components/shared/ArtifactsLakeBackground";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const SLASH_VS = `
+attribute vec2 position;
+varying vec2 vUv;
+void main() {
+    vUv = position * 0.5 + 0.5;
+    gl_Position = vec4(position, 0.0, 1.0);
+}
+`;
+
+const SLASH_FS = `
+precision highp float;
+uniform vec2 u_resolution;
+uniform float u_progress;
+uniform float u_time;
+varying vec2 vUv;
+
+float hash(vec2 p) {
+    p = fract(p * vec2(127.1, 311.7));
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    vec2 shift = vec2(100.0);
+    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+    for (int i = 0; i < 4; ++i) {
+        v += a * noise(p);
+        p = rot * p * 2.0 + shift;
+        a *= 0.5;
+    }
+    return v;
+}
+
+void main() {
+    if (u_progress >= 0.999) {
+        gl_FragColor = vec4(0.0);
+        return;
+    }
+
+    // Exact pure background matching --background (#fdfdfd)
+    vec3 paperColor = vec3(253.0 / 255.0, 253.0 / 255.0, 253.0 / 255.0);
+
+    if (u_progress <= 0.001) {
+        gl_FragColor = vec4(paperColor, 1.0);
+        return;
+    }
+
+    // Slash goes from BOTTOM-LEFT to TOP-RIGHT (~35 degrees)
+    vec2 pA = vec2(0.0, 0.0);
+    vec2 pB = u_resolution;
+    vec2 lineDir = normalize(pB - pA);
+    vec2 normal = vec2(-lineDir.y, lineDir.x);
+
+    vec2 center = u_resolution * 0.5;
+    vec2 toFrag = gl_FragCoord.xy - center;
+
+    float along = abs(dot(toFrag, lineDir));
+    float across = abs(dot(toFrag, normal));
+
+    vec2 polarUv = vec2(atan(toFrag.y, toFrag.x), length(toFrag) / length(u_resolution));
+    float angleWobble = fbm(vec2(polarUv.x * 2.5, polarUv.y * 1.5)) * 0.35;
+
+    float morphTear = smoothstep(0.20, 0.80, u_progress);
+    float p = mix(0.52, 1.85, morphTear);
+    float invP = 1.0 / p;
+    float a = mix(4.0 + angleWobble, 1.0, morphTear);
+    float b = mix(1.05 + angleWobble * 0.45, 1.0, morphTear);
+    float safeAlong = max(along / a, 0.0001);
+    float safeAcross = max(across / b, 0.0001);
+    float r = pow(pow(safeAlong, p) + pow(safeAcross, p), invP);
+
+    vec2 flowUv = vUv * 6.0 + vec2(u_time * 0.04, -u_time * 0.03);
+    float nChunk = (fbm(flowUv * 0.8) - 0.5) * 2.0;
+    float nRip = (fbm(flowUv * 2.4) - 0.5) * 2.0;
+    float nFine = (fbm(vUv * 45.0) - 0.5) * 2.0;
+    float nMicro = (fbm(vUv * 110.0) - 0.5) * 2.0;
+
+    float violentTearNoise = (nChunk * 95.0 + nRip * 65.0 + nFine * 35.0 + nMicro * 15.0);
+
+    // Natural reach to clear 4 corners without racing across screen (0.85x diagonal)
+    float maxReachPx = length(u_resolution) * 0.85;
+    float currentTearPx = u_progress * maxReachPx;
+
+    float displaceScale = 1.0 - smoothstep(0.75, 0.95, u_progress);
+    float displacedEdgePx = r - violentTearNoise * displaceScale;
+
+    float edgeFeatherPx = 1.6;
+    float torn = 1.0 - smoothstep(currentTearPx - edgeFeatherPx, currentTearPx, displacedEdgePx);
+
+    float finalSafety = smoothstep(0.92, 0.99, u_progress);
+    torn = mix(torn, 1.0, finalSafety);
+
+    // Outside the tear: paper remains visible (alpha = 1.0) with pure #fdfdfd
+    // Inside the tear: paper vanishes (alpha = 0.0), revealing Magnum Opus & dark forge beneath
+    float paperAlpha = 1.0 - torn;
+
+    gl_FragColor = vec4(paperColor, paperAlpha);
+}
+`;
+
 interface Project {
   id: string;
-  daiji: string;
+  kanji: string;
+  category: string;
   title: string;
-  blade: string;
-  bladeCm: number;
+  subtitle: string;
   description: string;
   image: string;
   tags: string[];
-  protocol: string;
   year: string;
-  note: string;
+  accent: string;
+  layout: 'center' | 'left' | 'panoramic';
+  metrics: string;
+  architecture: string;
 }
 
 const PROJECTS: Project[] = [
   {
-    id: '01',
-    daiji: '壹',
-    title: 'ForgeOS - An Operating System for Thought, Growth & Creation',
-    blade: 'THE NODACHI [大太刀]',
-    bladeCm: 110,
-    description: 'A powerful personal operating system tailored for self-mastery, engineering track, and gamified growth, built on a robust Domain-Driven Design (DDD) & CQRS architecture.',
+    id: 'forgeos',
+    kanji: '壹',
+    category: 'Core System & Self-Mastery OS',
+    title: 'Magnum Opus',
+    subtitle: 'Domain-Driven Design · CQRS',
+    description: 'A sovereign operating system engineered for self-mastery, cognitive telemetry, and gamified engineering growth. Built on event-sourced architecture and high-throughput real-time queues.',
     image: '/projects/forgeos.png',
-    tags: [
-      'TypeScript',
-      'Next.js',
-      'NestJS',
-      'Prisma',
-      'PostgreSQL',
-      'Redis',
-      'Socket.io',
-      'Turborepo',
-      'Docker',
-      'BullMQ',
-    ],
-    protocol: 'FORGE_CORE_SYSTEM_V1',
+    tags: ['TypeScript', 'Next.js', 'NestJS', 'PostgreSQL', 'Redis', 'Docker'],
     year: '2026',
-    note: 'forged from the ashes of past realities to master the present. a sanctuary for discipline, code synthesis, and deep existential tracking, slicing through raw personal metrics with unwavering focus.'
+    accent: '#f59e0b',
+    layout: 'center',
+    metrics: '120,000 req/s · Event Sourced · Sub-10ms p99',
+    architecture: 'CQRS & Event Sourcing, NestJS microservices, Redis Pub/Sub cluster, PostgreSQL event journal',
   },
   {
-    id: '02',
-    daiji: '貳',
-    title: 'Aether Design System',
-    blade: 'THE KATANA [刀]',
-    bladeCm: 75,
-    description: 'An enterprise-scale design system focused on sharp layout precision and high-fidelity, fluid micro-interactions.',
+    id: 'aether',
+    kanji: '貳',
+    category: 'Interface Infrastructure',
+    title: 'Aether System',
+    subtitle: 'Mathematical Precision & Micro-Interactions',
+    description: 'An enterprise design system tailored for high-velocity software interfaces, balancing strict layout constraints with fluid 60FPS canvas micro-interactions.',
     image: '/projects/ecommerce.png',
-    tags: ['Next.js', 'GSAP', 'Three.js'],
-    protocol: 'VISUAL_SYSTEM_ALPHA',
-    year: '2023',
-    note: 'perfectly balanced for instant draw. a razor-thin blade designed for absolute layout precision and frictionless micro-interactions...'
-  },
-  {
-    id: '03',
-    daiji: '參',
-    title: 'Sentience Analytics',
-    blade: 'THE WAKIZASHI [脇差]',
-    bladeCm: 50,
-    description: 'Full-stack AI-driven analytics dashboard with real-time 3D visualizations, swift and responsive like a companion blade.',
-    image: '/projects/crypto.png',
-    tags: ['React', 'Fiber', 'Python'],
-    protocol: 'SENTIENT_LOGIC_HUB',
+    tags: ['Next.js', 'GSAP', 'Three.js', 'TailwindCSS'],
     year: '2024',
-    note: 'a lightweight, swift companion blade. dynamically tracks moving flows, casting immediate light on hidden patterns of state...'
+    accent: '#e2e8f0',
+    layout: 'left',
+    metrics: '60 FPS Micro-Interactions · 0 CLS · 98 Lighthouse',
+    architecture: 'Custom GLSL shaders, headless primitives, atomic CSS tokens, hardware-accelerated GSAP pipelines',
   },
   {
-    id: '04',
-    daiji: '肆',
-    title: 'Void Protocol',
-    blade: 'THE TANTO [短刀]',
-    bladeCm: 28,
-    description: 'High-performance cryptographic communication layer for the decentralized era, concealed, compact, and structurally unbreakable.',
-    image: '/projects/ai-platform.png',
-    tags: ['Go', 'Solidity', 'Wasm'],
-    protocol: 'CRYPT_LAYER_OMEGA',
-    year: '2022',
-    note: 'forged to be concealed, waiting in the dark. a short blade that remains completely unbreakable under extreme cryptographic pressure...'
+    id: 'sentience',
+    kanji: '參',
+    category: 'Intelligence & State Protocol',
+    title: 'Sentience AI',
+    subtitle: 'Topological Viz & Streaming Engine',
+    description: 'Full-stack AI analytics platform featuring real-time WebGL topological visualizations, dynamic token tracking, and high-frequency reactive state manifolds.',
+    image: '/projects/crypto.png',
+    tags: ['React', 'Three.js', 'Python', 'WebSockets'],
+    year: '2025',
+    accent: '#38bdf8',
+    layout: 'panoramic',
+    metrics: 'WebGL Topo Viz · Low-Latency WebSocket Bus · Reactive Graph',
+    architecture: 'Real-time GLSL raymarching, WebSocket event bus, Python ML telemetry, Web Worker state manifolds',
   },
 ];
 
-// The divider line beside each project's blade name is sized to that blade's
-// real-world length (Nodachi longest, Tanto shortest) — the "forged blade"
-// metaphor becomes an actual proportion instead of just being asserted in
-// copy. `BLADE_BAR_MIN_PX` keeps the shortest blade (Tanto) from shrinking
-// to an illegible sliver.
-const BLADE_BAR_MAX_PX = 96;
-const BLADE_BAR_MIN_PX = 22;
-const MAX_BLADE_CM = Math.max(...PROJECTS.map((p) => p.bladeCm));
-const bladeBarWidth = (cm: number) => Math.round(BLADE_BAR_MIN_PX + (cm / MAX_BLADE_CM) * (BLADE_BAR_MAX_PX - BLADE_BAR_MIN_PX));
-
-const ProjectCard = ({ project, index, isDark }: { project: Project, index: number, isDark: boolean }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-  const watermarkRef = useRef<HTMLSpanElement>(null);
-  const backingPaperRef = useRef<HTMLDivElement>(null);
-  const photoScreenRef = useRef<HTMLDivElement>(null);
-  const isEven = index % 2 === 0;
-  // The flagship (first, biggest, newest) project gets its own case-study-
-  // style layout instead of joining the alternating left/right rhythm —
-  // otherwise all four cards read as one repeated formula at a glance.
-  const featured = index === 0;
-
-  useGSAP(() => {
-    if (!imageRef.current) return;
-
-    gsap.to(imageRef.current, {
-      y: "12%",
-      ease: "none",
-      scrollTrigger: {
-        trigger: cardRef.current,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: true
-      }
-    });
-
-    if (textRef.current) {
-      gsap.fromTo(textRef.current,
-        { y: isEven ? 40 : -40 },
-        {
-          y: isEven ? -40 : 40,
-          ease: "none",
-          scrollTrigger: {
-            trigger: cardRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true
-          }
-        }
-      );
-    }
-
-    if (watermarkRef.current) {
-      gsap.to(watermarkRef.current, {
-        y: isEven ? -50 : 50,
-        ease: "none",
-        scrollTrigger: {
-          trigger: cardRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true
-        }
-      });
-    }
-
-    if (backingPaperRef.current) {
-      gsap.to(backingPaperRef.current, {
-        y: isEven ? -22 : 22,
-        rotate: isEven ? -5.5 : -1,
-        ease: "none",
-        scrollTrigger: {
-          trigger: cardRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true
-        }
-      });
-    }
-
-    if (photoScreenRef.current) {
-      gsap.to(photoScreenRef.current, {
-        y: isEven ? 16 : -16,
-        rotate: isEven ? 3 : -0.5,
-        ease: "none",
-        scrollTrigger: {
-          trigger: cardRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true
-        }
-      });
-    }
-
-    gsap.from(`.project-reveal-${index}`, {
-      y: 50,
-      opacity: 0,
-      duration: 1.4,
-      stagger: 0.15,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: cardRef.current,
-        start: "top 75%",
-      }
-    });
-  }, { scope: cardRef });
-
-  return (
-    <div
-      ref={cardRef}
-      className={`relative w-full flex flex-col ${featured ? 'gap-8 md:gap-10 mb-40 md:mb-56' : `${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 md:gap-16 lg:gap-24 mb-32 md:mb-48`} items-center`}
-    >
-      <span
-        ref={watermarkRef}
-        className={`absolute text-[22vw] lg:text-[26vw] font-serif font-black text-foreground select-none pointer-events-none leading-none z-0 opacity-[0.012] ${isEven ? 'right-[5%] lg:right-[8%]' : 'left-[5%] lg:left-[8%]'}`}
-        style={{ filter: "url(#line-torn-filter)" }}
-      >
-        {project.daiji}
-      </span>
-      <div
-        className={`${featured ? 'w-full' : 'flex-1'} group cursor-none w-full z-10 relative flex justify-center items-center`}
-        onMouseEnter={() => soundManager?.playSwordWhoosh()}
-      >
-        <div className={`relative w-full ${featured ? 'max-w-none aspect-[21/9]' : 'max-w-[480px] aspect-[16/10]'} rotate-[1.5deg] group-hover:rotate-[0.5deg] transition-all duration-700 avatar-frame border border-foreground/10 p-2.5 bg-foreground shadow-[0_16px_48px_rgba(0,0,0,0.3)]`}>
-          <div className="absolute top-[-12px] left-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
-          <div className="absolute top-[-12px] left-[-12px] w-[1px] h-[20px] bg-foreground/20 pointer-events-none" />
-          <div className="absolute bottom-[-12px] right-[-12px] w-[20px] h-[1px] bg-foreground/20 pointer-events-none" />
-          <div className="absolute bottom-[-12px] right-[-12px] w-[1px] h-[20px] bg-foreground/20 pointer-events-none" />
-          <div
-            ref={backingPaperRef}
-            className="absolute inset-0 bg-foreground/5 border border-foreground/15 rotate-[-2.5deg] transition-all duration-700 group-hover:rotate-[-4deg] group-hover:bg-foreground/[0.08] pointer-events-none"
-            style={{ filter: "url(#line-torn-filter)" }}
-          />
-          <div ref={photoScreenRef} className="absolute inset-0 bg-foreground rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.25)] group-hover:shadow-[0_0_40px_rgba(239,68,68,0.25),0_12px_32px_rgba(0,0,0,0.25)] border border-transparent group-hover:border-orange-500/20">
-            <div className="relative w-full h-full overflow-hidden bg-card">
-              <div ref={imageRef} className="absolute -left-[5%] -right-[5%] w-[110%] h-[130%] -top-[15%]">
-                <PortraitMorph
-                  srcA={project.image}
-                  srcB={project.image}
-                  alt={project.title}
-                  className="w-full h-full object-cover object-center scale-105 group-hover:scale-100 transition-all duration-1000 grayscale contrast-[1.25] opacity-80 group-hover:opacity-100 group-hover:contrast-[1.38] group-hover:grayscale-0"
-                />
-              </div>
-
-              <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent opacity-60 pointer-events-none" />
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none z-30 transition-opacity duration-200 overflow-hidden">
-                <div className="absolute top-[-50%] left-[-50%] w-[35%] h-[200%] bg-gradient-to-r from-transparent via-white/80 to-transparent rotate-[35deg] translate-x-[-150%] group-hover:translate-x-[500%] transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]" />
-              </div>
-            </div>
-          </div>
-          <div
-            className="absolute inset-0 rotate-[1.5deg] transition-all duration-700 group-hover:rotate-[0.5deg] pointer-events-none z-20"
-          >
-            <div
-              className="absolute inset-[-20px] border-[44px] border-foreground"
-              style={{ filter: "url(#project-torn-mask)" }}
-            />
-            <div
-              className="absolute inset-[16px] border border-foreground/20"
-              style={{ filter: "url(#project-torn-mask)" }}
-            />
-            <div className="absolute inset-[10px] border border-foreground/[0.03] rotate-[-1deg]" />
-          </div>
-        </div>
-      </div>
-      <div ref={textRef} className={`${featured ? 'w-full' : 'flex-1'} flex flex-col justify-center z-10 w-full px-2 md:px-0 relative`}>
-        <div className={`flex items-center gap-4 mb-4 md:mb-5 mt-4 lg:mt-0 project-reveal-${index} project-reveal-tag`}>
-          {featured && (
-            <span className="text-[10px] font-mono text-foreground/40 uppercase tracking-widest font-bold">Flagship —</span>
-          )}
-          <span className="text-[10px] font-mono text-foreground/50 uppercase tracking-widest font-bold">
-            {project.blade} {'//'} {project.year}
-          </span>
-          {/* Length is proportional to the real blade's length (Nodachi
-              longest, Tanto shortest) — the metaphor as an actual measurement
-              rather than only asserted in the blade name. */}
-          <div
-            className="h-[2px] bg-foreground/15"
-            style={{ width: bladeBarWidth(project.bladeCm), filter: "url(#line-torn-filter)" }}
-          />
-        </div>
-
-        <h3 className={`${featured ? 'text-4xl md:text-6xl lg:text-7xl' : 'text-3xl md:text-4xl lg:text-5xl'} font-serif font-light text-foreground uppercase tracking-tight mb-4 md:mb-6 leading-tight project-reveal-${index}`}>
-          {project.title}
-        </h3>
-
-        <p className={`${featured ? 'text-base md:text-xl max-w-3xl' : 'text-sm md:text-base max-w-xl'} font-light text-foreground/45 leading-relaxed mb-6 md:mb-8 project-reveal-${index}`}>
-          {project.description}
-        </p>
-
-        <div className={`flex flex-wrap gap-2 md:gap-3 mb-8 md:mb-10 project-reveal-${index}`}>
-          {project.tags.map((tag: string) => (
-            <span
-              key={tag}
-              className="px-2.5 py-1 border border-foreground/15 text-[9px] font-mono text-foreground/50 uppercase tracking-widest bg-foreground/[0.02]"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-        <div className={`pt-6 border-t border-foreground/10 flex flex-col gap-2 relative project-reveal-${index}`}>
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-foreground/10" style={{ filter: "url(#line-torn-filter)" }} />
-          <span className="font-caveat text-xl sm:text-2xl text-foreground/55 lowercase tracking-normal pl-1 leading-relaxed italic">
-            * {project.note}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export const Artifacts = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme, theme } = useTheme();
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const textCardRef = useRef<HTMLDivElement>(null);
+  const portalWrapperRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<ProjectMistPortalHandle>(null);
+  const reflectionRef = useRef<ProjectWaterReflectionHandle>(null);
+  const projectCardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const katanaTrackRef = useRef<HTMLDivElement>(null);
+
+  const tearContainerRef = useRef<HTMLDivElement>(null);
+  const tearCanvasRef = useRef<HTMLDivElement>(null);
+  const slashLineRef = useRef<SVGLineElement>(null);
+  const slashShadowRef = useRef<SVGLineElement>(null);
+  const stillnessQuoteRef = useRef<HTMLDivElement>(null);
+  const mistVeilRef = useRef<HTMLDivElement>(null);
+  const tearProgramRef = useRef<Program | null>(null);
+  const hasPlayedSlashSound = useRef<boolean>(false);
+
+  const tearProgressRef = useRef({ current: 0, target: 0 });
+  const slashProgressRef = useRef({ current: 0, target: 0 });
+  const scrollPRef = useRef(0);
+
   const [mounted, setMounted] = useState(false);
-  const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const lastIndexRef = useRef(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Initialize OGL Tear Paper Shader
+  useEffect(() => {
+    if (!mounted || !tearCanvasRef.current) return;
+    const canvasWrap = tearCanvasRef.current;
+
+    const renderer = new Renderer({
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance",
+    });
+    const gl = renderer.gl;
+    gl.canvas.style.width = "100%";
+    gl.canvas.style.height = "100%";
+    gl.canvas.style.display = "block";
+    canvasWrap.appendChild(gl.canvas);
+
+    const geometry = new Triangle(gl);
+    const program = new Program(gl, {
+      vertex: SLASH_VS,
+      fragment: SLASH_FS,
+      transparent: true,
+      uniforms: {
+        u_resolution: { value: [gl.drawingBufferWidth, gl.drawingBufferHeight] },
+        u_progress: { value: 0 },
+        u_time: { value: 0 },
+      },
+    });
+    tearProgramRef.current = program;
+
+    const mesh = new Mesh(gl, { geometry, program });
+    const scene = new Transform();
+    mesh.setParent(scene);
+
+    const handleResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      renderer.setSize(w, h);
+      program.uniforms.u_resolution.value = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    let rafId = 0;
+    const startTime = performance.now();
+    const tick = () => {
+      program.uniforms.u_time.value = (performance.now() - startTime) / 1000;
+
+      // 1. Organic inertial smoothing for paper tear expansion
+      const tp = tearProgressRef.current;
+      tp.current += (tp.target - tp.current) * 0.08;
+      const easedTear = tp.current * tp.current * (3.0 - 2.0 * tp.current);
+      program.uniforms.u_progress.value = Math.max(0.0, Math.min(1.0, easedTear));
+
+      // 2. Organic inertial smoothing for Katana blade cut stroke
+      const sp = slashProgressRef.current;
+      sp.current += (sp.target - sp.current) * 0.12;
+      const s = Math.max(0.0, Math.min(1.0, sp.current));
+      const dashOffset = 3000 * (1.0 - s);
+      const opacity = s < 0.85 ? Math.min(1.0, s * 4.0) : Math.max(0, 1.0 - (s - 0.85) * 7.5);
+
+      if (slashLineRef.current) {
+        slashLineRef.current.style.strokeDashoffset = String(dashOffset);
+        slashLineRef.current.style.opacity = String(opacity);
+      }
+      if (slashShadowRef.current) {
+        slashShadowRef.current.style.strokeDashoffset = String(dashOffset);
+        slashShadowRef.current.style.opacity = String(opacity * 0.75);
+      }
+
+      // 3. Keep tear container active ONLY during Intro (< 0.22)
+      if (tearContainerRef.current) {
+        if (scrollPRef.current < 0.22) {
+          tearContainerRef.current.style.display = 'block';
+        } else {
+          tearContainerRef.current.style.display = 'none';
+        }
+      }
+
+      renderer.render({ scene });
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", handleResize);
+      tearProgramRef.current = null;
+      if (gl.canvas.parentElement === canvasWrap) {
+        canvasWrap.removeChild(gl.canvas);
+      }
+      setTimeout(() => {
+        gl.getExtension("WEBGL_lose_context")?.loseContext();
+      }, 100);
+    };
+  }, [mounted]);
+
+  // Fluid 3D mouse parallax response
+  useEffect(() => {
+    const sticky = stickyRef.current;
+    if (!sticky) return;
+
+    let rafId: number;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = sticky.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      targetX = (e.clientX - rect.left) / rect.width - 0.5;
+      targetY = (e.clientY - rect.top) / rect.height - 0.5;
+    };
+
+    const updateParallax = () => {
+      currentX += (targetX - currentX) * 0.07;
+      currentY += (targetY - currentY) * 0.07;
+
+      if (portalWrapperRef.current) {
+        portalWrapperRef.current.style.transform = `perspective(1200px) rotateY(${currentX * 7}deg) rotateX(${-currentY * 6}deg) translateZ(12px)`;
+      }
+
+      if (textCardRef.current) {
+        textCardRef.current.style.transform = `translate3d(${-currentX * 14}px, ${-currentY * 10}px, 0)`;
+      }
+
+      rafId = requestAnimationFrame(updateParallax);
+    };
+
+    sticky.addEventListener('mousemove', onMouseMove, { passive: true });
+    rafId = requestAnimationFrame(updateParallax);
+
+    return () => {
+      sticky.removeEventListener('mousemove', onMouseMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  // Quick navigation to project on click
+  const scrollToProject = (idx: number) => {
+    if (!sectionRef.current) return;
+    const st = ScrollTrigger.getById('artifacts-scroll');
+    if (!st) return;
+    // idx 0 lands directly at Project 01 after the tear is open; idx 1 -> Project 02; idx 2 -> Project 03
+    const targetProgress = idx === 0 ? 0.26 : idx === 1 ? 0.48 : 0.70;
+    const targetScroll = st.start + targetProgress * (st.end - st.start);
+    window.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth',
+    });
+    soundManager?.playSwordWhoosh();
+  };
+
+  // Close specification modal on Escape key
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedProject(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   useGSAP(() => {
     if (!sectionRef.current) return;
 
-    gsap.from(".artifacts-reveal-top", {
-      y: -20,
-      opacity: 0,
-      duration: 1.2,
-      stagger: 0.15,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 80%",
-      }
+    // Harmonize with dark forge palette
+    gsap.set(sectionRef.current, {
+      "--background": "#080808",
+      "--foreground": "#f5f5f0",
     });
 
-    // Synchronized title parallax with ease: "none" matching Philosophy
-    gsap.to(".artifacts-title-1", {
-      x: -30,
-      ease: "none",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: true
-      }
-    });
-    gsap.to(".artifacts-title-2", {
-      x: 30,
-      ease: "none",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: true
-      }
-    });
+    // Pinned ScrollTrigger with 1:1 hardware-accelerated GPU scrubbing
+    ScrollTrigger.create({
+      id: 'artifacts-scroll',
+      trigger: sectionRef.current,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 1,
+      onUpdate: (self) => {
+        const p = self.progress;
+        scrollPRef.current = p;
 
-    // Header ink image Parallax scroll (moves downwards slowly)
-    gsap.to(".artifacts-header-img", {
-      y: 80,
-      ease: "none",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: true,
-      }
+        // =========================================================================
+        // PHASE 1: STILLNESS, KATANA SLASH & PAPER TEAR REVEAL (p: 0.00 -> 0.22)
+        // =========================================================================
+        if (p < 0.22) {
+          if (tearContainerRef.current) {
+            tearContainerRef.current.style.display = 'block';
+          }
+
+          // 1. Stillness quote: rests serenely, then dissolves with motion blur (0.00 -> 0.06)
+          const pStillness = Math.min(1.0, Math.max(0.0, p / 0.06));
+          if (stillnessQuoteRef.current) {
+            const quoteOpacity = 1.0 - pStillness;
+            stillnessQuoteRef.current.style.opacity = quoteOpacity.toFixed(3);
+            stillnessQuoteRef.current.style.filter = pStillness > 0.01 ? `blur(${(pStillness * 8).toFixed(1)}px)` : 'none';
+            stillnessQuoteRef.current.style.transform = `scale(${(1.0 - pStillness * 0.06).toFixed(3)})`;
+            stillnessQuoteRef.current.style.pointerEvents = quoteOpacity > 0.1 ? 'auto' : 'none';
+          }
+
+          // 2. Katana blade slice stroke: drives target with generous scroll space (0.04 -> 0.14)
+          const targetSlash = Math.min(1.0, Math.max(0.0, (p - 0.04) / 0.10));
+          slashProgressRef.current.target = targetSlash;
+
+          // Razor cut sound trigger right at blade impact
+          if (p >= 0.06 && !hasPlayedSlashSound.current && self.direction > 0) {
+            soundManager?.playSwordWhoosh();
+            hasPlayedSlashSound.current = true;
+          } else if (p < 0.03) {
+            hasPlayedSlashSound.current = false;
+          }
+
+          // 3. OGL Tear Shader: drives target tear smoothly across (0.08 -> 0.22)
+          const targetTear = Math.min(1.0, Math.max(0.0, (p - 0.08) / 0.14));
+          tearProgressRef.current.target = targetTear;
+
+          // 4. Navbar theme: switch to dark mode once tear begins to reveal the black forge
+          if (p >= 0.14) {
+            window.dispatchEvent(new CustomEvent("dark-section", { detail: true }));
+          } else if (self.direction < 0 && p < 0.08) {
+            window.dispatchEvent(new CustomEvent("dark-section", { detail: false }));
+          }
+
+          // Katana rail track on the right remains hidden during slash intro
+          if (katanaTrackRef.current) {
+            katanaTrackRef.current.style.opacity = '0';
+            katanaTrackRef.current.style.pointerEvents = 'none';
+          }
+
+          // Keep Project 01 at rest (p = 0) so it shines directly inside the tear
+          portalRef.current?.setProgress(0);
+          reflectionRef.current?.setProgress(0);
+
+          projectCardsRef.current.forEach((card, idx) => {
+            if (!card) return;
+            if (idx === 0) {
+              card.style.opacity = '1';
+              card.style.transform = 'translate3d(0, 0px, 0)';
+              card.style.filter = 'none';
+              card.style.pointerEvents = 'auto';
+            } else {
+              card.style.opacity = '0';
+              card.style.transform = 'translate3d(0, 28px, 0)';
+              card.style.filter = 'blur(6px)';
+              card.style.pointerEvents = 'none';
+            }
+          });
+          return;
+        }
+
+        // =========================================================================
+        // PHASE 2: PROJECT SHOWCASE & REAL-TIME MORPHING (p: 0.22 -> 0.78)
+        // Generous resting dwell on Project 03 (0.68 -> 0.78)
+        // =========================================================================
+        if (p < 0.78) {
+          slashProgressRef.current.target = 1.0;
+          tearProgressRef.current.target = 1.0;
+
+          // Ensure intro quote and tear container are completely hidden on reload
+          if (tearProgressRef.current.current < 0.99) {
+            tearProgressRef.current.current = 1.0;
+            slashProgressRef.current.current = 1.0;
+          }
+          if (stillnessQuoteRef.current) {
+            stillnessQuoteRef.current.style.opacity = '0';
+            stillnessQuoteRef.current.style.pointerEvents = 'none';
+          }
+          if (tearContainerRef.current) {
+            tearContainerRef.current.style.display = 'none';
+          }
+
+          // Reset nocturnal lake elements while in project browsing
+          if (portalWrapperRef.current) {
+            portalWrapperRef.current.style.opacity = '1';
+            portalWrapperRef.current.style.transform = 'none';
+            portalWrapperRef.current.style.filter = 'none';
+          }
+          if (textCardRef.current) {
+            textCardRef.current.style.transform = 'none';
+            textCardRef.current.style.filter = 'none';
+          }
+          if (katanaTrackRef.current) {
+            katanaTrackRef.current.style.opacity = '1';
+            katanaTrackRef.current.style.pointerEvents = 'auto';
+          }
+          window.dispatchEvent(new CustomEvent("dark-section", { detail: true }));
+
+          // Map scroll (0.22 -> 0.68) to project progress (0.00 -> 1.00), leaving (0.68 -> 0.78) as dwell for Project 03
+          const projectP = Math.min(1.0, Math.max(0.0, (p - 0.22) / 0.46));
+
+          // 1. Direct real-time GPU uniform updates (zero lag, bidirectional, continuous)
+          portalRef.current?.setProgress(projectP);
+          reflectionRef.current?.setProgress(projectP);
+
+          // 2. Real-time cinematic text transition for Title & Desc (synchronized with mist portal morphing)
+          const v = Math.max(0, Math.min(projectP * 2.0, 2.0)); // 0.0 to 2.0
+          projectCardsRef.current.forEach((card, idx) => {
+            if (!card) return;
+            const d = v - idx; // distance from this project's resting point
+            if (Math.abs(d) < 0.6) {
+              const norm = 1.0 - Math.abs(d) / 0.6;
+              const opacity = norm * norm * (3.0 - 2.0 * norm); // Smooth cubic ease
+              const y = -d * 28.0; // Floats up as you scroll past, glides in from bottom as you approach
+              const blur = (1.0 - opacity) * 6.0;
+              card.style.opacity = opacity.toFixed(3);
+              card.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`;
+              card.style.filter = blur > 0.1 ? `blur(${blur.toFixed(1)}px)` : 'none';
+              card.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
+            } else {
+              card.style.opacity = '0';
+              card.style.transform = `translate3d(0, ${d > 0 ? -28 : 28}px, 0)`;
+              card.style.filter = 'blur(6px)';
+              card.style.pointerEvents = 'none';
+            }
+          });
+
+          // 3. Hysteresis buffer zones: prevents jitter for project audio and top markers
+          let nextIdx = lastIndexRef.current;
+          if (lastIndexRef.current === 0) {
+            if (projectP >= 0.38) nextIdx = 1;
+          } else if (lastIndexRef.current === 1) {
+            if (projectP <= 0.28) nextIdx = 0;
+            else if (projectP >= 0.72) nextIdx = 2;
+          } else if (lastIndexRef.current === 2) {
+            if (projectP <= 0.62) nextIdx = 1;
+          }
+
+          if (nextIdx !== lastIndexRef.current) {
+            soundManager?.playSwordWhoosh();
+            lastIndexRef.current = nextIdx;
+            setActiveIdx(nextIdx);
+          }
+          return;
+        }
+
+        // =========================================================================
+        // PHASE 3: ETHEREAL SUMI-E MIST VEIL TRANSITION (p: 0.78 -> 1.00)
+        // Hồ đêm và Project 03 dần được bao bọc trong màn sương mù trắng Washi
+        // Khi sương mù tan, người xem đã đứng trọn vẹn trong không gian Philosophy
+        // =========================================================================
+        // Ensure intro quote and tear container are completely hidden
+        if (stillnessQuoteRef.current) {
+          stillnessQuoteRef.current.style.opacity = '0';
+          stillnessQuoteRef.current.style.pointerEvents = 'none';
+        }
+        if (tearContainerRef.current) {
+          tearContainerRef.current.style.display = 'none';
+        }
+
+        // Keep Project 03 textures locked at 1.0
+        portalRef.current?.setProgress(1.0);
+        reflectionRef.current?.setProgress(1.0);
+
+        // Smooth mist expansion from p = 0.78 to 0.98
+        const mistProgress = Math.min(1.0, Math.max(0.0, (p - 0.78) / 0.18));
+        const lakeFade = Math.max(0, 1.0 - mistProgress * 1.25);
+
+        // Lake elements fade softly as mist rolls in
+        if (portalWrapperRef.current) {
+          portalWrapperRef.current.style.opacity = lakeFade.toFixed(3);
+          portalWrapperRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+        }
+        if (textCardRef.current) {
+          textCardRef.current.style.opacity = lakeFade.toFixed(3);
+          textCardRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+        }
+
+        // Katana rail track fades out smoothly as mist rises
+        if (katanaTrackRef.current) {
+          katanaTrackRef.current.style.opacity = lakeFade.toFixed(3);
+          katanaTrackRef.current.style.pointerEvents = lakeFade > 0.5 ? 'auto' : 'none';
+        }
+
+        // The dense white Washi mist veil covers the screen
+        if (mistVeilRef.current) {
+          mistVeilRef.current.style.opacity = mistProgress.toFixed(3);
+          mistVeilRef.current.style.pointerEvents = mistProgress > 0.7 ? 'auto' : 'none';
+        }
+
+        // Seamless handover for navbar: switches to dark text as mist envelops the view
+        window.dispatchEvent(new CustomEvent("dark-section", { detail: mistProgress < 0.45 }));
+      },
     });
   }, { scope: sectionRef });
-
 
   return (
     <section
       ref={sectionRef}
       id="artifacts"
-      className="relative py-28 md:py-44 bg-background select-none"
+      className="relative w-full bg-[#080808] text-[#f5f5f0] select-none"
+      style={{ height: "560vh" }}
     >
-      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
-        <defs>
-          <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-          <filter id="project-torn-mask" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="4" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
-      <div className="mx-auto max-w-[1400px] px-6 md:px-10 relative z-10">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16 lg:items-start">
-          {/* The header stays put (CSS `sticky`, not a GSAP pin — same reasoning
-              as About's stage: no JS measurement, no containing-block edge
-              cases) while the project list scrolls past beside it, so "Chapter
-              II" orientation never disappears mid-browse. Desktop only — below
-              `lg` the header sits above the list in normal stacked flow. */}
-          <div className="lg:col-span-5 lg:sticky lg:top-28 artifacts-title-trigger mb-24 md:mb-32 lg:mb-0 text-left relative z-10">
-            {/* The decorative art sits in normal flow above all the header
-                text — big, but not behind or under any of it, so there's no
-                text-vs-image legibility trade-off to tune at all. */}
-            <div
-              className="hidden md:block relative w-full h-[320px] lg:h-[300px] mb-8 opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none artifacts-header-img z-0"
-              style={{ filter: isDark ? "invert(1)" : "invert(0)" }}
-            >
-              <Image
-                src="/images/be-calm-stay-in-control.jpg"
-                alt="Be Calm Stay In Control Art"
-                fill
-                sizes="(max-width: 1024px) 500px, 420px"
-                className="object-contain object-left-top"
-                style={{
-                  maskImage: "linear-gradient(to bottom, black 75%, transparent 100%)",
-                  WebkitMaskImage: "linear-gradient(to bottom, black 75%, transparent 100%)",
-                }}
-                priority
-              />
-            </div>
+      {/* Sticky Fullscreen Stage */}
+      <div
+        ref={stickyRef}
+        className="sticky top-0 left-0 w-full h-screen overflow-hidden flex flex-col justify-center items-center py-4 sm:py-6 px-6 sm:px-10 md:px-14 lg:px-20 z-10 bg-[#080808]"
+      >
+        {/* Atmospheric Nocturnal Lake & Distant Sumi Mist */}
+        <ArtifactsLakeBackground />
 
-            <div className="flex items-center gap-4 mb-8 w-full artifacts-reveal-top relative z-10">
-              <div className="flex items-center font-mono text-foreground/75">
-                <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
-                  [ CHAPTER II : CREATIONS ]
-                </span>
+        {/* Katana Slash & Paper Tear Reveal Layer */}
+        <div
+          ref={tearContainerRef}
+          className="absolute inset-0 w-full h-full z-30 pointer-events-none overflow-hidden"
+        >
+          {/* Stage 1: Minimalist Stillness Quote */}
+          <div
+            ref={stillnessQuoteRef}
+            className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none px-6 z-20 will-change-transform"
+          >
+            <p className="font-serif italic text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#111111]/80 font-light tracking-tight mb-3">
+              Where thought becomes form.
+            </p>
+          </div>
+
+          {/* OGL Canvas: Rách mở màn hình theo vết chém kĩ thuật */}
+          <div
+            ref={tearCanvasRef}
+            className="absolute inset-0 w-full h-full z-10 pointer-events-none"
+          />
+
+          {/* Anime Katana Cut Line */}
+          <svg
+            className="absolute inset-0 w-full h-full z-25 pointer-events-none overflow-visible"
+          >
+            {/* Subtle silver blade gleam */}
+            <line
+              ref={slashShadowRef}
+              x1="-5%"
+              y1="105%"
+              x2="105%"
+              y2="-5%"
+              stroke="#ffffff"
+              strokeWidth="3.5"
+              strokeDasharray="3000"
+              strokeDashoffset="3000"
+              strokeLinecap="round"
+              className="opacity-0"
+            />
+            {/* Razor-thin steel blade incision */}
+            <line
+              ref={slashLineRef}
+              x1="-5%"
+              y1="105%"
+              x2="105%"
+              y2="-5%"
+              stroke="#111111"
+              strokeWidth="2"
+              strokeDasharray="3000"
+              strokeDashoffset="3000"
+              strokeLinecap="round"
+              className="opacity-0"
+            />
+          </svg>
+        </div>
+
+        {/* Central Stage: Split 2-Column Layout (Portal Left, Title & Desc Right) */}
+        <div className="relative w-full max-w-[1560px] mx-auto flex items-center justify-between z-10 py-2 sm:py-4 px-2 sm:px-4">
+          <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-center">
+            {/* LEFT COLUMN: Enlarged Mist Portal & Submerged Water Reflection */}
+            <div
+              ref={portalWrapperRef}
+              className="lg:col-span-7 xl:col-span-7 w-full flex flex-col items-center lg:items-start will-change-transform"
+            >
+              {/* The OGL Mist Portal (Expanded size with interactive inspection trigger) */}
+              <div
+                onClick={() => {
+                  soundManager?.playSwordWhoosh();
+                  setSelectedProject(PROJECTS[activeIdx]);
+                }}
+                className="relative w-full aspect-[16/10] max-w-[680px] xl:max-w-[760px] flex items-center justify-center cursor-pointer group/portal"
+              >
+                <ProjectMistPortal
+                  ref={portalRef}
+                  projects={PROJECTS}
+                  currentIndex={activeIdx}
+                  className="w-full h-full"
+                />
+              </div>
+
+              {/* The Submerged Water Mirror Reflection */}
+              <div className="relative w-full max-w-[680px] xl:max-w-[760px] h-[160px] sm:h-[190px] lg:h-[220px] -mt-[2px] pointer-events-none select-none overflow-hidden">
+                <ProjectWaterReflection
+                  ref={reflectionRef}
+                  images={PROJECTS.map((p) => p.image)}
+                  className="w-full h-full"
+                />
               </div>
             </div>
 
-            <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-7xl xl:text-8xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] overflow-visible artifacts-reveal-top relative z-10">
-              <span className="inline-block artifacts-title-1">FORGED</span> <br />
-              <span className="inline-block artifacts-title-2 text-transparent" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>BLADES.</span>
-            </h2>
+            {/* RIGHT COLUMN: Project Title & Description with Realtime Transition */}
+            <div
+              ref={textCardRef}
+              className="lg:col-span-5 xl:col-span-5 relative w-full min-h-[340px] sm:min-h-[380px] will-change-transform pl-0 lg:pl-6"
+            >
+              {PROJECTS.map((proj, idx) => (
+                <div
+                  key={proj.id}
+                  ref={(el) => { projectCardsRef.current[idx] = el; }}
+                  className="absolute inset-0 flex flex-col items-start text-left will-change-transform"
+                  style={{
+                    opacity: idx === 0 ? 1 : 0,
+                    transform: idx === 0 ? 'translate3d(0, 0px, 0)' : 'translate3d(0, 28px, 0)',
+                    filter: idx === 0 ? 'none' : 'blur(6px)',
+                    pointerEvents: idx === 0 ? 'auto' : 'none',
+                  }}
+                >
+                  <div className="flex items-center gap-3.5 mb-3">
+                    <span className="font-serif text-3xl lg:text-4xl text-white/25 select-none">
+                      {proj.kanji}
+                    </span>
+                    <span className="font-mono text-xs tracking-[0.3em] text-white/40 uppercase">
+                      0{idx + 1}
+                    </span>
+                  </div>
 
-            <div className="flex flex-col md:flex-row lg:flex-col gap-8 md:gap-12 lg:gap-0 items-start justify-between mt-10 md:mt-12 artifacts-reveal-top">
-              <p className="text-xl md:text-3xl lg:text-xl xl:text-2xl font-light text-foreground/45 max-w-2xl lg:max-w-md leading-tight tracking-tight">
-                A grand exhibition of <span className="text-foreground font-semibold underline decoration-foreground/30 underline-offset-4">architectural manifestations</span>. Each creation is a forged blade, balanced between high-precision logic and silent aesthetics.
-              </p>
+                  <h3 className="font-serif font-light text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white tracking-tight leading-[1.08] mb-4">
+                    {proj.title}
+                  </h3>
+
+                  <p className="font-light text-white/70 text-sm sm:text-base lg:text-[17px] leading-relaxed max-w-xl mb-4">
+                    {proj.description}
+                  </p>
+
+                  {/* Minimal Mono Tech Stack */}
+                  <div className="font-mono text-xs sm:text-[13px] text-white/40 tracking-wider mb-6 flex items-center gap-2.5 select-none">
+                    <span className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" style={{ backgroundColor: proj.accent }} />
+                    <span>{proj.tags.join(" · ")}</span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      soundManager?.playSwordWhoosh();
+                      setSelectedProject(proj);
+                    }}
+                    className="inline-flex items-center gap-2 group/link cursor-pointer focus:outline-none"
+                  >
+                    <span className="font-mono text-xs tracking-[0.25em] uppercase text-white/50 group-hover/link:text-white transition-colors">
+                      View Specification ↗
+                    </span>
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-          {/* `overflow-hidden` lives here (scoped to the list only) instead of
-              on the whole `<section>` — each card's giant daiji watermark can
-              bleed near the card's own edges and needs clipping, but putting
-              that overflow rule on an ancestor of the sticky header above
-              breaks `position: sticky` outright (a well-known CSS interaction:
-              any ancestor with overflow other than `visible` becomes sticky's
-              reference box). */}
-          <div className="lg:col-span-7 flex flex-col overflow-hidden">
-            {PROJECTS.map((project, i) => (
-              <ProjectCard key={project.id} project={project} index={i} isDark={isDark} />
-            ))}
-          </div>
+        </div>
+
+        {/* Minimal Katana Navigation Track on the far right */}
+        <div
+          ref={katanaTrackRef}
+          className="hidden lg:flex flex-col items-end gap-5 absolute right-6 top-1/2 -translate-y-1/2 z-40 select-none transition-opacity duration-300"
+          style={{ opacity: 0, pointerEvents: 'none' }}
+        >
+          {PROJECTS.map((proj, idx) => {
+            const isActive = activeIdx === idx;
+            return (
+              <button
+                key={proj.id}
+                onClick={() => scrollToProject(idx)}
+                className="group flex items-center gap-3 py-1.5 cursor-pointer focus:outline-none"
+                aria-label={`Jump to ${proj.title}`}
+              >
+                <span className={`font-mono text-[9px] tracking-[0.25em] transition-all duration-300 ${isActive ? 'text-white font-semibold' : 'text-white/20 group-hover:text-white/60'
+                  }`}>
+                  0{idx + 1}
+                </span>
+                <span className={`block h-[1px] transition-all duration-500 ${isActive ? 'w-8 bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]' : 'w-3 bg-white/20 group-hover:w-5 group-hover:bg-white/50'
+                  }`} />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Phase 3: Ethereal Sumi-e Mist / Morning Fog Transition Layer */}
+        <div
+          ref={mistVeilRef}
+          className="absolute inset-0 w-full h-full z-40 pointer-events-none opacity-0 flex flex-col items-center justify-center overflow-hidden bg-[#fdfdfd]"
+        >
+          {/* Layered swirling mist gradients */}
+          <div 
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{
+              background: `
+                radial-gradient(ellipse at 50% 50%, rgba(253, 253, 253, 0.98) 0%, rgba(253, 253, 253, 0.92) 55%, rgba(253, 253, 253, 1) 100%),
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.85) 0%, transparent 60%),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.85) 0%, transparent 60%)
+              `,
+            }}
+          />
         </div>
       </div>
+
+      {/* Ethereal Technical Specification Modal */}
+      {selectedProject && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/85 backdrop-blur-xl animate-in fade-in duration-300"
+          onClick={() => setSelectedProject(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl bg-[#0b0b0b]/95 border border-white/10 p-6 sm:p-8 rounded-lg shadow-2xl overflow-hidden select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+              <div className="flex items-center gap-3">
+                <span className="font-serif text-2xl text-white/30">{selectedProject.kanji}</span>
+                <span className="font-mono text-xs tracking-[0.25em] text-white/40 uppercase">
+                  Technical Specification
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedProject(null)}
+                className="font-mono text-[11px] tracking-widest text-white/40 hover:text-white transition-colors cursor-pointer px-2 py-1"
+              >
+                [ CLOSE ✕ ]
+              </button>
+            </div>
+            <h2 className="font-serif text-3xl sm:text-4xl text-white font-light tracking-tight mb-2">
+              {selectedProject.title}
+            </h2>
+            <p className="font-mono text-xs text-white/70 tracking-wide mb-6">
+              {selectedProject.metrics}
+            </p>
+            <div className="mb-6">
+              <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">
+                Architecture & Engineering
+              </h4>
+              <p className="text-xs sm:text-sm text-white/70 font-light leading-relaxed mb-3">
+                {selectedProject.description}
+              </p>
+              <div className="p-3.5 rounded bg-white/[0.03] border border-white/5 font-mono text-[11px] text-white/60 leading-relaxed">
+                {selectedProject.architecture}
+              </div>
+            </div>
+
+            {/* Tech Stack List */}
+            <div className="mb-6">
+              <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2.5">
+                Core Technologies
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedProject.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-4 pt-4 border-t border-white/10">
+              <button
+                onClick={() => setSelectedProject(null)}
+                className="font-mono text-xs tracking-widest uppercase text-white/60 hover:text-white px-4 py-2 cursor-pointer transition-colors"
+              >
+                Dismiss
+              </button>
+              <a
+                href="#contact"
+                onClick={() => setSelectedProject(null)}
+                className="font-mono text-xs tracking-widest uppercase bg-white text-black font-semibold px-4 py-2 rounded hover:bg-white/90 transition-colors cursor-pointer"
+              >
+                Inquire System ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
-
-

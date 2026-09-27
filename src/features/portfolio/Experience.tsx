@@ -3,7 +3,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
-import { useTheme } from "next-themes";
 import Image from 'next/image';
 import { soundManager } from '@/lib/sound';
 
@@ -102,7 +101,7 @@ const FootprintSVG = ({ isLeft, className }: { isLeft: boolean; className?: stri
     </g>
 
     {/* 2. Translucent Foreground Ink Stamp on top */}
-    <g className="text-foreground opacity-[0.55] dark:opacity-[0.28]" fill="currentColor">
+    <g className="text-foreground opacity-[0.55]" fill="currentColor">
       <path d="M 50,155 C 38,155 30,140 30,122 C 30,105 38,98 42,88 C 45,78 38,65 33,48 C 30,38 33,26 50,26 C 67,26 70,38 67,48 C 62,65 55,78 58,88 C 62,98 70,105 70,122 C 70,140 62,155 50,155 Z" />
       <ellipse cx="48" cy="14" rx="9" ry="12" />
       <ellipse cx="66" cy="18" rx="6.5" ry="9" />
@@ -115,7 +114,6 @@ const FootprintSVG = ({ isLeft, className }: { isLeft: boolean; className?: stri
 
 export const Experience = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [activeBook, setActiveBook] = useState('earth');
 
@@ -125,18 +123,6 @@ export const Experience = () => {
 
   useGSAP(() => {
     if (!mounted || !containerRef.current) return;
-
-    gsap.from(".exp-reveal-top", {
-      y: -20,
-      opacity: 0,
-      duration: 1.2,
-      stagger: 0.15,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top 80%",
-      }
-    });
 
     // Synchronized title parallax with ease: "none" matching Philosophy
     gsap.to(".exp-title-1", {
@@ -185,8 +171,6 @@ export const Experience = () => {
 
   }, { scope: containerRef, dependencies: [mounted] });
 
-  const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
-
   return (
     <section
       ref={containerRef}
@@ -226,14 +210,14 @@ export const Experience = () => {
           <div className="flex items-center gap-4 mb-8 w-full exp-reveal-top">
             <div className="flex items-center font-mono text-foreground/75">
               <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
-                [ CHAPTER V : THE WATER PATH ]
+                [ CHAPTER IV : THE WATER PATH ]
               </span>
             </div>
           </div>
 
           <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible exp-reveal-top whitespace-nowrap">
             <span className="inline-block exp-title-1 whitespace-nowrap">PATH OF THE</span> <br />
-            <span className="inline-block exp-title-2 text-transparent ml-[5%] md:ml-[15%] whitespace-nowrap" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>WANDERER.</span>
+            <span className="inline-block exp-title-2 text-transparent ml-[5%] md:ml-[15%] whitespace-nowrap" style={{ WebkitTextStroke: "1.5px rgba(0,0,0,0.7)" }}>WANDERER.</span>
           </h2>
           <p className="mt-8 font-caveat text-2xl sm:text-3xl md:text-4xl text-foreground/60 tracking-wide font-normal max-w-2xl exp-reveal-top">
             &quot;A journey of a thousand leagues begins beneath one&apos;s feet.&quot;
@@ -268,7 +252,7 @@ export const Experience = () => {
                           </span>
                         )}
                       </span>
-                      <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] aspect-[2/3] opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] overflow-hidden exp-reveal-top relative">
+                      <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] aspect-[2/3] opacity-[0.85] mix-blend-multiply overflow-hidden exp-reveal-top relative">
                         <Image
                           src={exp.image}
                           alt="Zen Decor"
@@ -491,15 +475,14 @@ export const Experience = () => {
                         {exp.period}
                       </span>
 
-                      <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] opacity-[0.85] mix-blend-multiply dark:mix-blend-screen dark:opacity-[0.55] overflow-hidden exp-reveal-top relative">
+                      <div className="mt-8 md:mt-16 w-[260px] md:w-[380px] lg:w-[460px] aspect-[2/3] opacity-[0.85] mix-blend-multiply overflow-hidden exp-reveal-top relative">
                         <Image
                           src={exp.image}
                           alt="Zen Decor"
                           width={460}
                           height={690}
-                          className="w-full h-full object-cover grayscale contrast-[1.2] pointer-events-auto"
+                          className="h-full w-full object-cover grayscale contrast-[1.2] pointer-events-auto"
                           style={{
-                            height: "auto",
                             maskImage: "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to right, black 75%, transparent 100%)",
                             WebkitMaskImage: "linear-gradient(to bottom, black 75%, transparent 100%), linear-gradient(to right, black 75%, transparent 100%)",
                             maskComposite: "intersect",

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Rock_Salt, Caveat } from "next/font/google";
+import { Geist, Geist_Mono, Rock_Salt, Caveat, Fraunces } from "next/font/google";
 import "@/app/globals.css";
 import { Navbar } from "@/components/shared/Navbar";
 import { CustomCursor } from "@/components/shared/CustomCursor";
@@ -25,6 +25,21 @@ const rockSalt = Rock_Salt({
 const caveat = Caveat({
   variable: "--font-caveat",
   subsets: ["latin"],
+});
+
+// The site's `font-serif` utility (the headline, the logo, every serif
+// heading) had no real font behind it — Tailwind's default theme falls back
+// silently to the system serif stack (Georgia/Times) when `--font-serif`
+// isn't overridden, which is exactly what was happening here. Fraunces is a
+// display serif built for this kind of dramatic, oversized editorial use —
+// its italic in particular is far more expressive/"handcrafted" than a
+// standard oblique, which suits the already-italic "SAMURAI DISCIPLINE."
+// treatment specifically.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: ["300", "400", "500", "600", "700", "900"],
 });
 
 export const metadata: Metadata = {
@@ -59,10 +74,10 @@ export const metadata: Metadata = {
   },
 };
 
-import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { PageBackdrop } from "@/components/shared/PageBackdrop";
 import { InkTransitionCanvas } from "@/components/shared/InkTransitionCanvas";
 import { Preloader } from "@/components/shared/Preloader";
+import { GlobalCanvas } from "@/components/shared/GlobalCanvas";
 
 export default function RootLayout({
   children,
@@ -85,25 +100,19 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${rockSalt.variable} ${caveat.variable} antialiased selection:bg-accent selection:text-black`}
+        className={`${geistSans.variable} ${geistMono.variable} ${rockSalt.variable} ${caveat.variable} ${fraunces.variable} antialiased selection:bg-accent selection:text-black`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Preloader />
-          <InkTransitionCanvas />
-          <PageBackdrop />
-          <div className="grain-overlay" />
-          <SmoothScroll>
-            <CustomCursor />
-            <Navbar />
-            {children}
-            <Analytics />
-          </SmoothScroll>
-        </ThemeProvider>
+        <Preloader />
+        <InkTransitionCanvas />
+        <PageBackdrop />
+        <GlobalCanvas />
+        <div className="grain-overlay" />
+        <SmoothScroll>
+          <CustomCursor />
+          <Navbar />
+          {children}
+          <Analytics />
+        </SmoothScroll>
       </body>
     </html>
   );

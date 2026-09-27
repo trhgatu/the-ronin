@@ -3,12 +3,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
-import { useTheme } from 'next-themes';
 import { soundManager } from '@/lib/sound';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Preloader = () => {
-  const { resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [showEnter, setShowEnter] = useState(false);
@@ -36,8 +34,6 @@ export const Preloader = () => {
       document.body.style.overflow = '';
     };
   }, []);
-
-  const currentTheme = resolvedTheme || theme || "dark";
 
   useGSAP(() => {
     if (!mounted || !isActive || !containerRef.current || !quoteRef.current || !circleRef.current) return;
@@ -103,8 +99,6 @@ export const Preloader = () => {
           detail: {
             cx: window.innerWidth / 2,
             cy: window.innerHeight / 2,
-            targetTheme: currentTheme,
-            preset: "mist"
           },
         })
       );

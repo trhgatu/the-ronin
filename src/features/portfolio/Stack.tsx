@@ -4,7 +4,6 @@ import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import {
   motion,
-  AnimatePresence,
   useScroll,
   useTransform,
   useSpring,
@@ -14,8 +13,6 @@ import {
 } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import gsap from "@/lib/gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useTheme } from "next-themes";
 import { soundManager } from "@/lib/sound";
 
 const wrap = (min: number, max: number, v: number) => {
@@ -23,94 +20,172 @@ const wrap = (min: number, max: number, v: number) => {
   return ((((v - min) % rangeSize) + rangeSize) % rangeSize) + min;
 };
 
-const BOOKS = [
+interface KakemonoScroll {
+  order: string;
+  kanjiOrdinal: string;
+  kanji: string;
+  romanji: string;
+  element: string;
+  title: string;
+  subtitle: string;
+  quote: string;
+  seal: string;
+  techs: string[];
+}
+
+const SCROLLS: KakemonoScroll[] = [
   {
-    id: "earth",
+    order: "01",
+    kanjiOrdinal: "壱",
     kanji: "地",
-    title: "The Book of Earth",
-    subtitle: "Foundations & Core Platforms",
-    description: "Bulletproof system design, database resilience, and deep core backbones that stand like solid rock.",
-    techs: ["Golang", "Rust", "TypeScript", "JavaScript", "Python"],
+    romanji: "CHI",
+    element: "EARTH",
+    title: "Groundwork & Core",
+    subtitle: "Cốt Lõi Vững Chắc",
+    quote: "Solid as Mount Fuji, unshakeable roots where every creation begins.",
+    seal: "地印",
+    techs: ["TypeScript", "JavaScript", "Go"],
   },
   {
-    id: "water",
+    order: "02",
+    kanjiOrdinal: "弐",
     kanji: "水",
-    title: "The Book of Water",
-    subtitle: "Fluid Interaction & Motion",
-    description: "Adaptive motion dynamics, seamless responsiveness, and user experiences that flow like pristine liquid.",
-    techs: ["React", "Next.js", "TailwindCSS", "Vite", "GSAP", "Three.js", "Framer", "CSS", "HTML"],
+    romanji: "SUI",
+    element: "WATER",
+    title: "Fluid Interfaces",
+    subtitle: "Dòng Chảy Vô Định",
+    quote: "Taking the shape of every vessel, calm as a mirror, unstoppable in motion.",
+    seal: "水印",
+    techs: ["React", "Next.js", "TailwindCSS", "GSAP", "Vite", "CSS", "HTML"],
   },
   {
-    id: "fire",
+    order: "03",
+    kanjiOrdinal: "参",
     kanji: "火",
-    title: "The Book of Fire",
-    subtitle: "Concurrency, Scaling & Infra Forge",
-    description: "High-concurrency engineering, extreme low-latency tuning, and aggressive runtime optimizations under heavy stress.",
-    techs: ["NestJS", "Node.js", "Express", "PostgreSQL", "MongoDB", "Redis", "Prisma", "Supabase", "GraphQL"],
+    romanji: "KA",
+    element: "FIRE",
+    title: "High-Load Systems",
+    subtitle: "Lửa Luyện Thần Binh",
+    quote: "Tempered under immense heat, cutting through load with absolute precision.",
+    seal: "火印",
+    techs: ["NestJS", "Node.js", "Express", "PostgreSQL", "MongoDB", "Redis", "Prisma", "GraphQL"],
   },
   {
-    id: "wind",
+    order: "04",
+    kanjiOrdinal: "四",
     kanji: "風",
-    title: "The Book of Wind",
-    subtitle: "Stealth Automation & Arsenal",
-    description: "Uncompromising clean code, automated container pipelines, and modular cloud architectures.",
-    techs: ["Git", "Github", "Docker", "Kubernetes", "Vercel", "Figma", "Postman", "Grafana"],
+    romanji: "FU",
+    element: "WIND",
+    title: "Cloud & DevOps",
+    subtitle: "Gió Thoảng Vô Vết",
+    quote: "Swift as the mountain gale, leaving no unnecessary traces in the ether.",
+    seal: "風印",
+    techs: ["Docker", "Kubernetes", "Git", "Github", "Postman", "Grafana"],
+  },
+  {
+    order: "05",
+    kanjiOrdinal: "伍",
+    kanji: "空",
+    romanji: "KU",
+    element: "VOID",
+    title: "Cognitive AI",
+    subtitle: "Hư Không Vô Tận",
+    quote: "Boundless as the cosmos, where intuition and intellect strike as one.",
+    seal: "空印",
+    techs: ["Claude", "ChatGPT", "GitHub Copilot", "Gemini"],
   },
 ];
 
-const cardVariants = {
-  hidden: { opacity: 0, scale: 0.97 },
-  show: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      type: "tween" as const,
-      ease: "easeOut" as const,
-      duration: 0.35
-    }
-  }
+const TECH_ICON_ASSETS: Record<string, string> = {
+  "Next.js": "/tech-stack/nextjs.svg",
+  "React": "/tech-stack/reactjs.svg",
+  "TailwindCSS": "/tech-stack/tailwindcss.svg",
+  "Vite": "/tech-stack/vitejs.svg",
+  "GSAP": "/tech-stack/gsap-black.svg",
+  "Framer": "/tech-stack/framer-dark.svg",
+  "NestJS": "/tech-stack/nestjs.svg",
+  "Go": "/tech-stack/go.svg",
+  "JavaScript": "/tech-stack/javascript.svg",
+  "TypeScript": "/tech-stack/typescript.svg",
+  "Node.js": "/tech-stack/nodejs.svg",
+  "Express": "/tech-stack/expressjs-dark.svg",
+  "PostgreSQL": "/tech-stack/postgresql.svg",
+  "MongoDB": "/tech-stack/mongodb.svg",
+  "Redis": "/tech-stack/redis.svg",
+  "Prisma": "/tech-stack/prisma.svg",
+  "GraphQL": "/tech-stack/graphql.svg",
+  "CSS": "/tech-stack/css3.svg",
+  "HTML": "/tech-stack/html5.svg",
+  "Git": "/tech-stack/git.svg",
+  "Github": "/tech-stack/github-light.svg",
+  "Docker": "/tech-stack/docker.svg",
+  "Kubernetes": "/tech-stack/kubernetes.svg",
+  "Postman": "/tech-stack/postman.svg",
+  "Grafana": "/tech-stack/grafana.svg",
+  "Claude": "/tech-stack/claude-ai.svg",
+  "GitHub Copilot": "/tech-stack/github-copilot.svg",
+  "Gemini": "/tech-stack/gemini.svg",
+  "ChatGPT": "/tech-stack/chatgpt.svg",
 };
 
-const TechCard = ({ name }: { name: string }) => {
-  return (
-    <motion.div
-      variants={cardVariants}
-      className="flex-shrink-0 w-56 h-16 md:w-64 md:h-[72px] relative overflow-hidden border border-foreground/30 bg-background/50 rounded-none p-4 group flex items-center justify-between cursor-none"
-    >
-      <div
-        className="absolute inset-0 border border-foreground/20 z-10 pointer-events-none"
-        style={{ filter: "url(#line-torn-filter)" }}
+const TechIcon = ({ name }: { name: string }) => {
+  const iconAsset = TECH_ICON_ASSETS[name];
+
+  if (name === "Github") {
+    return (
+      <span
+        aria-hidden="true"
+        className="block h-full w-full bg-[#161412] opacity-75"
+        style={{
+          WebkitMask: "url('/tech-stack/github-light.svg') center / contain no-repeat",
+          mask: "url('/tech-stack/github-light.svg') center / contain no-repeat",
+        }}
       />
+    );
+  }
 
-      <div className="relative z-10 flex items-center gap-4">
-        <div className="w-8 h-8 md:w-10 md:h-10 relative flex items-center justify-center transition-all duration-700 scale-95 group-hover:scale-105">
-          <Image
-            src={`https://skillicons.dev/icons?i=${name.toLowerCase()}`}
-            alt={name}
-            width={36}
-            height={36}
-            className="w-full h-full grayscale contrast-[1.15] opacity-55 dark:opacity-40 group-hover:grayscale-0 group-hover:contrast-100 group-hover:opacity-100 transition-all duration-700 ease-out"
-            unoptimized
-          />
-        </div>
+  if (name === "Express") {
+    return (
+      <div className="relative w-full h-full flex items-center justify-center">
+        <Image
+          src="/tech-stack/expressjs-dark.svg"
+          alt="Express"
+          width={16}
+          height={16}
+          className="object-contain grayscale contrast-125 opacity-70 group-hover/item:opacity-100 group-hover/item:grayscale-0 transition-all duration-300"
+        />
+      </div>
+    );
+  }
 
-        <h3 className="text-sm md:text-base font-serif font-semibold text-foreground/70 uppercase tracking-widest">
-          {name}
-        </h3>
+  if (iconAsset) {
+    return (
+      <div className="relative w-full h-full flex items-center justify-center">
+        <Image
+          src={iconAsset}
+          alt={name}
+          width={16}
+          height={16}
+          className="object-contain grayscale contrast-125 opacity-70 group-hover/item:opacity-100 group-hover/item:grayscale-0 transition-all duration-300 group-hover/item:scale-105"
+        />
       </div>
-      <div className="relative z-10 text-foreground/25 font-serif font-bold text-lg md:text-xl">
-        術
-      </div>
-    </motion.div>
+    );
+  }
+
+  return (
+    <span className="font-mono text-[9px] text-foreground/50 uppercase font-semibold">
+      {name.slice(0, 2)}
+    </span>
   );
 };
 
+// Kinetic Marquee Line
 const DataLine = ({ text }: { text: string }) => (
-  <div className="flex-shrink-0 mx-6 md:mx-10 text-xl md:text-2xl font-caveat text-foreground/45 whitespace-nowrap py-2 md:py-3 flex items-center gap-6 lowercase">
+  <div className="flex-shrink-0 mx-6 md:mx-10 text-lg md:text-xl font-caveat text-foreground/40 whitespace-nowrap py-2 flex items-center gap-6 lowercase select-none">
     <span>{text}</span>
-    <div className="w-12 md:w-16 h-[1px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+    <div className="w-12 h-[1px] bg-foreground/15" />
     <span>{text}</span>
-    <div className="w-12 md:w-16 h-[1px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
+    <div className="w-12 h-[1px] bg-foreground/15" />
     <span>{text}</span>
   </div>
 );
@@ -136,7 +211,7 @@ const KineticMarquee = ({ children, baseVelocity = 1 }: MarqueeProps) => {
   });
 
   return (
-    <div className="flex overflow-hidden whitespace-nowrap flex-nowrap py-2 md:py-3 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+    <div className="flex overflow-hidden whitespace-nowrap flex-nowrap py-2 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
       <motion.div className="flex whitespace-nowrap flex-nowrap items-center" style={{ x }}>
         {children}{children}{children}{children}
       </motion.div>
@@ -146,67 +221,58 @@ const KineticMarquee = ({ children, baseVelocity = 1 }: MarqueeProps) => {
 
 export const Stack = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [activeBook, setActiveBook] = useState<string>("earth");
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (mounted) {
-      const timer = setTimeout(() => {
-        ScrollTrigger.refresh();
-      }, 650);
-      return () => clearTimeout(timer);
-    }
-  }, [activeBook, mounted]);
-
   useGSAP(() => {
     if (!mounted || !containerRef.current) return;
 
-    // FIX: Trigger scroll parallax specifically on the header wrapper elements which have FIXED height
-    // This stops the title from jumping/glitching when the accordion height changes below!
+    // Subtle gentle headline parallax on natural scroll
     gsap.to(".tech-title-1", {
-      x: -30,
+      x: -16,
       ease: "none",
       scrollTrigger: {
         trigger: ".tech-title-trigger",
         start: "top bottom",
         end: "bottom top",
-        scrub: true
-      }
+        scrub: true,
+      },
     });
     gsap.to(".tech-title-2", {
-      x: 30,
+      x: 16,
       ease: "none",
       scrollTrigger: {
         trigger: ".tech-title-trigger",
         start: "top bottom",
         end: "bottom top",
-        scrub: true
-      }
+        scrub: true,
+      },
     });
 
-    gsap.from(".stack-reveal-top", {
-      y: -20,
-      opacity: 0,
-      duration: 1.2,
-      stagger: 0.15,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top 80%",
-      }
+    // Staggered ink-wash entrance for the 5 hanging scrolls
+    gsap.utils.toArray<HTMLElement>(".kakemono-scroll").forEach((scroll, idx) => {
+      gsap.fromTo(
+        scroll,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          delay: idx * 0.1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: scroll,
+            start: "top 88%",
+            once: true,
+          },
+        }
+      );
     });
-
   }, { scope: containerRef, dependencies: [mounted] });
-
-  const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
-  // The ambient backdrop character — whichever book is open, or "道" (the
-  // Way) when every book is closed. Purely click-driven, no scroll tie-in.
-  const activeKanji = BOOKS.find((b) => b.id === activeBook)?.kanji ?? "道";
 
   if (!mounted) return null;
 
@@ -214,172 +280,194 @@ export const Stack = () => {
     <section
       ref={containerRef}
       id="stack"
-      className="relative py-28 md:py-48 lg:py-60 bg-background overflow-hidden select-none z-10"
+      className="relative -mt-[100vh] pt-20 sm:pt-24 md:pt-28 pb-24 md:pb-36 bg-[#fdfdfd] text-[#161412] overflow-hidden select-none z-20 shadow-[0_-35px_90px_rgba(0,0,0,0.50)]"
+      style={{
+        "--background": "#fdfdfd",
+        "--foreground": "#161412",
+      } as React.CSSProperties}
     >
-      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
-        <defs>
-          <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-          <filter id="stack-kanji-filter" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
+      {/* Top Mist Feather: Ethereal morning haze blending Lake into Washi */}
+      <div
+        className="absolute top-0 left-0 right-0 h-20 pointer-events-none bg-gradient-to-b from-black/[0.06] to-transparent z-10"
+      />
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-foreground/15 z-10 shadow-[0_-1px_10px_rgba(0,0,0,0.25)]" />
 
-      <div className="relative z-20">
-        <div className="tech-title-trigger mx-auto max-w-[1400px] px-6 md:px-10 mb-20 md:mb-32 text-left relative z-20">
+      {/* Background Washi Paper Subtle Texture */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.025] z-0"
+        style={{
+          backgroundImage: `radial-gradient(#161412 1px, transparent 1px)`,
+          backgroundSize: '24px 24px',
+        }}
+      />
+
+      <div className="relative z-10 mx-auto max-w-[1440px] px-6 md:px-10 lg:px-14">
+        {/* ========================================================================= */}
+        {/* HEADER: TRANQUIL MASTHEAD                                                 */}
+        {/* ========================================================================= */}
+        <div className="tech-title-trigger mb-12 md:mb-16 text-left relative z-10">
+          {/* Classical Sumi-e Samurai Illustration blended peacefully onto Washi paper */}
           <div
-            className="hidden md:block absolute right-[2%] lg:right-[5%] top-[-20%] lg:top-[-30%] w-[350px] lg:w-[500px] h-[500px] lg:h-[700px] opacity-80 mix-blend-multiply dark:mix-blend-screen pointer-events-none stack-reveal-top z-0"
-            style={{ filter: isDark ? "invert(1)" : "invert(0)" }}
+            className="hidden md:block absolute right-[0%] lg:right-[3%] -top-14 lg:-top-24 w-[320px] lg:w-[440px] h-[460px] lg:h-[580px] opacity-[0.12] lg:opacity-[0.16] pointer-events-none z-0 mix-blend-multiply"
           >
             <Image
               src="/images/samurai.png"
-              alt="Ronin Samurai"
+              alt="Ronin Samurai Sumi-e Art"
               fill
-              sizes="(max-width: 768px) 0vw, (max-width: 1024px) 350px, 500px"
-              className="object-contain object-right-top"
+              sizes="(max-width: 768px) 0vw, (max-width: 1024px) 320px, 440px"
+              className="object-contain object-right-top contrast-125"
               priority
             />
           </div>
 
-          <div className="flex items-center gap-4 mb-8 w-full stack-reveal-top relative z-10">
-            <div className="flex items-center font-mono text-foreground/75">
-              <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold">
-                [ CHAPTER III : THE ARSENAL ]
-              </span>
-            </div>
+          <div className="flex items-center gap-4 mb-6 w-full relative z-10">
+            <span className="font-mono text-[10px] sm:text-xs tracking-[0.4em] uppercase font-bold text-foreground/50">
+              [ CHAPTER III : THE ARSENAL ]
+            </span>
+            <div className="h-px flex-1 bg-foreground/10" />
           </div>
 
-          <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible stack-reveal-top">
+          <h2 className="font-serif font-light text-foreground uppercase tracking-tight leading-[0.88] text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl relative z-10">
             <span className="inline-block tech-title-1">RONIN&apos;S</span> <br />
-            <span className="inline-block tech-title-2 text-transparent ml-[5%] md:ml-[15%]" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>
+            <span
+              className="inline-block tech-title-2 text-transparent ml-[3%] md:ml-[8%]"
+              style={{ WebkitTextStroke: "1.5px var(--foreground)" }}
+            >
               ARMORY.
             </span>
           </h2>
 
-          <p className="mt-8 font-caveat text-2xl sm:text-3xl md:text-4xl text-foreground/60 tracking-wide font-normal max-w-2xl stack-reveal-top">
+          <p className="mt-6 md:mt-8 font-caveat text-2xl sm:text-3xl md:text-4xl text-foreground/60 tracking-wide font-normal max-w-2xl relative z-10">
             &ldquo;A master requires no specific sword, but intimately understands every blade.&rdquo;
           </p>
         </div>
 
-        {/* The Tech Accordions */}
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10 space-y-6 relative z-20">
-          {/* Ambient mood kanji — crossfades to whichever book is open. Same
-              two-plane depth trick as About (a larger blurred glow behind a
-              crisper, ink-textured mark in front), but purely click-driven
-              here instead of scroll-driven — the accordion has no scroll
-              mechanic of its own to tie into. Scoped to this list specifically
-              (not the whole section, which also contains the header and the
-              marquee far below) so it actually overlaps the visible content. */}
-          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeKanji}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0"
-              >
-                {/* Centered on the accordion's own current height (not
-                    anchored to its top/bottom edge) — that height changes a
-                    lot as books open/close, and a fixed-edge anchor either
-                    scrolls out of view or sits in the wrong place depending
-                    on which book is open. Centering keeps it roughly where
-                    the user is looking regardless. */}
-                <span
-                  className="absolute right-[-4%] top-1/2 -translate-y-1/2 font-serif font-black text-foreground leading-none select-none"
-                  style={{ fontSize: "min(50vw, 520px)", opacity: 0.035, filter: "blur(20px)" }}
-                >
-                  {activeKanji}
-                </span>
-                <span
-                  className="absolute right-[1%] top-1/2 -translate-y-1/2 font-serif font-black text-foreground leading-none select-none"
-                  style={{ fontSize: "min(36vw, 380px)", opacity: 0.07, filter: "url(#stack-kanji-filter)" }}
-                >
-                  {activeKanji}
-                </span>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+        {/* ========================================================================= */}
+        {/* KAKEMONO EDITORIAL SCROLLS: 5 HANGING SUMI-E PARCHMENTS                   */}
+        {/* ========================================================================= */}
+        <div
+          className="border-y border-foreground/15 grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-foreground/15 relative z-20 bg-background/30 backdrop-blur-[2px]"
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
+          {SCROLLS.map((scroll, idx) => {
+            const isHovered = hoveredIndex === idx;
+            const isAnyHovered = hoveredIndex !== null;
+            const isFaded = isAnyHovered && !isHovered;
 
-          {BOOKS.map((book) => {
-            const isOpen = activeBook === book.id;
             return (
               <div
-                key={book.id}
-                id={`book-row-${book.id}`}
-                className="border-b border-foreground/10 pb-6 relative group overflow-hidden book-row-trigger"
+                key={scroll.order}
+                onMouseEnter={() => {
+                  setHoveredIndex(idx);
+                  soundManager?.playSwordWhoosh();
+                }}
+                className={`kakemono-scroll group relative p-6 sm:p-7 lg:p-8 flex flex-col justify-between transition-all duration-500 ease-out cursor-default ${isFaded ? "opacity-45 md:opacity-40" : "opacity-100"
+                  } ${isHovered ? "bg-foreground/[0.02]" : "bg-transparent"}`}
               >
-                <div className="absolute inset-0 bg-foreground/[0.005] translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700 ease-out z-0 pointer-events-none" />
-                <button
-                  onClick={() => {
-                    setActiveBook(isOpen ? "" : book.id);
-                    soundManager?.playBookOpen();
-                  }}
-                  className="w-full text-left flex items-center py-4 relative z-10 cursor-pointer pointer-events-auto group/btn"
-                >
-                  <div className="flex items-center gap-6">
-                    <span className={`font-serif text-3xl md:text-4xl lg:text-5xl inline-block origin-left will-change-transform transition-[transform,color] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? "text-foreground scale-110 font-bold" : "text-foreground/25 scale-100 font-bold group-hover/btn:text-foreground/60"}`}>
-                      {book.kanji}
-                    </span>
-                    <div className="flex flex-col">
-                      <span className={`text-lg md:text-xl lg:text-2xl font-serif uppercase tracking-wide transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? "text-foreground font-semibold" : "text-foreground/50 font-light group-hover/btn:text-foreground/80"}`}>
-                        {book.title}
+                {/* Subtle vertical hanging rod accent line at the top */}
+                <div className="absolute top-0 left-6 right-6 h-[2px] bg-foreground/10 group-hover:bg-foreground/30 transition-colors" />
+
+                {/* Ambient Calligraphic Kanji Watermark in background */}
+                <div className="absolute right-2 top-24 pointer-events-none select-none transition-all duration-700 group-hover:scale-105 group-hover:translate-x-1 opacity-[0.035] group-hover:opacity-[0.07]">
+                  <span className="font-serif text-8xl lg:text-[110px] font-black leading-none">
+                    {scroll.kanji}
+                  </span>
+                </div>
+
+                {/* ----------------------------------------------------------------- */}
+                {/* SCROLL TOP: ORDINAL, RED HANKO SEAL, & CALLIGRAPHIC HEADING       */}
+                {/* ----------------------------------------------------------------- */}
+                <div className="relative z-10">
+                  {/* Top Bar: Book Ordinal & Vermilion Red Inkan Stamp */}
+                  <div className="flex items-center justify-between gap-3 mb-6">
+                    <div className="flex items-center gap-2">
+                      <span className="font-serif text-sm font-bold text-foreground/50">
+                        {scroll.kanjiOrdinal}
                       </span>
-                      <span className="text-[11px] md:text-xs font-serif italic tracking-wide text-foreground/35 mt-1.5 normal-case">
-                        {book.subtitle}
+                      <span className="font-mono text-[10px] text-foreground/40 tracking-widest uppercase">
+                        // BK.{scroll.order}
                       </span>
                     </div>
-                  </div>
-                </button>
 
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{
-                    height: isOpen ? "auto" : 0,
-                    opacity: isOpen ? 1 : 0
-                  }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden relative z-10"
-                >
-                  <div className="pt-4 pb-2 space-y-6">
-                    <p className="text-sm md:text-base font-serif font-light text-foreground/75 leading-relaxed pl-6 relative">
-                      <span className="absolute left-0 top-1 bottom-1 w-[2px] bg-foreground/20" style={{ filter: "url(#line-torn-filter)" }} />
-                      {book.description}
-                    </p>
-                    <motion.div
-                      initial="hidden"
-                      animate={isOpen ? "show" : "hidden"}
-                      variants={{
-                        hidden: { opacity: 0 },
-                        show: {
-                          opacity: 1,
-                          transition: {
-                            staggerChildren: 0.05
-                          }
-                        }
-                      }}
-                      className="flex flex-wrap gap-4 pt-2"
+                    {/* Authentic Japanese Red Hanko (印鑑) Seal Stamp */}
+                    <div
+                      className="w-7 h-7 rounded-[2px] border border-[#9e2a2b] text-[#9e2a2b] bg-[#9e2a2b]/[0.05] flex items-center justify-center font-serif text-[11px] font-bold tracking-tighter select-none rotate-[-1.5deg] shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-0"
+                      title={`${scroll.element} Seal`}
                     >
-                      {book.techs.map((tech) => (
-                        <TechCard key={tech} name={tech} />
-                      ))}
-                    </motion.div>
+                      {scroll.seal}
+                    </div>
                   </div>
-                </motion.div>
+
+                  {/* Main Calligraphy Kanji & Element Header */}
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-3">
+                      <span className="font-serif text-5xl lg:text-6xl font-light text-foreground/85 group-hover:text-foreground transition-colors leading-none">
+                        {scroll.kanji}
+                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-mono text-xs tracking-[0.25em] font-semibold text-foreground/60 uppercase">
+                          {scroll.romanji}
+                        </span>
+                        <span className="font-mono text-[9px] tracking-wider text-foreground/35 uppercase">
+                          {scroll.element}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Scroll Title & Vietnamese Subtitle */}
+                    <h3 className="font-serif text-lg lg:text-xl font-light text-foreground tracking-tight mt-3">
+                      {scroll.title}
+                    </h3>
+                  </div>
+
+                  {/* Poetic Musashi Haiku Maxim */}
+                  <p className="font-caveat text-lg lg:text-xl text-foreground/65 leading-snug my-5">
+                    &ldquo;{scroll.quote}&rdquo;
+                  </p>
+
+                </div>
+
+                {/* ----------------------------------------------------------------- */}
+                {/* SCROLL BODY: PURE LITERARY TECH INSCRIPTIONS (NO BOXES/PILLS)     */}
+                {/* ----------------------------------------------------------------- */}
+                <div className="relative z-10 mt-2 space-y-2">
+                  {scroll.techs.map((techName) => (
+                    <div
+                      key={techName}
+                      className="group/item flex items-center gap-2.5 py-0.5 transition-all duration-200"
+                    >
+                      {/* Minimalist Grayscale Sumi-e Icon */}
+                      <div className="w-4 h-4 relative flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover/item:scale-110">
+                        <TechIcon name={techName} />
+                      </div>
+                      {/* Pure Typographic Name */}
+                      <span className="font-serif text-sm lg:text-[15px] text-foreground/75 group-hover/item:text-foreground group-hover/item:translate-x-0.5 transition-all duration-200 font-medium">
+                        {techName}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ----------------------------------------------------------------- */}
+                {/* SCROLL BOTTOM: SUBTLE FOOTER STAMP                                */}
+                {/* ----------------------------------------------------------------- */}
+                <div className="relative z-10 pt-6 mt-6 border-t border-foreground/10 flex items-center justify-between text-[9px] font-mono text-foreground/30">
+                  <span>MA.{scroll.order}</span>
+                  <span className="group-hover:text-foreground/60 transition-colors">
+                    {scroll.element} DISCIPLINE
+                  </span>
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Simplified, Silent Kinetic Marquee at the very bottom */}
-        <div className="mt-32 md:mt-48 relative border-y border-foreground/5 py-4 opacity-[0.4] bg-foreground/[0.005]">
-          <div className="absolute inset-y-0 left-0 w-1/12 bg-gradient-to-r from-background to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-1/12 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
+        {/* ========================================================================= */}
+        {/* FOOTER: TRANQUIL SUMI-E KINETIC MARQUEE                                   */}
+        {/* ========================================================================= */}
+        <div className="mt-16 md:mt-24 relative border-y border-foreground/10 py-4 bg-foreground/[0.01]">
+          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#fdfdfd] to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#fdfdfd] to-transparent z-10 pointer-events-none" />
 
           <KineticMarquee baseVelocity={0.3}>
             <DataLine text="polish the blade ten thousand days to perfect the art // do nothing which is of no use" />

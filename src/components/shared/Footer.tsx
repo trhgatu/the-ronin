@@ -6,7 +6,7 @@ export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative py-16 md:py-24 bg-background overflow-hidden border-t-2 border-foreground/15 opacity-95">
+    <footer className="relative py-16 md:py-24 bg-background overflow-hidden border-t-2 border-foreground/15">
       <div className="absolute top-[-2px] left-0 w-full h-[3px] bg-background" style={{ filter: "url(#line-torn-filter)" }} />
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat z-0" />
 
@@ -88,8 +88,7 @@ export const Footer = () => {
         </div>
         <div className="pt-10 border-t-2 border-foreground/15 flex flex-col md:flex-row justify-between items-center gap-10 md:gap-8 relative">
           <div className="text-[10px] font-mono text-foreground/40 uppercase tracking-widest flex items-center gap-2">
-            <span>COPYRIGHT</span>
-            <span>© {currentYear} TRHGATU. ALL RIGHTS RESERVED.</span>
+            <span>© {currentYear} TRHGATU.</span>
           </div>
         </div>
       </div>

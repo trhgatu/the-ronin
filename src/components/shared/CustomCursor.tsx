@@ -6,8 +6,6 @@ import gsap from 'gsap';
 export const CustomCursor = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
   const followerRef = useRef<HTMLDivElement>(null);
-  const labelRef = useRef<HTMLSpanElement>(null);
-  const [cursorText, setCursorText] = useState('');
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -70,7 +68,6 @@ export const CustomCursor = () => {
         });
 
         if (target.closest('.project-item') || target.closest('a') || target.closest('button')) {
-          setCursorText('見'); // 'Ken' - See/View
           gsap.to(follower, {
             scale: 2.5,
             backgroundColor: 'var(--foreground)',
@@ -91,7 +88,6 @@ export const CustomCursor = () => {
       const interactive = target.closest('a, button, .project-item, .group\\/icon');
 
       if (interactive) {
-        setCursorText('');
         gsap.to(follower, {
           scale: 1,
           backgroundColor: 'transparent',
@@ -132,14 +128,7 @@ export const CustomCursor = () => {
       <div
         ref={followerRef}
         className="fixed top-0 left-0 w-8 h-8 border border-foreground/40 rounded-full pointer-events-none z-[100000] items-center justify-center overflow-hidden hidden lg:flex"
-      >
-        <span
-          ref={labelRef}
-          className="text-[10px] font-serif font-light text-background opacity-100 transition-opacity"
-        >
-          {cursorText}
-        </span>
-      </div>
+      />
     </>
   );
 };

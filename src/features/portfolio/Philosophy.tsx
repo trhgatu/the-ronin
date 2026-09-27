@@ -4,14 +4,12 @@ import { useRef, useState, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
 import Image from 'next/image';
-import { useTheme } from "next-themes";
 import { ShaderFlow } from '@/components/shared/ShaderFlow';
 import { SumiLeaves } from '@/components/shared/SumiLeaves';
 
 export const Philosophy = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const quoteRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -67,18 +65,6 @@ export const Philosophy = () => {
       }
     });
 
-    gsap.from(".phil-reveal-top", {
-      y: -20,
-      opacity: 0,
-      duration: 1.2,
-      stagger: 0.15,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top 80%",
-      }
-    });
-
     // Clean Character Reveal (Ink spreading effect triggered once on entering viewport)
     gsap.to(".phil-char", {
       scrollTrigger: {
@@ -93,8 +79,6 @@ export const Philosophy = () => {
       ease: "power2.out"
     });
   }, { dependencies: [mounted], scope: containerRef });
-
-  const isDark = mounted && (resolvedTheme === 'dark' || theme === 'dark');
 
   return (
     <section
@@ -132,7 +116,7 @@ export const Philosophy = () => {
         />
       </div>
       <div className="phil-sumi-tree absolute left-[-20%] md:left-[-15%] top-0 w-96 md:w-[900px] h-[800px] md:h-[1000px] pointer-events-none z-[1]"
-        style={{ filter: isDark ? "invert(1) grayscale(1)" : "invert(0) grayscale(0)" }}>
+        style={{ filter: "invert(0) grayscale(0)" }}>
         <Image
           src="/images/sumi-tree.png"
           alt="Sumi-e Tree Decoration"
@@ -144,7 +128,7 @@ export const Philosophy = () => {
       </div>
 
       <div className="phil-musashi absolute left-[2%] md:left-[8%] bottom-[5%] md:bottom-[8%] w-48 md:w-[320px] h-96 md:h-[600px] pointer-events-none z-0"
-        style={{ filter: isDark ? "invert(1) grayscale(1)" : "invert(0) grayscale(0)" }}>
+        style={{ filter: "invert(0) grayscale(0)" }}>
         <Image
           src="/images/musashi-samurai.png"
           alt="Musashi Meditating"
@@ -161,14 +145,14 @@ export const Philosophy = () => {
           <div className="flex items-center gap-4 mb-8 w-full justify-end phil-reveal-top">
             <div className="flex items-center font-mono text-foreground/75">
               <span className="text-[10px] md:text-[12px] tracking-[0.5em] uppercase font-bold text-right">
-                [ CHAPTER IV : THE VOID ]
+                [ CHAPTER III : THE VOID ]
               </span>
             </div>
           </div>
 
           <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif font-light uppercase text-foreground tracking-tighter leading-[0.85] lg:leading-[0.8] overflow-visible phil-reveal-top whitespace-nowrap">
             <span className="inline-block phil-title-1 whitespace-nowrap">THE WAY OF</span> <br />
-            <span className="inline-block phil-title-2 text-transparent mr-[5%] md:mr-[15%] whitespace-nowrap" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.7)" : "1.5px rgba(0,0,0,0.7)" }}>THE RONIN.</span>
+            <span className="inline-block phil-title-2 text-transparent mr-[5%] md:mr-[15%] whitespace-nowrap" style={{ WebkitTextStroke: "1.5px rgba(0,0,0,0.7)" }}>THE RONIN.</span>
           </h2>
         </div>
 

@@ -1,19 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020202;
-  --foreground: #ffffff;
-  --accent: #fbbf24;
-  /* Alchemical Gold */
-  --accent-secondary: #ef4444;
-  /* Philosopher's Red */
-  --border: rgba(255, 255, 255, 0.15);
-  --text-stroke: rgba(255, 255, 255, 0.3);
-  --card-bg: rgba(255, 255, 255, 0.02);
-  --separator-gray: #333333;
-}
-
-.light {
   --background: #fdfdfd;
   --foreground: #111111;
   --accent: #d97706;
@@ -30,6 +17,7 @@
   --color-accent: var(--accent);
   --color-accent-secondary: var(--accent-secondary);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-rock-salt: var(--font-rock-salt), cursive;
   --font-caveat: var(--font-caveat), cursive;
