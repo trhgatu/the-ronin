@@ -518,6 +518,10 @@ export const Artifacts = () => {
   useLayoutEffect(() => {
     if (openIdx === null || !slotRef.current || !sheetRef.current) return;
     portalRef.current?.open(sheetRef.current, slotRef.current, openIdx);
+    // The resting card and reflection would otherwise show through the
+    // sheet's soft mist edge (the portal's own anchor stays measurable at
+    // opacity 0, so hiding its wrapper is safe).
+    gsap.to([textCardRef.current, portalWrapperRef.current], { opacity: 0, duration: 0.35, ease: 'power2.out' });
     const reveal = detailRef.current?.querySelectorAll('.case-reveal');
     if (reveal?.length) {
       gsap.fromTo(reveal, { opacity: 0, y: 24 }, {
@@ -531,6 +535,7 @@ export const Artifacts = () => {
     closingRef.current = true;
     const reveal = detailRef.current?.querySelectorAll('.case-reveal');
     if (reveal?.length) gsap.to(reveal, { opacity: 0, y: 12, duration: 0.25, ease: 'power2.in' });
+    gsap.to([textCardRef.current, portalWrapperRef.current], { opacity: 1, duration: 0.5, delay: 0.3, ease: 'power2.out' });
     portalRef.current?.close(() => {
       openIdxRef.current = null;
       closingRef.current = false;
@@ -1064,122 +1069,127 @@ export const Artifacts = () => {
               aria-modal="true"
               aria-labelledby="artifact-case-title"
             >
+              {/* The sheet box is where the mist panel lands; everything in
+                  the case study lives inside it, padded clear of its torn
+                  edge. The slot is only a target box for the image. */}
               <div
                 ref={sheetRef}
-                aria-hidden="true"
-                className="absolute inset-2 sm:inset-4 lg:inset-[3vmin]"
-              />
-              <div
-                ref={slotRef}
-                aria-hidden="true"
-                className="absolute left-5 right-5 top-24 aspect-[16/10] lg:left-auto lg:right-[5vw] lg:top-1/2 lg:-translate-y-1/2 lg:w-[52vw] lg:max-w-[980px]"
-              />
-
-              {/* data-lenis-prevent: Lenis is stopped while this is open, and
-                  this column scrolls natively on its own. The mask fades copy
-                  out before it scrolls into the sheet's torn mist edge. */}
-              <div
-                data-lenis-prevent
-                style={{
-                  maskImage: 'linear-gradient(to bottom, transparent, black 1.5rem, black calc(100% - 4.5rem), transparent)',
-                  WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 1.5rem, black calc(100% - 4.5rem), transparent)',
-                }}
-                className="pointer-events-auto absolute inset-x-0 bottom-0 top-[calc(6rem+(100vw-2.5rem)*0.625+1.25rem)] overflow-y-auto px-8 pb-16 lg:top-24 lg:bottom-0 lg:right-auto lg:w-[40vw] lg:pl-[5vw] lg:pr-8 lg:pt-4 lg:pb-20"
+                className="absolute inset-3 sm:inset-5 lg:inset-[4vmin]"
               >
-                {/* Sticky so Close stays reachable however far the copy scrolls. */}
-                <div className="case-reveal sticky top-0 z-10 -mx-2 px-2 py-3 flex items-center justify-between gap-4 mb-5 bg-[#09090b]/90 backdrop-blur-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="font-serif text-2xl text-white/30">{openProject.kanji}</span>
-                    <span className="font-mono text-xs tracking-[0.25em] text-white/40 uppercase">
-                      Case Study · 0{(openIdx ?? 0) + 1}
-                    </span>
-                  </div>
-                  <button
-                    onClick={closeCaseStudy}
-                    className="font-mono text-[11px] tracking-widest text-white/50 hover:text-white transition-colors cursor-pointer px-2 py-1"
+                <div className="absolute inset-0 flex flex-col gap-6 px-7 pt-20 pb-8 sm:px-12 sm:pt-24 lg:grid lg:grid-cols-12 lg:gap-[4vw] lg:px-[5vw] lg:pt-28 lg:pb-[5vmin]">
+                  <div
+                    ref={slotRef}
+                    aria-hidden="true"
+                    className="shrink-0 w-full aspect-[16/10] lg:order-last lg:col-span-6 lg:self-center"
+                  />
+
+                  {/* data-lenis-prevent: Lenis is stopped while this is open,
+                      and this column scrolls natively on its own. The mask
+                      fades copy out at the bottom instead of cutting it. */}
+                  <div
+                    data-lenis-prevent
+                    style={{
+                      maskImage: 'linear-gradient(to bottom, black calc(100% - 4rem), transparent)',
+                      WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 4rem), transparent)',
+                    }}
+                    className="pointer-events-auto min-h-0 flex-1 overflow-y-auto pr-3 pb-16 lg:col-span-6 lg:h-full"
                   >
-                    [ CLOSE ✕ ]
-                  </button>
-                </div>
-
-                <p className="case-reveal font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/40 mb-3">
-                  {openProject.category} · {openProject.year}
-                </p>
-                <h2 id="artifact-case-title" className="case-reveal font-serif text-4xl sm:text-5xl xl:text-6xl text-white font-light tracking-tight leading-[1.05] mb-4">
-                  {openProject.title}
-                </h2>
-                <p className="case-reveal flex items-start gap-2.5 font-mono text-xs text-white/70 tracking-wide leading-relaxed mb-2">
-                  <span className="mt-1 w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: openProject.accent }} />
-                  {openProject.highlights}
-                </p>
-                <p className="case-reveal font-caveat text-xl text-white/50 mb-10">{openProject.role}</p>
-
-                {([
-                  ['The Problem', openProject.problem],
-                  ['The Approach', openProject.approach],
-                  ['The Outcome', openProject.outcome],
-                ] as const).map(([label, text]) => (
-                  <div key={label} className="case-reveal mb-8">
-                    <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2.5">
-                      {label}
-                    </h4>
-                    <p className="text-sm sm:text-[15px] text-white/75 font-light leading-relaxed">
-                      {text}
-                    </p>
-                  </div>
-                ))}
-
-                <div className="case-reveal mb-8">
-                  <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-3">
-                    Under the Hood
-                  </h4>
-                  <ul className="space-y-2.5">
-                    {openProject.engineering.map((item) => (
-                      <li key={item} className="flex gap-3 text-sm text-white/70 font-light leading-relaxed">
-                        <span className="text-white/25 font-serif">一</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="case-reveal mb-8">
-                  <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2.5">
-                    Stack
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {openProject.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
+                    {/* Sticky so Close stays reachable however far the copy scrolls. */}
+                    <div className="case-reveal sticky top-0 z-10 -mx-2 px-2 pb-3 flex items-center justify-between gap-4 mb-6 bg-[#0a0a0c]/90 backdrop-blur-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="font-serif text-2xl text-white/30">{openProject.kanji}</span>
+                        <span className="whitespace-nowrap font-mono text-[11px] sm:text-xs tracking-[0.18em] sm:tracking-[0.25em] text-white/40 uppercase">
+                          Case Study · 0{(openIdx ?? 0) + 1}
+                        </span>
+                      </div>
+                      <button
+                        onClick={closeCaseStudy}
+                        className="whitespace-nowrap font-mono text-[11px] tracking-widest text-white/50 hover:text-white transition-colors cursor-pointer px-2 py-1"
                       >
-                        {tag}
-                      </span>
+                        [ CLOSE ✕ ]
+                      </button>
+                    </div>
+
+                    <p className="case-reveal font-mono text-[11px] sm:text-xs uppercase tracking-[0.25em] text-white/45 mb-4">
+                      {openProject.category} · {openProject.year}
+                    </p>
+                    <h2 id="artifact-case-title" className="case-reveal font-serif text-[2.75rem] sm:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[1.02] mb-5">
+                      {openProject.title}
+                    </h2>
+                    <p className="case-reveal flex items-start gap-2.5 font-mono text-[13px] text-white/75 tracking-wide leading-relaxed mb-3">
+                      <span className="mt-1 w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: openProject.accent }} />
+                      {openProject.highlights}
+                    </p>
+                    <p className="case-reveal font-caveat text-2xl text-white/55 mb-12">{openProject.role}</p>
+
+                    {([
+                      ['The Problem', openProject.problem],
+                      ['The Approach', openProject.approach],
+                      ['The Outcome', openProject.outcome],
+                    ] as const).map(([label, text]) => (
+                      <div key={label} className="case-reveal mb-10">
+                        <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-2.5">
+                          {label}
+                        </h4>
+                        <p className="text-base lg:text-[17px] text-white/80 font-light leading-[1.75]">
+                          {text}
+                        </p>
+                      </div>
                     ))}
+
+                    <div className="case-reveal mb-10">
+                      <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-3">
+                        Under the Hood
+                      </h4>
+                      <ul className="space-y-2.5">
+                        {openProject.engineering.map((item) => (
+                          <li key={item} className="flex gap-3 text-[15px] lg:text-base text-white/75 font-light leading-relaxed">
+                            <span className="text-white/25 font-serif">一</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="case-reveal mb-10">
+                      <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-2.5">
+                        Stack
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {openProject.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {openProject.credit && (
+                      <p className="case-reveal font-mono text-[10px] text-white/35 leading-relaxed mb-8">
+                        {openProject.credit}
+                      </p>
+                    )}
+
+                    <div className="case-reveal flex flex-wrap items-center gap-3 pt-6 border-t border-white/10">
+                      {openProject.links.map((link, i) => (
+                        <a
+                          key={link.href}
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`font-mono text-xs tracking-widest uppercase px-4 py-2 rounded transition-colors cursor-pointer ${i === 0
+                            ? 'bg-white text-black font-semibold hover:bg-white/90'
+                            : 'border border-white/20 text-white/70 hover:text-white hover:border-white/50'
+                            }`}
+                        >
+                          {link.label} ↗
+                        </a>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {openProject.credit && (
-                  <p className="case-reveal font-mono text-[10px] text-white/35 leading-relaxed mb-8">
-                    {openProject.credit}
-                  </p>
-                )}
-
-                <div className="case-reveal flex flex-wrap items-center gap-3 pt-6 border-t border-white/10">
-                  {openProject.links.map((link, i) => (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`font-mono text-xs tracking-widest uppercase px-4 py-2 rounded transition-colors cursor-pointer ${i === 0
-                        ? 'bg-white text-black font-semibold hover:bg-white/90'
-                        : 'border border-white/20 text-white/70 hover:text-white hover:border-white/50'
-                        }`}
-                    >
-                      {link.label} ↗
-                    </a>
-                  ))}
                 </div>
               </div>
             </div>
