@@ -42,6 +42,10 @@ body {
    lenis.css's `.lenis-stopped { overflow: clip }` — clipping <html> turns off
    the viewport's scrolling, which un-sticks Artifacts' sticky stage while a
    case study is open. */
+html.lenis.lenis-stopped {
+  overflow: visible;
+}
+
 .lenis [data-lenis-prevent] {
   overscroll-behavior: contain;
 }
