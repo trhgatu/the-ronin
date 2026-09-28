@@ -17,7 +17,7 @@ const CONTACT_LINKS = [
     id: "02",
     title: "THE NETWORK",
     value: "LINKEDIN",
-    href: "https://linkedin.com/in/trhgatu",
+    href: "https://linkedin.com/in/trhgatu1103",
     annotation: "alliances across the digital lands..."
   },
   {
