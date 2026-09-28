@@ -1,73 +1,91 @@
 # 侍 the ronin architect
 
-A personal portfolio built as a samurai-themed visual novel — every section is a "chapter," scroll is the page-turn, and the whole thing leans on ink-brush textures, torn-paper edges, and kanji calligraphy instead of generic SaaS-portfolio patterns.
+A personal portfolio built as a samurai-themed visual novel. Every section is a "chapter", scrolling turns the page, and the whole thing leans on sumi-e ink, torn washi paper and kanji instead of generic SaaS-portfolio patterns.
 
 **Live:** [thatu.dev](https://thatu.dev)
 
-![Hero — Chapter 0](.github/assets/hero.png)
+![Prologue — Samurai Discipline](.github/assets/hero.png)
 
 ## Chapters
 
-### Chapter 0 — Hero
-Full-bleed sumi-e ink illustration, an OGL/WebGL wind-particle backdrop, and a title reveal — the "prologue" before the site properly begins.
+### Prologue — Hero
+The Musashi × Tu crest and the "Architected with Samurai Discipline" title card sit on a WebGL fluid-ink veil. Moving the cursor stirs the ink and reveals the 3D scene behind it (a samurai resting under a pink-leafed tree). A torn-paper hole follows the cursor and inverts the text and crest underneath it. The eye button in the header swaps to an unveiled parchment mode with a water-ripple pass over the 3D scene.
 
-### Chapter I — The Architect (About)
-A four-act pinned stage (`position: sticky`, not a GSAP pin — see [note below](#notes-on-the-build)) that scroll-drives through an intro, an origin story, a Five Rings colophon, and a closing philosophy quote. The portrait frame morphs its pose per act, and a giant backdrop kanji cycles as a mood clock.
+### Chapter I — The Ronin Architect (About)
+Hero's black bleeds into the paper through a ragged ink edge. The name headline reveals word by word. A portrait and the origin statement follow, under a continuous rain of ink leaves.
 
-![About — The Five Rings](.github/assets/about-five-rings.png)
+![About — Origins](.github/assets/about.png)
 
-### Chapter II — Creations (Artifacts)
-Projects framed as forged blades — a flagship case study up top (full-width, its own layout), then three more in an alternating rhythm below, each with a divider line sized to that blade's *actual* historical length (nodachi longest, tanto shortest). The chapter header stays sticky beside the list as it scrolls past.
+### Chapter II — Artifacts
+A 560vh sticky stage driven by a single `ScrollTrigger`:
+1. "Where thought becomes form." A katana slash then tears the white paper open (OGL shader) onto a dark forge.
+2. Three projects on a night lake. Each shows through a mist-edged portal that morphs between projects, with a live water reflection underneath. A katana rail jumps between projects, and "View specification" opens a detail modal.
+3. A white washi mist rolls in and hands over to the next chapter.
 
-![Artifacts — Flagship project](.github/assets/artifacts-flagship.png)
+![Artifacts — the tear](.github/assets/artifacts-tear.png)
+![Artifacts — projects on the lake](.github/assets/artifacts.png)
 
-### Chapter III — The Armory (Stack)
-Tech stack as an accordion of "books" (Earth / Water / Fire / Wind), each opening onto a shelf of skill cards. A two-plane ambient kanji crossfades to whichever book is open.
+### Chapter III — The Void (Philosophy)
+A single manifesto quote, ink-revealed character by character. It sits over a parallaxing sumi-e tree, a Musashi silhouette and a WebGL fog shader.
 
-![Stack — The Armory](.github/assets/armory.png)
+![Philosophy — The Way of the Ronin](.github/assets/philosophy.png)
 
-### Chapter IV — The Void (Philosophy)
-A single manifesto quote, ink-revealed character by character, layered over a parallaxing sumi-e tree and a WebGL fluid shader.
+### Chapter IV — The Water Path (Experience)
+A zigzag timeline with ink footprints stamped in as each entry scrolls into view. The current role's stack is organized into Five Rings tabs (地 水 火 風 空).
 
-![Philosophy — The Void](.github/assets/philosophy.png)
+![Experience — Path of the Wanderer](.github/assets/experience.png)
 
-### Chapter V — The Water Path (Experience)
-A zigzag timeline of roles, ink-stamped footprints marking each entry as it scrolls into view, with the current role's stack organized into the same Five-Rings tabbed browser.
-
-![Experience — The Water Path](.github/assets/experience.png)
-
-### Chapter VI — The Summons (Contact)
-A manga double-page spread — a hover-morphing portrait panel on one side, three outbound links (GitHub, LinkedIn, email) on the other.
+### Chapter V — The Summons (Contact)
+A manga panel that swaps expression when a link is hovered, three outbound links (GitHub, LinkedIn, email) and a hanko seal that stamps on hover.
 
 ![Contact — Call the Ronin](.github/assets/contact.png)
+
+The site opens on an ensō preloader. Its "Enter the Void" button is also the user gesture that unlocks audio: background music plus procedural Web Audio sword, footstep and stamp effects. Sound starts muted and has a toggle in the header.
 
 ## Stack
 
 - **[Next.js 16](https://nextjs.org)** (App Router) · **React 19** · **TypeScript**
-- **[GSAP](https://gsap.com)** + `ScrollTrigger` for scroll-driven staging, and **[Framer Motion](https://www.framer.com/motion/)** for interactive UI state
-- **[Lenis](https://github.com/darkroomengineering/lenis)** for smooth scroll, wired into GSAP's ticker so `ScrollTrigger` stays in sync with both wheel input and programmatic scrolls
-- **[Three.js](https://threejs.org)** / `@react-three/fiber` / **[OGL](https://github.com/oframe/ogl)** for the WebGL backdrops
-- **Tailwind CSS v4**
-- Hand-rolled SVG `feTurbulence` filters throughout for the torn-paper / ink-bleed textures — no image assets for those
+- **[GSAP](https://gsap.com)** + `ScrollTrigger` for scroll-driven staging. **[Framer Motion](https://motion.dev)** for the menu overlay and preloader.
+- **[Lenis](https://github.com/darkroomengineering/lenis)** for smooth scroll, with its scroll events forwarded to `ScrollTrigger` (see `src/components/ui/SmoothScroll.tsx`).
+- **[Three.js](https://threejs.org)** / `@react-three/fiber` / `drei` for the 3D Hero scene. **[OGL](https://github.com/oframe/ogl)** and raw WebGL for the full-screen shaders (fluid veil, paper tear, lake, mist portal, fog, ink transitions).
+- **Tailwind CSS v4** (theme tokens in `src/app/globals.css`, no config file).
+- Hand-rolled SVG `feTurbulence` filters for the torn-paper and ink-bleed textures.
 
 ## Getting started
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
-npm run build   # production build
-npm run lint    # eslint
+pnpm build   # production build
+pnpm start   # serve the production build
+pnpm lint    # eslint
+```
+
+## Project layout
+
+```
+src/
+  app/                  layout (fonts, metadata, global layers), page, globals.css
+  features/portfolio/   one component per chapter (Hero, About, Artifacts, …); content lives inline
+  components/shared/    Navbar, Footer, Preloader, cursor, and every WebGL piece
+  components/ui/        SmoothScroll (Lenis root)
+  hooks/                useTornCursorMask
+  lib/                  gsap setup, sound manager, visibility (offscreen pause)
 ```
 
 ## Notes on the build
 
-A few decisions worth knowing if you're reading the source:
-
-- **Sticky over pin.** Every "locked in place while content changes" moment (About's stage, Artifacts' header) uses CSS `position: sticky`, not GSAP's `pin`. A site-wide per-section reveal animation leaves a resting `transform` on every `<section>`, which — combined with `pin`'s use of `position: fixed` — breaks per the CSS spec's containing-block rules. `sticky` sidesteps it entirely, with the one caveat that no ancestor of a sticky element can have `overflow` other than `visible`.
-- **One scroll axis.** Nothing on the page ties vertical scroll to a second, hidden axis (no scroll-driven horizontal carousels). Earlier iterations tried that for the Five Rings widget; it read as confusing rather than clever, so it's now a plain always-visible list instead.
-- **Lenis ↔ GSAP sync.** Lenis drives scroll from its own RAF loop, which doesn't always forward as native scroll events — `ScrollTrigger` (which listens for those) can silently stop updating for anything scrolled programmatically. `SmoothScroll.tsx` forwards Lenis's own scroll events to `ScrollTrigger.update` to close that gap.
+- **Sticky over pin.** Every "locked in place while content changes" moment uses CSS `position: sticky`, not GSAP's `pin`. Sections carry resting transforms from their reveal animations, and `pin`'s `position: fixed` breaks inside a transformed ancestor. `sticky` sidesteps that, with one caveat: no ancestor of a sticky element can have `overflow` other than `visible`.
+- **Cross-component signals are window events.** Pieces that live in separate trees (layout-level canvases and header vs. page sections) talk through `CustomEvent`s:
+  - `preloader-complete`
+  - `trigger-ink-transition`
+  - `hero-swap-mode` / `request-hero-swap-toggle`
+  - `dark-section` (a section tells the header it is over a dark background)
+  - `sound-mute-toggle`
+- **Nothing renders offscreen.** The 3D Hero canvas is fixed behind the whole page, but only Hero ever shows it, so its frameloop stops once Hero leaves the viewport. Every other rAF/WebGL loop and every infinite leaf tween pauses the same way, through `watchVisibility()` in `src/lib/visibility.ts`. Textures are uploaded at load, so resuming a loop doesn't hitch mid-scroll.
+- **Lenis ↔ GSAP sync.** Lenis drives scroll from its own rAF loop, so `ScrollTrigger` can miss programmatic scrolls unless Lenis's scroll events are forwarded to `ScrollTrigger.update`.
