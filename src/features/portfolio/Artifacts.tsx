@@ -152,6 +152,8 @@ interface Project {
   engineering: string[];
   links: { label: string; href: string }[];
   credit?: string;
+  /** Extra images shown in the case study after the cover (`image`). */
+  gallery: { src: string; caption: string }[];
 }
 
 // Every claim here is checked against the project's own repo — no invented
@@ -183,6 +185,11 @@ const PROJECTS: Project[] = [
       { label: 'Live', href: 'https://www.magnum-opus.dev' },
       { label: 'Source', href: 'https://github.com/trhgatu/magnum-opus' },
     ],
+    gallery: [
+      { src: '/projects/magnum-opus.webp', caption: "Landing — life as the raw material of a masterpiece" },
+      { src: '/projects/gallery/magnum-opus-architecture.webp', caption: "Architecture — one API process, bounded contexts, a separate worker" },
+      { src: '/projects/gallery/magnum-opus-sign-in.webp', caption: "Sign-in — the same quiet, private tone as the rest of the product" },
+    ],
   },
   {
     id: 'auto-wp-publisher',
@@ -207,6 +214,10 @@ const PROJECTS: Project[] = [
     ],
     links: [
       { label: 'Source', href: 'https://github.com/trhgatu/auto-wp-publisher' },
+    ],
+    gallery: [
+      { src: '/projects/auto-wp-publisher.webp', caption: "Pipeline — spreadsheet to storefront" },
+      { src: '/projects/gallery/auto-wp-publisher-failures.webp', caption: "Failure handling — rate limits, key rotation, template fallback" },
     ],
   },
   {
@@ -234,6 +245,12 @@ const PROJECTS: Project[] = [
       { label: 'Live', href: 'https://thatu.is-a.dev' },
       { label: 'Source', href: 'https://github.com/trhgatu/the-alchemist' },
     ],
+    gallery: [
+      { src: '/projects/the-alchemist.webp', caption: "The grimoire — the tech stack released as a constellation" },
+      { src: '/projects/gallery/the-alchemist-hero.webp', caption: "Hero — the name burned through washi paper" },
+      { src: '/projects/gallery/the-alchemist-journal.webp', caption: "The alchemist's journal — Nigredo, Albedo, Citrinitas, Rubedo" },
+      { src: '/projects/gallery/the-alchemist-desert.webp', caption: "The ending — the desert, and 'Maktub'" },
+    ],
   },
   {
     id: 'kim-khanh',
@@ -260,6 +277,12 @@ const PROJECTS: Project[] = [
       { label: 'Source', href: 'https://github.com/trhgatu/kimkhanh-portfolio' },
     ],
     credit: '3D model "Rhododendron - Azalea" by Nestaeric on Sketchfab, licensed CC BY 4.0.',
+    gallery: [
+      { src: '/projects/kim-khanh.webp', caption: "Hero — an interactive 3D azalea" },
+      { src: '/projects/gallery/kim-khanh-about.webp', caption: "About — a life shaped by work and small joys" },
+      { src: '/projects/gallery/kim-khanh-journey.webp', caption: "The paths that shaped me — a pinned editorial journey" },
+      { src: '/projects/gallery/kim-khanh-notes.webp', caption: "A few things that shaped me — scrapbook notes" },
+    ],
   },
 ];
 
@@ -493,6 +516,19 @@ export const Artifacts = () => {
   useEffect(() => { lenisRef.current = lenis; }, [lenis]);
 
   const openIdxRef = useRef<number | null>(null);
+  const [galleryIdx, setGalleryIdx] = useState(0);
+  const galleryIdxRef = useRef(0);
+
+  const showGallery = (i: number) => {
+    const idx = openIdxRef.current;
+    if (idx === null || closingRef.current) return;
+    const items = PROJECTS[idx].gallery;
+    const next = (i + items.length) % items.length;
+    if (next === galleryIdxRef.current) return;
+    galleryIdxRef.current = next;
+    setGalleryIdx(next);
+    portalRef.current?.showImage(items[next].src);
+  };
   const closingRef = useRef(false);
 
   const openCaseStudy = (idx: number, { push = true } = {}) => {
@@ -506,6 +542,9 @@ export const Artifacts = () => {
       katanaTrackRef.current.style.opacity = '0';
       katanaTrackRef.current.style.pointerEvents = 'none';
     }
+    galleryIdxRef.current = 0;
+    setGalleryIdx(0);
+    portalRef.current?.preload(PROJECTS[idx].gallery.map((g) => g.src));
     if (push) {
       window.history.pushState({ artifact: PROJECTS[idx].id }, '', `?project=${PROJECTS[idx].id}`);
     }
@@ -533,6 +572,8 @@ export const Artifacts = () => {
   const finishClose = () => {
     if (openIdxRef.current === null || closingRef.current) return;
     closingRef.current = true;
+    // Land back in the resting frame on the cover, not a gallery image.
+    portalRef.current?.showImage(PROJECTS[openIdxRef.current].image);
     const reveal = detailRef.current?.querySelectorAll('.case-reveal');
     if (reveal?.length) gsap.to(reveal, { opacity: 0, y: 12, duration: 0.25, ease: 'power2.in' });
     gsap.to([textCardRef.current, portalWrapperRef.current], { opacity: 1, duration: 0.5, delay: 0.3, ease: 'power2.out' });
@@ -581,6 +622,8 @@ export const Artifacts = () => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (openIdxRef.current === null) return;
       if (e.key === 'Escape') closeCaseStudy();
+      else if (e.key === 'ArrowRight') showGallery(galleryIdxRef.current + 1);
+      else if (e.key === 'ArrowLeft') showGallery(galleryIdxRef.current - 1);
       else if (SCROLL_KEYS.has(e.key) && !(e.target as Element | null)?.closest?.('[data-lenis-prevent]')) {
         e.preventDefault();
       }
@@ -1077,11 +1120,37 @@ export const Artifacts = () => {
                 className="absolute inset-3 sm:inset-5 lg:inset-[4vmin]"
               >
                 <div className="absolute inset-0 flex flex-col gap-6 px-7 pt-20 pb-8 sm:px-12 sm:pt-24 lg:grid lg:grid-cols-12 lg:gap-[4vw] lg:px-[5vw] lg:pt-28 lg:pb-[5vmin]">
-                  <div
-                    ref={slotRef}
-                    aria-hidden="true"
-                    className="shrink-0 w-full aspect-[16/10] lg:order-last lg:col-span-6 lg:self-center"
-                  />
+                  <div className="shrink-0 flex flex-col gap-3 sm:gap-4 lg:order-last lg:col-span-6 lg:self-center">
+                    <div ref={slotRef} aria-hidden="true" className="w-full aspect-[16/10]" />
+
+                    {/* Gallery: thumbnails are plain images; picking one mist-morphs
+                        the portal (already on the GPU, preloaded on open). */}
+                    {openProject.gallery.length > 1 && (
+                      <div className="case-reveal pointer-events-auto flex items-center gap-4">
+                        <div className="flex gap-2 sm:gap-2.5">
+                          {openProject.gallery.map((item, i) => (
+                            <button
+                              key={item.src}
+                              onClick={() => showGallery(i)}
+                              aria-label={item.caption}
+                              aria-current={i === galleryIdx}
+                              className={`relative w-12 sm:w-16 aspect-[16/10] overflow-hidden rounded-[2px] border transition-all duration-500 cursor-pointer ${i === galleryIdx
+                                ? 'border-white/60 opacity-100'
+                                : 'border-white/10 opacity-40 hover:opacity-80'
+                                }`}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={item.src} alt="" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+                            </button>
+                          ))}
+                        </div>
+                        <p className="min-w-0 font-mono text-[10px] sm:text-[11px] tracking-wider text-white/45 leading-snug">
+                          <span className="text-white/70">{String(galleryIdx + 1).padStart(2, '0')} / {String(openProject.gallery.length).padStart(2, '0')}</span>
+                          <span className="hidden sm:inline"> — {openProject.gallery[galleryIdx]?.caption}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
                   {/* data-lenis-prevent: Lenis is stopped while this is open,
                       and this column scrolls natively on its own. The mask
@@ -1092,7 +1161,7 @@ export const Artifacts = () => {
                       maskImage: 'linear-gradient(to bottom, black calc(100% - 4rem), transparent)',
                       WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 4rem), transparent)',
                     }}
-                    className="pointer-events-auto min-h-0 flex-1 overflow-y-auto pr-3 pb-16 lg:col-span-6 lg:h-full"
+                    className="case-scroll pointer-events-auto min-h-0 flex-1 overflow-y-auto pr-4 pb-16 lg:col-span-6 lg:h-full"
                   >
                     {/* Sticky so Close stays reachable however far the copy scrolls. */}
                     <div className="case-reveal sticky top-0 z-10 -mx-2 px-2 pb-3 flex items-center justify-between gap-4 mb-6 bg-[#0a0a0c]/90 backdrop-blur-sm">

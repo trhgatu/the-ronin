@@ -50,6 +50,16 @@ html.lenis.lenis-stopped {
   overscroll-behavior: contain;
 }
 
+/* Artifacts case study column: no scrollbar at all — the column's bottom
+   fade already says there's more, and a bar cut through the mist panel. */
+.case-scroll {
+  scrollbar-width: none;
+}
+
+.case-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 4px;

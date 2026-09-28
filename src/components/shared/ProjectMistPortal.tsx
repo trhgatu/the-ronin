@@ -20,6 +20,11 @@ export interface ProjectMistPortalHandle {
   open: (sheet: HTMLElement, image: HTMLElement, index: number) => void;
   /** Shrink back into the resting frame; `onDone` fires once it has landed. */
   close: (onDone?: () => void) => void;
+  /** Start loading (and uploading) extra images, e.g. a case study gallery. */
+  preload: (srcs: string[]) => void;
+  /** Mist-morph the open portal to another image (same dissolve used when
+   * scrolling between projects). */
+  showImage: (src: string) => void;
 }
 
 interface ProjectMistPortalProps {
@@ -282,6 +287,14 @@ export const ProjectMistPortal = React.forwardRef<
   const lastProgressRef = useRef(0);
   const expandTweenRef = useRef<gsap.core.Tween | null>(null);
 
+  // Every texture by src — project covers and case study gallery images —
+  // so showImage() never loads on demand if preload() ran first.
+  type Entry = { tex: Texture; size: [number, number]; ready: Promise<void> };
+  const cacheRef = useRef(new Map<string, Entry>());
+  const loadRef = useRef<((src: string) => Entry) | null>(null);
+  const shownSrcRef = useRef<string | null>(null);
+  const morphTweenRef = useRef<gsap.core.Tween | null>(null);
+
   // Hex color to [R, G, B] normalized
   const parseHex = (hex: string): [number, number, number] => {
     const clean = hex.replace('#', '');
@@ -343,7 +356,9 @@ export const ProjectMistPortal = React.forwardRef<
     },
     open: (sheet: HTMLElement, image: HTMLElement, index: number) => {
       targetRef.current = { sheet, image };
+      morphTweenRef.current?.kill();
       showSingle(index);
+      shownSrcRef.current = projects[index]?.image ?? null;
       expandTweenRef.current?.kill();
       expandTweenRef.current = gsap.to(expandRef.current, {
         value: 1,
@@ -361,9 +376,46 @@ export const ProjectMistPortal = React.forwardRef<
         ease: 'power3.inOut',
         onComplete: () => {
           targetRef.current = null;
+          morphTweenRef.current?.kill();
+          shownSrcRef.current = null;
           applyProgress(lastProgressRef.current);
           onDone?.();
         },
+      });
+    },
+    preload: (srcs: string[]) => {
+      srcs.forEach((src) => loadRef.current?.(src));
+    },
+    showImage: (src: string) => {
+      const program = programRef.current;
+      const load = loadRef.current;
+      if (!program || !load || !targetRef.current || src === shownSrcRef.current) return;
+      shownSrcRef.current = src;
+      const entry = load(src);
+      entry.ready.then(() => {
+        // A later click already moved on, or the case study closed.
+        if (shownSrcRef.current !== src || !targetRef.current) return;
+        morphTweenRef.current?.kill();
+        // If a previous morph was mid-way, settle it first so it starts clean.
+        if (program.uniforms.uProgress.value > 0.5) {
+          program.uniforms.uTexA.value = program.uniforms.uTexB.value;
+          program.uniforms.uImageSizeA.value = program.uniforms.uImageSizeB.value;
+        }
+        program.uniforms.uTexB.value = entry.tex;
+        program.uniforms.uImageSizeB.value = entry.size;
+        const state = { t: 0 };
+        program.uniforms.uProgress.value = 0;
+        morphTweenRef.current = gsap.to(state, {
+          t: 1,
+          duration: 0.9,
+          ease: 'power2.inOut',
+          onUpdate: () => { program.uniforms.uProgress.value = state.t; },
+          onComplete: () => {
+            program.uniforms.uTexA.value = entry.tex;
+            program.uniforms.uImageSizeA.value = entry.size;
+            program.uniforms.uProgress.value = 0;
+          },
+        });
       });
     },
   }));
@@ -424,6 +476,39 @@ export const ProjectMistPortal = React.forwardRef<
 
     texturesRef.current = loadedTextures;
     imageSizesRef.current = loadedSizes;
+
+    const cache = cacheRef.current;
+    projects.forEach((proj, idx) => {
+      const tex = loadedTextures[idx];
+      const entry: Entry = {
+        tex,
+        get size() { return loadedSizes[idx]; },
+        ready: new Promise<void>((resolve) => {
+          const check = () => (tex.image ? resolve() : setTimeout(check, 50));
+          check();
+        }),
+      } as Entry;
+      cache.set(proj.image, entry);
+    });
+    loadRef.current = (src: string) => {
+      const hit = cache.get(src);
+      if (hit) return hit;
+      const tex = new Texture(gl, { generateMipmaps: false });
+      const entry: Entry = { tex, size: [16, 10], ready: Promise.resolve() };
+      entry.ready = new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          if (!isActive) return;
+          tex.image = img;
+          tex.update(); // upload now, not on the first morph frame
+          entry.size = [img.naturalWidth || 16, img.naturalHeight || 10];
+          resolve();
+        };
+        img.src = src;
+      });
+      cache.set(src, entry);
+      return entry;
+    };
 
     // Pointer tracking (client px) & hover over the resting frame
     const mouse = { x: -9999, y: -9999, strength: 0 };
@@ -568,6 +653,9 @@ export const ProjectMistPortal = React.forwardRef<
       cancelAnimationFrame(rafId);
       ro.disconnect();
       expandTweenRef.current?.kill();
+      morphTweenRef.current?.kill();
+      loadRef.current = null;
+      cache.clear();
       window.removeEventListener('mousemove', onPointerMove);
       programRef.current = null;
       geometry.remove();
