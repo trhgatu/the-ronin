@@ -138,9 +138,12 @@ void main() {
   vec2 uv = (frag - (center - halfC)) / (2.0 * halfC);
   float aspect = halfC.x / halfC.y;
 
-  // calm: the resting mist fades out as the portal opens; travel: a brief
-  // bloom of mist while it's in flight, gone again once it lands.
+  // calm: cursor effects belong to the resting frame and fade out as it
+  // opens. mist: the torn smoke edge grows with the image and stays around
+  // the case study's hero, only settling a little. travel: an extra bloom
+  // while it's in flight.
   float calm = 1.0 - uExpand;
+  float mist = 1.0 - uExpand * 0.3;
   float travel = sin(uExpand * 3.14159);
 
   // Single monochrome ethereal mist color (silver-white twilight smoke)
@@ -165,16 +168,16 @@ void main() {
   vec2 swirlDisp = vec2(-mDelta.y, mDelta.x) * mSwirl * 0.045;
   vec2 totalHoverDisp = rippleDisp + swirlDisp;
 
-  // Organic edge displacement — dissolves into a clean edge as it opens
-  vec2 mistDisplace = vec2(smoke1, smoke2) * (0.055 * calm + 0.03 * travel) + totalHoverDisp * 1.4;
+  // Organic edge displacement — the mist frame travels with the image
+  vec2 mistDisplace = vec2(smoke1, smoke2) * (0.055 * mist + 0.03 * travel) + totalHoverDisp * 1.4;
 
   vec2 pAspect = (frag - center) / H;
   vec2 warpedP = pAspect + mistDisplace * vec2(aspect, 1.0);
   vec2 halfSize = halfPx / H;
-  float cornerRadius = mix(0.04, 0.006, uExpand);
+  float cornerRadius = 0.04;
   float dist = sdRoundedBox(warpedP, halfSize, cornerRadius);
 
-  float portalAlpha = smoothstep(0.015 * calm + 0.0005, -mix(0.035, 0.0015, uExpand), dist);
+  float portalAlpha = smoothstep(0.015, -0.035, dist);
   if (portalAlpha <= 0.001) {
     gl_FragColor = vec4(0.0);
     return;
@@ -223,11 +226,11 @@ void main() {
   imgColor += mistColor * frontier * 0.85;
 
   // --- 3. Ethereal mist rim (fades with calm, blooms briefly in flight) ---
-  float rimMist = exp(-pow((dist + 0.008) * 36.0, 2.0)) * (0.35 * calm + 0.5 * travel);
+  float rimMist = exp(-pow((dist + 0.008) * 36.0, 2.0)) * (0.35 * mist + 0.5 * travel);
   float hoverRim = exp(-pow((dist + 0.004) * 32.0, 2.0)) * hover * 0.40;
   rimMist += hoverRim;
 
-  float internalSmoke = (smoke1 * 0.5 + smoke2 * 0.5) * 0.06 * calm;
+  float internalSmoke = (smoke1 * 0.5 + smoke2 * 0.5) * 0.06 * mist;
 
   vec3 finalColor = imgColor + vec3(internalSmoke) + mistColor * rimMist;
 
@@ -328,8 +331,10 @@ export const ProjectMistPortal = React.forwardRef<
       expandTweenRef.current?.kill();
       expandTweenRef.current = gsap.to(expandRef.current, {
         value: 1,
-        duration: 0.85,
-        ease: 'expo.out',
+        // Starts at full speed on the click frame (no ease-in), but takes
+        // long enough to read as the mist frame growing into the page.
+        duration: 1.1,
+        ease: 'power3.out',
       });
     },
     close: (onDone?: () => void) => {
@@ -503,7 +508,7 @@ export const ProjectMistPortal = React.forwardRef<
       // Quad = image rect plus room for the mist, so fragments outside it are
       // never shaded at all.
       const H = rh / REST_FILL;
-      const margin = H * (0.12 * (1 - e) + 0.06 * Math.sin(e * Math.PI)) + 4;
+      const margin = H * (0.12 + 0.06 * Math.sin(e * Math.PI)) + 4;
       const bufW = hostRect.width * dpr;
       program.uniforms.uBounds.value = [
         ((rx - margin) / bufW) * 2 - 1,
