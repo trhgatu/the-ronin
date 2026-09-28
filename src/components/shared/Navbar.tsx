@@ -35,6 +35,7 @@ export const Navbar = () => {
   // section's local CSS variable override can't reach this header (a DOM
   // sibling, not a descendant).
   const [darkSection, setDarkSection] = useState(false);
+  const [heroUnderHeader, setHeroUnderHeader] = useState(true);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -90,18 +91,36 @@ export const Navbar = () => {
       });
 
       setActiveSection(activeId);
+      // activeSection flips to "about" while Hero's dark tail is still behind
+      // the header, so the scrim's tone can't key off it alone. About's ink
+      // bleed carries that black ~60px past Hero's own bottom edge, so this
+      // stays true until the ink has also cleared the wordmark (~y 40).
+      const hero = document.getElementById("hero");
+      setHeroUnderHeader(hero ? hero.getBoundingClientRect().bottom > -24 : false);
     };
 
-    window.addEventListener("scroll", updateActiveSection, { passive: true });
-    window.addEventListener("resize", updateActiveSection, { passive: true });
+    // Coalesced to one layout read per frame — scroll can fire several times
+    // a frame, and each run measures every section.
+    let rafId = 0;
+    const scheduleUpdate = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        updateActiveSection();
+      });
+    };
+
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate, { passive: true });
 
     // Force updates on mount to counter any slow font/image layout shifts
     updateActiveSection();
     const timeouts = [100, 500, 1000, 2000].map(ms => setTimeout(updateActiveSection, ms));
 
     return () => {
-      window.removeEventListener("scroll", updateActiveSection);
-      window.removeEventListener("resize", updateActiveSection);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      cancelAnimationFrame(rafId);
       timeouts.forEach(clearTimeout);
     };
   }, []);
@@ -120,8 +139,12 @@ export const Navbar = () => {
   // the same 'hero-swap-mode' event used for the Eye/EyeOff icon below) —
   // isHero alone doesn't know about that, so it kept forcing white text
   // over a now-light section.
-  const isHero = activeSection === "hero";
-  const showWhiteText = (isHero ? !heroSwapMode : (darkSection || activeSection === "artifacts")) && !isMobileMenuOpen;
+  // Keyed off Hero still being behind the header rather than activeSection:
+  // the latter flips to "about" (dark text) while Hero's black tail still
+  // fills the header area, and the wordmark vanished into it. Artifacts is
+  // left to its own 'dark-section' events — it opens and closes on white
+  // paper, so forcing white text for the whole section hid the wordmark.
+  const showWhiteText = (heroUnderHeader ? !heroSwapMode : darkSection) && !isMobileMenuOpen;
 
   return (
     <>
@@ -131,6 +154,19 @@ export const Navbar = () => {
           goes near-illegible floating on top of it. Once the menu is open,
           the header's own color should follow that light overlay instead. */}
       <header className={`fixed inset-x-0 top-0 z-[9999] px-5 py-5 transition-colors duration-500 md:px-8 ${showWhiteText ? "text-white" : "text-foreground"}`}>
+        {/* The header has no bar of its own, so section copy scrolling up
+            under it collided with the wordmark. A soft paper-toned scrim
+            fades that copy out before it reaches the header, without adding
+            a visible bar. Off over dark backgrounds (Hero, the Artifacts
+            stage): nothing scrolls under the header there, and mid-tear a
+            dark scrim painted a grey band over the still-white paper. */}
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-x-0 top-0 -z-10 h-28 transition-opacity duration-500 ${heroUnderHeader || showWhiteText || isMobileMenuOpen ? "opacity-0" : "opacity-100"}`}
+          style={{
+            background: "linear-gradient(to bottom, rgba(253,253,253,1) 0%, rgba(253,253,253,0.85) 55%, rgba(253,253,253,0) 100%)",
+          }}
+        />
         <div className="mx-auto flex max-w-[1600px] items-center justify-between">
           <Link
             href="#hero"

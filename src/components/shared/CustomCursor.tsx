@@ -36,22 +36,29 @@ export const CustomCursor = () => {
     let followerX = 0;
     let followerY = 0;
 
-    const onMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      xCursor(mouseX);
-      yCursor(mouseY);
-    };
-
-    // Animation loop for the follower
+    // Animation loop for the follower. It used to re-request itself without
+    // keeping the new id, so cleanup only ever cancelled the first frame and
+    // every re-run of this effect stacked another immortal loop. Now it keeps
+    // the id and parks itself once the follower has caught up, waking again
+    // on the next mousemove.
+    let rafId = 0;
     const tick = () => {
       followerX += (mouseX - followerX) * 0.15;
       followerY += (mouseY - followerY) * 0.15;
       xFollower(followerX);
       yFollower(followerY);
-      requestAnimationFrame(tick);
+      rafId = Math.abs(mouseX - followerX) + Math.abs(mouseY - followerY) > 0.1
+        ? requestAnimationFrame(tick)
+        : 0;
     };
-    const rafId = requestAnimationFrame(tick);
+
+    const onMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      xCursor(mouseX);
+      yCursor(mouseY);
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    };
 
     const onMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;

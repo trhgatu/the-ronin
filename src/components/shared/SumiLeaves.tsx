@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from '@/lib/gsap';
+import { watchVisibility } from '@/lib/visibility';
 
 interface SumiLeavesProps {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -93,6 +94,11 @@ export const SumiLeaves = ({ containerRef, count = 15, color = '#161412', reveal
     const leaves = gsap.utils.toArray('.sumi-leaf-item', localRef.current);
     const h = containerRef.current.clientHeight || 900;
     const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    // Each leaf's current drift tween, so the whole set can be paused while
+    // the host section is offscreen — otherwise 12 (Hero) + 15 (Philosophy)
+    // infinite 3D-transform tweens restyle the page every frame of the visit.
+    const drift = new Map<unknown, gsap.core.Tween>();
+    let paused = false;
 
     const animateLeaf = (el: any, isInitial = false) => {
       const startY = isInitial
@@ -110,7 +116,7 @@ export const SumiLeaves = ({ containerRef, count = 15, color = '#161412', reveal
         });
       }
 
-      gsap.to(el, {
+      const tween = gsap.to(el, {
         x: w + 100,
         y: `+=${gsap.utils.random(-220, 220)}`,
         rotation: "+=random(360, 900)",
@@ -120,6 +126,8 @@ export const SumiLeaves = ({ containerRef, count = 15, color = '#161412', reveal
         ease: "none",
         onComplete: () => animateLeaf(el, false),
       });
+      if (paused) tween.pause();
+      drift.set(el, tween);
     };
 
     leaves.forEach((leaf: any) => {
@@ -148,6 +156,12 @@ export const SumiLeaves = ({ containerRef, count = 15, color = '#161412', reveal
         }
       });
     });
+
+    const unwatch = watchVisibility(containerRef.current, (visible) => {
+      paused = !visible;
+      drift.forEach((tween) => (visible ? tween.resume() : tween.pause()));
+    });
+    return unwatch;
   }, { dependencies: [mounted, containerRef], scope: localRef });
 
   if (!mounted) return null;

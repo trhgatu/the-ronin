@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Renderer, Program, Mesh, Triangle, Transform, Texture } from "ogl";
+import { watchVisibility } from "@/lib/visibility";
 
 export type PortraitMorphProps = {
   srcA: string;
@@ -179,6 +180,9 @@ export function PortraitMorph({
         }
         img.onload = () => {
           target.image = img;
+          // Upload up front; the loop may be paused (offscreen) on first
+          // draw, and a lazy upload then lands mid-scroll as a hitch.
+          target.update();
           imageSize[0] = img.naturalWidth;
           imageSize[1] = img.naturalHeight;
           resolve();
@@ -230,9 +234,11 @@ export function PortraitMorph({
     let last = performance.now();
     let time = 0;
     let running = true;
+    let paused = false;
+    let loaded = false;
 
     const tick = () => {
-      if (!running) return;
+      if (!running || paused) return;
       const now = performance.now();
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
@@ -269,6 +275,7 @@ export function PortraitMorph({
     Promise.all([loadImage(srcA, texA), loadImage(srcB, texB)])
       .then(() => {
         setReady(true);
+        loaded = true;
         last = performance.now();
         tick();
       })
@@ -325,12 +332,23 @@ export function PortraitMorph({
       lastPointerRef.current = { x, y, t: performance.now() };
     };
 
+    // Paused while About is offscreen; see lib/visibility.
+    const unwatch = watchVisibility(container, (visible) => {
+      paused = !visible;
+      cancelAnimationFrame(raf);
+      if (visible && loaded && running) {
+        last = performance.now();
+        tick();
+      }
+    });
+
     container.addEventListener("pointerenter", onPointerEnter);
     container.addEventListener("pointerleave", onPointerLeave);
     container.addEventListener("pointermove", onPointerMove);
 
     return () => {
       running = false;
+      unwatch();
       cancelAnimationFrame(raf);
       ro.disconnect();
       container.removeEventListener("pointerenter", onPointerEnter);

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
+import { watchVisibility } from '@/lib/visibility';
 import { Renderer, Program, Mesh, Triangle, Transform } from 'ogl';
 
 const LAKE_VS = `
@@ -217,7 +218,7 @@ export const ArtifactsLakeBackground: React.FC<{ className?: string }> = ({ clas
 
     const startTime = performance.now();
     const render = () => {
-      if (!isActive) return;
+      if (!isActive || paused) return;
 
       const elapsed = (performance.now() - startTime) * 0.001;
       program.uniforms.uTime.value = elapsed;
@@ -230,10 +231,20 @@ export const ArtifactsLakeBackground: React.FC<{ className?: string }> = ({ clas
       rafId = requestAnimationFrame(render);
     };
 
+    // Offscreen (Artifacts scrolled away) or hidden tab: stop the loop
+    // entirely, restart it on the way back in. See lib/visibility.
+    let paused = false;
+    const unwatch = watchVisibility(container, (visible) => {
+      paused = !visible;
+      cancelAnimationFrame(rafId);
+      if (visible && isActive) rafId = requestAnimationFrame(render);
+    });
+
     rafId = requestAnimationFrame(render);
 
     return () => {
       isActive = false;
+      unwatch();
       cancelAnimationFrame(rafId);
       ro.disconnect();
       window.removeEventListener('mousemove', onMouseMove);

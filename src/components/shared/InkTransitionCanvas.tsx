@@ -200,7 +200,17 @@ export function InkTransitionCanvas() {
     let rafId = 0;
     const startTime = performance.now();
 
+    // Stops for good once the dissolve completes — the loop used to keep
+    // drawing a fully transparent full-screen canvas until the next trigger,
+    // i.e. for the rest of the visit after the Preloader's entrance mist.
+    let finished = false;
+    const finish = () => {
+      finished = true;
+      cancelAnimationFrame(rafId);
+      setIsActive(false);
+    };
     const tick = () => {
+      if (finished) return;
       program.uniforms.u_time.value = (performance.now() - startTime) / 1000;
       renderer.render({ scene });
       rafId = requestAnimationFrame(tick);
@@ -222,9 +232,7 @@ export function InkTransitionCanvas() {
         dissolve: 1.0,
         duration: 3.8,
         ease: "sine.out",
-        onComplete: () => {
-          setIsActive(false);
-        }
+        onComplete: finish
       });
     } else {
       // Ink sweeps out from the trigger point to full coverage (0.6s)
@@ -245,9 +253,7 @@ export function InkTransitionCanvas() {
               onUpdate: () => {
                 program.uniforms.u_dissolve.value = animState.dissolve;
               },
-              onComplete: () => {
-                setIsActive(false);
-              }
+              onComplete: finish
             });
           }, 150);
         }

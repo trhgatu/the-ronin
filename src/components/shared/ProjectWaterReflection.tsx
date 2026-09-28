@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
+import { watchVisibility } from '@/lib/visibility';
 import * as THREE from 'three';
 
 interface ProjectWaterReflectionProps {
@@ -236,7 +237,11 @@ export const ProjectWaterReflection = React.forwardRef<
     const textureLoader = new THREE.TextureLoader();
     const imageList = images.length > 0 ? images : imageSrc ? [imageSrc] : [];
     const loadedTextures: THREE.Texture[] = imageList.map((src) => {
-      const t = textureLoader.load(src);
+      // Uploaded on load rather than on first draw — the loop is paused
+      // until Artifacts scrolls in, and a lazy upload there hitched.
+      const t = textureLoader.load(src, (tex) => {
+        if (isActive) renderer.initTexture(tex);
+      });
       t.minFilter = THREE.LinearFilter;
       t.magFilter = THREE.LinearFilter;
       return t;
@@ -307,7 +312,7 @@ export const ProjectWaterReflection = React.forwardRef<
     window.addEventListener('resize', handleResize);
 
     const render = () => {
-      if (!isActive) return;
+      if (!isActive || paused) return;
 
       const elapsed = (performance.now() - startTime) * 0.001;
       material.uniforms.uTime.value = elapsed;
@@ -319,10 +324,20 @@ export const ProjectWaterReflection = React.forwardRef<
       rafId = requestAnimationFrame(render);
     };
 
+    // Offscreen (Artifacts scrolled away) or hidden tab: stop the loop
+    // entirely, restart it on the way back in. See lib/visibility.
+    let paused = false;
+    const unwatch = watchVisibility(container, (visible) => {
+      paused = !visible;
+      cancelAnimationFrame(rafId);
+      if (visible && isActive) rafId = requestAnimationFrame(render);
+    });
+
     rafId = requestAnimationFrame(render);
 
     return () => {
       isActive = false;
+      unwatch();
       cancelAnimationFrame(rafId);
       window.removeEventListener('mousemove', onPointerMove);
       window.removeEventListener('resize', handleResize);

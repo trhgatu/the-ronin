@@ -1,10 +1,11 @@
 'use client';
 
 import { Canvas, useThree } from '@react-three/fiber';
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useGLTF, useAnimations, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { HeroWaterRipple } from './HeroWaterRipple';
+import { watchVisibility } from '@/lib/visibility';
 
 const MODEL_PATH = '/models/laying_under_a_tree_with_pink_leaves_and_wind.glb';
 
@@ -121,8 +122,20 @@ function WaterRippleController() {
 }
 
 export function HeroScene() {
+  // This canvas is fixed behind the whole page, but every section after Hero
+  // paints an opaque background over it — it was rendering the 39MB model,
+  // the HDRI lighting and the ripple composite every frame for a scene only
+  // Hero ever shows. Stop the frameloop whenever Hero is out of view.
+  const [heroVisible, setHeroVisible] = useState(true);
+  useEffect(() => {
+    const hero = document.getElementById('hero');
+    if (!hero) return;
+    return watchVisibility(hero, setHeroVisible, '50% 0px');
+  }, []);
+
   return (
     <Canvas
+      frameloop={heroVisible ? 'always' : 'never'}
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true }}
       camera={{ position: [0, 1.3, 4.4], fov: 32 }}

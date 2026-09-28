@@ -7,6 +7,7 @@ import gsap from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Mesh, Program, Renderer, Transform, Triangle } from "ogl";
 import { soundManager } from "@/lib/sound";
+import { watchVisibility } from "@/lib/visibility";
 import { ProjectMistPortal, ProjectMistPortalHandle } from "@/components/shared/ProjectMistPortal";
 import { ProjectWaterReflection, ProjectWaterReflectionHandle } from "@/components/shared/ProjectWaterReflection";
 import { ArtifactsLakeBackground } from "@/components/shared/ArtifactsLakeBackground";
@@ -261,8 +262,10 @@ export const Artifacts = () => {
     window.addEventListener("resize", handleResize);
 
     let rafId = 0;
+    let paused = false;
     const startTime = performance.now();
     const tick = () => {
+      if (paused) return;
       program.uniforms.u_time.value = (performance.now() - startTime) / 1000;
 
       // 1. Organic inertial smoothing for paper tear expansion
@@ -288,20 +291,32 @@ export const Artifacts = () => {
       }
 
       // 3. Keep tear container active ONLY during Intro (< 0.22)
+      const tearVisible = scrollPRef.current < 0.22;
       if (tearContainerRef.current) {
-        if (scrollPRef.current < 0.22) {
-          tearContainerRef.current.style.display = 'block';
-        } else {
-          tearContainerRef.current.style.display = 'none';
-        }
+        tearContainerRef.current.style.display = tearVisible ? 'block' : 'none';
       }
 
-      renderer.render({ scene });
+      // Past the intro the canvas is display:none — drawing a full-screen
+      // shader nobody can see was the bulk of this loop's cost.
+      if (tearVisible) renderer.render({ scene });
       rafId = requestAnimationFrame(tick);
     };
+
+    const section = sectionRef.current;
+    const unwatch = section
+      ? watchVisibility(section, (visible) => {
+          paused = !visible;
+          cancelAnimationFrame(rafId);
+          if (visible) rafId = requestAnimationFrame(tick);
+          // A full viewport of margin: the paper this canvas paints is what
+          // hides the dark forge at p=0, so it must have drawn before the
+          // section's top edge actually scrolls in.
+        }, '100% 0px')
+      : () => {};
     rafId = requestAnimationFrame(tick);
 
     return () => {
+      unwatch();
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
       tearProgramRef.current = null;
@@ -332,7 +347,9 @@ export const Artifacts = () => {
       targetY = (e.clientY - rect.top) / rect.height - 0.5;
     };
 
+    let paused = false;
     const updateParallax = () => {
+      if (paused) return;
       currentX += (targetX - currentX) * 0.07;
       currentY += (targetY - currentY) * 0.07;
 
@@ -348,9 +365,15 @@ export const Artifacts = () => {
     };
 
     sticky.addEventListener('mousemove', onMouseMove, { passive: true });
+    const unwatch = watchVisibility(sticky, (visible) => {
+      paused = !visible;
+      cancelAnimationFrame(rafId);
+      if (visible) rafId = requestAnimationFrame(updateParallax);
+    });
     rafId = requestAnimationFrame(updateParallax);
 
     return () => {
+      unwatch();
       sticky.removeEventListener('mousemove', onMouseMove);
       cancelAnimationFrame(rafId);
     };
@@ -435,11 +458,10 @@ export const Artifacts = () => {
           tearProgressRef.current.target = targetTear;
 
           // 4. Navbar theme: switch to dark mode once tear begins to reveal the black forge
-          if (p >= 0.14) {
-            window.dispatchEvent(new CustomEvent("dark-section", { detail: true }));
-          } else if (self.direction < 0 && p < 0.08) {
-            window.dispatchEvent(new CustomEvent("dark-section", { detail: false }));
-          }
+          // A single threshold both ways — the old down-at-0.14 / up-at-0.08
+          // hysteresis left the header white over the white paper on the way
+          // back up, which read as the navbar vanishing.
+          window.dispatchEvent(new CustomEvent("dark-section", { detail: p >= 0.12 }));
 
           // Katana rail track on the right remains hidden during slash intro
           if (katanaTrackRef.current) {

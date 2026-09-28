@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
+import { watchVisibility } from '@/lib/visibility';
 import { Renderer, Program, Mesh, Triangle, Transform, Texture } from 'ogl';
 
 export interface ProjectPortalItem {
@@ -328,6 +329,10 @@ export const ProjectMistPortal = React.forwardRef<
       img.onload = () => {
         if (!isActive) return;
         tex.image = img;
+        // Upload now, while the page loads — the render loop is paused until
+        // Artifacts scrolls in, and a first-draw upload there was a
+        // ~150ms hitch mid-scroll.
+        tex.update();
         loadedSizes[idx] = [img.naturalWidth || 16, img.naturalHeight || 9];
         if (programRef.current) {
           if (idx === currentIndex) {
@@ -418,7 +423,7 @@ export const ProjectMistPortal = React.forwardRef<
 
     // 6. Animation Render Loop
     const render = () => {
-      if (!isActive) return;
+      if (!isActive || paused) return;
 
       const elapsed = (performance.now() - startTime) * 0.001;
       program.uniforms.uTime.value = elapsed;
@@ -434,10 +439,20 @@ export const ProjectMistPortal = React.forwardRef<
       rafId = requestAnimationFrame(render);
     };
 
+    // Offscreen (Artifacts scrolled away) or hidden tab: stop the loop
+    // entirely, restart it on the way back in. See lib/visibility.
+    let paused = false;
+    const unwatch = watchVisibility(container, (visible) => {
+      paused = !visible;
+      cancelAnimationFrame(rafId);
+      if (visible && isActive) rafId = requestAnimationFrame(render);
+    });
+
     rafId = requestAnimationFrame(render);
 
     return () => {
       isActive = false;
+      unwatch();
       cancelAnimationFrame(rafId);
       ro.disconnect();
       window.removeEventListener('mousemove', onPointerMove);

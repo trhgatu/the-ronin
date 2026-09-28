@@ -50,7 +50,6 @@ export const Footer = () => {
                 { label: 'Prologue', href: '#hero' },
                 { label: 'The Architect', href: '#about' },
                 { label: 'Artifacts', href: '#artifacts' },
-                { label: 'The Armory', href: '#stack' },
                 { label: 'The Void', href: '#philosophy' },
                 { label: 'The Battles', href: '#experience' },
                 { label: 'The Summons', href: '#contact' },

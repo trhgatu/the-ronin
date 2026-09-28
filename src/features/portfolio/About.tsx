@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap, { ScrollTrigger } from "@/lib/gsap";
 import { PortraitMorph } from "@/components/shared/PortraitMorph";
+import { watchVisibility } from "@/lib/visibility";
 
 // Reuses the same 5 leaf silhouettes SumiLeaves scatters through Hero (and
 // Philosophy) — a quiet, continuous rain of leaves falling through the
@@ -200,8 +201,11 @@ export const About = () => {
     if (!section || !zone) return;
 
     const leaves = gsap.utils.toArray<HTMLElement>('.about-landing-leaf', section);
-    const fallTweens: gsap.core.Tween[] = [];
+    // One live tween per leaf (the old array grew by one every loop, forever),
+    // paused while About is offscreen.
+    const fallTweens = new Map<HTMLElement, gsap.core.Tween>();
     let killed = false;
+    let paused = false;
 
     // Hidden immediately on mount — otherwise each leaf sits at its
     // unstyled default (full opacity, resting at the section's top edge)
@@ -227,16 +231,16 @@ export const About = () => {
         rotation: gsap.utils.random(0, 360),
       });
 
-      fallTweens.push(
-        gsap.to(el, {
-          y: zoneHeight + 80,
-          x: `+=${gsap.utils.random(-70, 70)}`,
-          rotation: `+=${gsap.utils.random(180, 480) * spinDir}`,
-          duration,
-          ease: 'none',
-          onComplete: () => runCycle(el),
-        })
-      );
+      const tween = gsap.to(el, {
+        y: zoneHeight + 80,
+        x: `+=${gsap.utils.random(-70, 70)}`,
+        rotation: `+=${gsap.utils.random(180, 480) * spinDir}`,
+        duration,
+        ease: 'none',
+        onComplete: () => runCycle(el),
+      });
+      if (paused) tween.pause();
+      fallTweens.set(el, tween);
     };
 
     const trigger = ScrollTrigger.create({
@@ -255,8 +259,14 @@ export const About = () => {
       },
     });
 
+    const unwatch = watchVisibility(section, (visible) => {
+      paused = !visible;
+      fallTweens.forEach((tween) => (visible ? tween.resume() : tween.pause()));
+    });
+
     return () => {
       killed = true;
+      unwatch();
       trigger.kill();
       fallTweens.forEach((tw) => tw.kill());
     };
@@ -264,6 +274,26 @@ export const About = () => {
 
   return (
     <section id="about" ref={sectionRef} className="relative bg-background z-20 overflow-hidden">
+      {/* Ink bleed from Hero's near-black (#050505) into this section's paper —
+          without it the two met on a hard horizontal cut, the one seam on the
+          page that wasn't a transition. A solid strip pushed partly above the
+          section (clipped by overflow-hidden, so its top stays flush with
+          Hero) gets a displaced, ragged lower edge plus a soft fade, reading
+          as ink soaking into washi rather than a boundary. */}
+      <svg className="absolute h-0 w-0" aria-hidden="true">
+        <defs>
+          <filter id="about-ink-edge-filter" x="-5%" y="-30%" width="110%" height="160%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.009 0.04" numOctaves="4" seed="7" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="110" xChannelSelector="R" yChannelSelector="G" result="torn" />
+            <feGaussianBlur in="torn" stdDeviation="0.8" />
+          </filter>
+        </defs>
+      </svg>
+      <div
+        className="pointer-events-none absolute inset-x-[-5%] -top-24 z-10 h-40 md:h-44"
+        aria-hidden="true"
+        style={{ backgroundColor: '#050505', filter: 'url(#about-ink-edge-filter)' }}
+      />
       {/* Landing leaves — see the effect above. Absolutely positioned across
           the section's full height (not the page-wide max-w column below)
           so they read as raining through the section itself, not into any
