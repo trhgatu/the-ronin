@@ -531,8 +531,36 @@ export const Artifacts = () => {
   };
   const closingRef = useRef(false);
 
+  const pendingOpenRef = useRef(false);
+
   const openCaseStudy = (idx: number, { push = true } = {}) => {
-    if (openIdxRef.current !== null) return;
+    if (openIdxRef.current !== null || pendingOpenRef.current) return;
+
+    // Only open from the showcase band. Before it the tear paper (z-30) still
+    // covers the stage, after it the closing mist veil (z-40) does — either
+    // would sit on top of the case study. Glide to the project's rest point
+    // first, then open.
+    const p = scrollPRef.current;
+    if (p < 0.22 || p > 0.7) {
+      const y = projectRestScroll(idx);
+      const lenis = lenisRef.current;
+      if (y !== null && lenis) {
+        pendingOpenRef.current = true;
+        lenis.scrollTo(y, {
+          duration: 0.7,
+          force: true,
+          onComplete: () => {
+            // Let the scrub and the tear shader settle on the new position.
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              pendingOpenRef.current = false;
+              openCaseStudy(idx, { push });
+            }));
+          },
+        });
+      }
+      return;
+    }
+
     openIdxRef.current = idx;
     closingRef.current = false;
     soundManager?.playSwordWhoosh();
