@@ -281,7 +281,7 @@ export const Artifacts = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const portalCanvasHostRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
   const lastIndexRef = useRef(0);
 
@@ -505,9 +505,8 @@ export const Artifacts = () => {
   // commits the overlay, and starting the portal before the first paint is
   // what makes the click feel instant.
   useLayoutEffect(() => {
-    if (openIdx === null || !slotRef.current) return;
-    portalRef.current?.open(slotRef.current, openIdx);
-    gsap.fromTo(backdropRef.current, { opacity: 0 }, { opacity: 1, duration: 0.6, ease: 'power2.out' });
+    if (openIdx === null || !slotRef.current || !sheetRef.current) return;
+    portalRef.current?.open(sheetRef.current, slotRef.current, openIdx);
     const reveal = detailRef.current?.querySelectorAll('.case-reveal');
     if (reveal?.length) {
       gsap.fromTo(reveal, { opacity: 0, y: 24 }, {
@@ -521,7 +520,6 @@ export const Artifacts = () => {
     closingRef.current = true;
     const reveal = detailRef.current?.querySelectorAll('.case-reveal');
     if (reveal?.length) gsap.to(reveal, { opacity: 0, y: 12, duration: 0.25, ease: 'power2.in' });
-    gsap.to(backdropRef.current, { opacity: 0, duration: 0.5, delay: 0.15, ease: 'power2.inOut' });
     portalRef.current?.close(() => {
       openIdxRef.current = null;
       closingRef.current = false;
@@ -1032,21 +1030,15 @@ export const Artifacts = () => {
           })}
         </div>
 
-        {/* Case study. Backdrop and copy are separate layers so the portal's
-            canvas (z-25) sits between them: over the dimmed lake, under the
-            text. The slot is only a target box — the image itself is drawn by
-            the portal, which grows into it. */}
+        {/* Case study. The panel isn't DOM: the portal's mist frame grows into
+            the sheet box below and becomes it, while the image settles into
+            the slot box — both are only targets. The copy sits above the
+            portal canvas (z-25). */}
         {openProject && (
           <>
-            <div
-              ref={backdropRef}
-              // touch-none: on touch devices Lenis doesn't own scrolling, so a
-              // swipe on the backdrop would otherwise scroll the page behind.
-              className="absolute inset-0 z-[22] bg-[#080808] touch-none"
-              style={{ opacity: 0 }}
-              onClick={closeCaseStudy}
-              aria-hidden="true"
-            />
+            {/* touch-none: on touch devices Lenis doesn't own scrolling, so a
+                swipe outside the copy would otherwise scroll the page behind. */}
+            <div className="absolute inset-0 z-[22] touch-none" aria-hidden="true" />
             <div
               ref={detailRef}
               className="absolute inset-0 z-[35] pointer-events-none"
@@ -1055,16 +1047,26 @@ export const Artifacts = () => {
               aria-labelledby="artifact-case-title"
             >
               <div
+                ref={sheetRef}
+                aria-hidden="true"
+                className="absolute inset-2 sm:inset-4 lg:inset-[3vmin]"
+              />
+              <div
                 ref={slotRef}
                 aria-hidden="true"
                 className="absolute left-5 right-5 top-24 aspect-[16/10] lg:left-auto lg:right-[5vw] lg:top-1/2 lg:-translate-y-1/2 lg:w-[52vw] lg:max-w-[980px]"
               />
 
               {/* data-lenis-prevent: Lenis is stopped while this is open, and
-                  this column scrolls natively on its own. */}
+                  this column scrolls natively on its own. The mask fades copy
+                  out before it scrolls into the sheet's torn mist edge. */}
               <div
                 data-lenis-prevent
-                className="pointer-events-auto absolute inset-x-0 bottom-0 top-[calc(6rem+(100vw-2.5rem)*0.625+1.25rem)] overflow-y-auto px-5 pb-16 lg:inset-y-0 lg:right-auto lg:w-[40vw] lg:pl-[5vw] lg:pr-8 lg:pt-32 lg:pb-20"
+                style={{
+                  maskImage: 'linear-gradient(to bottom, transparent, black 1.5rem, black calc(100% - 4.5rem), transparent)',
+                  WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 1.5rem, black calc(100% - 4.5rem), transparent)',
+                }}
+                className="pointer-events-auto absolute inset-x-0 bottom-0 top-[calc(6rem+(100vw-2.5rem)*0.625+1.25rem)] overflow-y-auto px-8 pb-16 lg:inset-y-0 lg:right-auto lg:w-[40vw] lg:pl-[5vw] lg:pr-8 lg:pt-32 lg:pb-20"
               >
                 <div className="case-reveal flex items-center justify-between gap-4 mb-8">
                   <div className="flex items-center gap-3">

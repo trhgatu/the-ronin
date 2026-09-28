@@ -14,9 +14,10 @@ export interface ProjectPortalItem {
 
 export interface ProjectMistPortalHandle {
   setProgress: (scrollProgress: number) => void;
-  /** Grow the portal out of its mist frame into `target`'s box (the case
-   * study's hero slot), showing project `index`. */
-  open: (target: HTMLElement, index: number) => void;
+  /** Grow the mist frame into `sheet`'s box (the case study panel) while
+   * the image settles into `image`'s box (its hero slot), showing project
+   * `index`. */
+  open: (sheet: HTMLElement, image: HTMLElement, index: number) => void;
   /** Shrink back into the resting frame; `onDone` fires once it has landed. */
   close: (onDone?: () => void) => void;
 }
@@ -54,6 +55,7 @@ uniform sampler2D uTexB;
 uniform float uProgress;
 uniform float uTime;
 uniform vec4 uRect;       // image rect in drawing-buffer px: x, y (bottom-left), w, h
+uniform vec4 uSheet;      // mist sheet rect, same space; equals uRect at rest
 uniform float uExpand;    // 0 = resting in its mist frame, 1 = opened into the case study
 uniform vec2 uImageSizeA;
 uniform vec2 uImageSizeB;
@@ -127,23 +129,26 @@ vec2 getCoverUv(vec2 uv, vec2 imgSize, vec2 targetSize) {
 
 void main() {
   vec2 frag = gl_FragCoord.xy;
-  vec2 halfPx = uRect.zw * 0.5;
-  vec2 center = uRect.xy + halfPx;
+
+  // Two boxes. The sheet (uSheet) is the torn mist surface; the image
+  // (uRect) sits inside it. At rest they're the same box, so the portal is
+  // just the image in its mist frame. Opening, the sheet grows into the case
+  // study's near-full-screen panel while the image settles into its hero slot
+  // within it — the mist itself becomes the "modal".
+  vec2 sHalf = uSheet.zw * 0.5;
+  vec2 sCenter = uSheet.xy + sHalf;
 
   // Everything below was tuned in units of the old frame-sized canvas, whose
   // height the image filled 88% of — keep that unit (H) so the mist reads the
-  // same at rest.
-  float H = uRect.w / 0.88;
-  vec2 halfC = halfPx / 0.88;
-  vec2 uv = (frag - (center - halfC)) / (2.0 * halfC);
+  // same at rest, and simply scales up with the sheet as it grows.
+  float H = uSheet.w / 0.88;
+  vec2 halfC = sHalf / 0.88;
+  vec2 uv = (frag - (sCenter - halfC)) / (2.0 * halfC);
   float aspect = halfC.x / halfC.y;
 
-  // calm: cursor effects belong to the resting frame and fade out as it
-  // opens. mist: the torn smoke edge grows with the image and stays around
-  // the case study's hero, only settling a little. travel: an extra bloom
-  // while it's in flight.
+  // calm: cursor effects belong to the resting frame and fade as it opens.
+  // travel: an extra bloom of mist while the sheet is in flight.
   float calm = 1.0 - uExpand;
-  float mist = 1.0 - uExpand * 0.3;
   float travel = sin(uExpand * 3.14159);
 
   // Single monochrome ethereal mist color (silver-white twilight smoke)
@@ -168,14 +173,14 @@ void main() {
   vec2 swirlDisp = vec2(-mDelta.y, mDelta.x) * mSwirl * 0.045;
   vec2 totalHoverDisp = rippleDisp + swirlDisp;
 
-  // Organic edge displacement — the mist frame travels with the image
-  vec2 mistDisplace = vec2(smoke1, smoke2) * (0.055 * mist + 0.03 * travel) + totalHoverDisp * 1.4;
+  // Organic edge displacement of the sheet. H grows with the sheet, so the
+  // same amplitude would bite ~50px into a full-screen panel — ease it down
+  // as it opens to keep the torn edge clear of the case study copy.
+  vec2 mistDisplace = vec2(smoke1, smoke2) * (0.055 * mix(1.0, 0.5, uExpand) + 0.03 * travel) + totalHoverDisp * 1.4;
 
-  vec2 pAspect = (frag - center) / H;
+  vec2 pAspect = (frag - sCenter) / H;
   vec2 warpedP = pAspect + mistDisplace * vec2(aspect, 1.0);
-  vec2 halfSize = halfPx / H;
-  float cornerRadius = 0.04;
-  float dist = sdRoundedBox(warpedP, halfSize, cornerRadius);
+  float dist = sdRoundedBox(warpedP, sHalf / H, 0.04);
 
   float portalAlpha = smoothstep(0.015, -0.035, dist);
   if (portalAlpha <= 0.001) {
@@ -183,14 +188,15 @@ void main() {
     return;
   }
 
-  // Local image UV
+  // --- 2. The image, in its own (moving) box ---
+  vec2 halfPx = uRect.zw * 0.5;
+  vec2 center = uRect.xy + halfPx;
   vec2 localUv = (frag - (center - halfPx)) / (2.0 * halfPx);
   vec2 clampedLocalUv = clamp(localUv, 0.0, 1.0);
 
   vec2 imgUvA = getCoverUv(clampedLocalUv, uImageSizeA, uRect.zw);
   vec2 imgUvB = getCoverUv(clampedLocalUv, uImageSizeB, uRect.zw);
 
-  // --- 2. In-Place Project Morphing & Interactive Liquid Refraction ---
   float morphNoise = fbm(clampedLocalUv * 4.0 + vec2(uTime * 0.07, -uTime * 0.10)) * 0.35;
   float p = smoothstep(0.0, 1.0, uProgress);
   float morphThreshold = p * 1.5 - 0.25 + morphNoise;
@@ -225,14 +231,24 @@ void main() {
   float frontier = exp(-pow((morphThreshold - 0.5) * 8.0, 2.0)) * transEnergy;
   imgColor += mistColor * frontier * 0.85;
 
-  // --- 3. Ethereal mist rim (fades with calm, blooms briefly in flight) ---
-  float rimMist = exp(-pow((dist + 0.008) * 36.0, 2.0)) * (0.35 * mist + 0.5 * travel);
+  // At rest the image fills the whole torn shape (its edge pixels stretch
+  // out into the mist, as they always did). Once the sheet starts growing
+  // the image becomes its own crisp card and the rest of the sheet is ink.
+  float rectDist = sdRoundedBox(frag - center, halfPx, uRect.w * 0.012);
+  float rectMask = smoothstep(1.5, -1.5, rectDist);
+  float imgWeight = mix(1.0, rectMask, smoothstep(0.0, 0.2, uExpand));
+
+  // --- 3. Sheet: ink surface with slow internal smoke ---
+  float internalSmoke = (smoke1 * 0.5 + smoke2 * 0.5);
+  vec3 sheetColor = vec3(0.035, 0.036, 0.042) + vec3(internalSmoke) * 0.035;
+  vec3 baseColor = mix(sheetColor, imgColor + vec3(internalSmoke) * 0.06 * calm, imgWeight);
+
+  // Ethereal mist rim around the sheet (blooms briefly in flight)
+  float rimMist = exp(-pow((dist + 0.008) * 36.0, 2.0)) * (0.35 + 0.5 * travel);
   float hoverRim = exp(-pow((dist + 0.004) * 32.0, 2.0)) * hover * 0.40;
   rimMist += hoverRim;
 
-  float internalSmoke = (smoke1 * 0.5 + smoke2 * 0.5) * 0.06 * mist;
-
-  vec3 finalColor = imgColor + vec3(internalSmoke) + mistColor * rimMist;
+  vec3 finalColor = baseColor + mistColor * rimMist;
 
   gl_FragColor = vec4(finalColor, portalAlpha);
 }
@@ -262,7 +278,7 @@ export const ProjectMistPortal = React.forwardRef<
   // Opening state lives in refs: the render loop reads it every frame, and
   // nothing about it should re-render React.
   const expandRef = useRef({ value: 0 });
-  const targetRef = useRef<HTMLElement | null>(null);
+  const targetRef = useRef<{ sheet: HTMLElement; image: HTMLElement } | null>(null);
   const lastProgressRef = useRef(0);
   const expandTweenRef = useRef<gsap.core.Tween | null>(null);
 
@@ -325,8 +341,8 @@ export const ProjectMistPortal = React.forwardRef<
       if (targetRef.current) return;
       applyProgress(scrollProgress);
     },
-    open: (target: HTMLElement, index: number) => {
-      targetRef.current = target;
+    open: (sheet: HTMLElement, image: HTMLElement, index: number) => {
+      targetRef.current = { sheet, image };
       showSingle(index);
       expandTweenRef.current?.kill();
       expandTweenRef.current = gsap.to(expandRef.current, {
@@ -437,6 +453,7 @@ export const ProjectMistPortal = React.forwardRef<
         uProgress: { value: 0 },
         uTime: { value: 0 },
         uRect: { value: [0, 0, 1, 1] },
+        uSheet: { value: [0, 0, 1, 1] },
         uBounds: { value: [-1, -1, 1, 1] },
         uExpand: { value: 0 },
         uImageSizeA: { value: loadedSizes[initialIndex] || [16, 9] },
@@ -477,9 +494,10 @@ export const ProjectMistPortal = React.forwardRef<
       const bufH = hostRect.height * dpr;
 
       // Resting frame: the anchor box, inset so the mist has room around the
-      // image. Opening: interpolate toward the case study's hero slot.
+      // image; sheet and image share it. Opening: the sheet interpolates to
+      // the case study panel, the image to its hero slot.
       const a = toBox(container.getBoundingClientRect(), hostRect);
-      let box: Box = {
+      const rest: Box = {
         x: a.x + a.w * (1 - REST_FILL) / 2,
         y: a.y + a.h * (1 - REST_FILL) / 2,
         w: a.w * REST_FILL,
@@ -487,34 +505,35 @@ export const ProjectMistPortal = React.forwardRef<
       };
       const e = expandRef.current.value;
       const target = targetRef.current;
-      if (target && e > 0) {
-        const t = toBox(target.getBoundingClientRect(), hostRect);
-        box = {
-          x: box.x + (t.x - box.x) * e,
-          y: box.y + (t.y - box.y) * e,
-          w: box.w + (t.w - box.w) * e,
-          h: box.h + (t.h - box.h) * e,
+      const lerpBox = (from: Box, el: HTMLElement): Box => {
+        const t = toBox(el.getBoundingClientRect(), hostRect);
+        return {
+          x: from.x + (t.x - from.x) * e,
+          y: from.y + (t.y - from.y) * e,
+          w: from.w + (t.w - from.w) * e,
+          h: from.h + (t.h - from.h) * e,
         };
-      }
+      };
+      const image = target && e > 0 ? lerpBox(rest, target.image) : rest;
+      const sheet = target && e > 0 ? lerpBox(rest, target.sheet) : rest;
 
       // Drawing-buffer px, GL origin bottom-left
-      const rx = box.x * dpr;
-      const ry = bufH - (box.y + box.h) * dpr;
-      const rw = box.w * dpr;
-      const rh = box.h * dpr;
-      program.uniforms.uRect.value = [rx, ry, rw, rh];
+      const toGl = (b: Box) => [b.x * dpr, bufH - (b.y + b.h) * dpr, b.w * dpr, b.h * dpr];
+      program.uniforms.uRect.value = toGl(image);
+      const [sx, sy, sw, sh] = toGl(sheet);
+      program.uniforms.uSheet.value = [sx, sy, sw, sh];
       program.uniforms.uExpand.value = e;
 
-      // Quad = image rect plus room for the mist, so fragments outside it are
+      // Quad = sheet plus room for its mist edge, so fragments outside it are
       // never shaded at all.
-      const H = rh / REST_FILL;
+      const H = sh / REST_FILL;
       const margin = H * (0.12 + 0.06 * Math.sin(e * Math.PI)) + 4;
       const bufW = hostRect.width * dpr;
       program.uniforms.uBounds.value = [
-        ((rx - margin) / bufW) * 2 - 1,
-        ((ry - margin) / bufH) * 2 - 1,
-        ((rx + rw + margin) / bufW) * 2 - 1,
-        ((ry + rh + margin) / bufH) * 2 - 1,
+        ((sx - margin) / bufW) * 2 - 1,
+        ((sy - margin) / bufH) * 2 - 1,
+        ((sx + sw + margin) / bufW) * 2 - 1,
+        ((sy + sh + margin) / bufH) * 2 - 1,
       ];
 
       program.uniforms.uTime.value = (performance.now() - startTime) * 0.001;
