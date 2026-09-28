@@ -19,11 +19,12 @@ Hero's black bleeds into the paper through a ragged ink edge. The name headline 
 ### Chapter II — Artifacts
 A 560vh sticky stage driven by a single `ScrollTrigger`:
 1. "Where thought becomes form." A katana slash then tears the white paper open (OGL shader) onto a dark forge.
-2. Three projects on a night lake. Each shows through a mist-edged portal that morphs between projects, with a live water reflection underneath. A katana rail jumps between projects, and "View specification" opens a detail modal.
+2. Four projects on a night lake: Magnum Opus, Auto WP Publisher, The Alchemist and Kim Khanh. Each shows through a mist-edged portal that morphs between projects, with a live water reflection underneath. A katana rail jumps between projects, and "View case study" opens the problem, approach, outcome and engineering notes for each. Project data lives in `PROJECTS` in `src/features/portfolio/Artifacts.tsx`, and the stage stretches to fit however many there are.
 3. A white washi mist rolls in and hands over to the next chapter.
 
 ![Artifacts — the tear](.github/assets/artifacts-tear.png)
 ![Artifacts — projects on the lake](.github/assets/artifacts.png)
+![Artifacts — case study](.github/assets/artifacts-case-study.png)
 
 ### Chapter III — The Void (Philosophy)
 A single manifesto quote, ink-revealed character by character. It sits over a parallaxing sumi-e tree, a Musashi silhouette and a WebGL fog shader.

@@ -194,19 +194,16 @@ export const ProjectWaterReflection = React.forwardRef<
       const textures = texturesRef.current;
       if (!material || textures.length < 2) return;
 
-      const v = Math.max(0, Math.min(scrollProgress * 2.0, 2.0));
-      if (v < 1.0) {
-        material.uniforms.uTextureA.value = textures[0];
-        material.uniforms.uTextureB.value = textures[1];
-        const t = Math.max(0, Math.min((v - 0.15) / 0.70, 1.0));
-        material.uniforms.uProgress.value = t * t * (3 - 2 * t);
-      } else {
-        const localV = v - 1.0;
-        material.uniforms.uTextureA.value = textures[1];
-        material.uniforms.uTextureB.value = textures[2] || textures[1];
-        const t = Math.max(0, Math.min((localV - 0.15) / 0.70, 1.0));
-        material.uniforms.uProgress.value = t * t * (3 - 2 * t);
-      }
+      // Same segment mapping as ProjectMistPortal, for any number of images
+      // (this used to hardcode three, so a fourth project kept reflecting
+      // the third one's image).
+      const last = textures.length - 1;
+      const v = Math.max(0, Math.min(scrollProgress, 1)) * last;
+      const idxA = Math.min(Math.floor(v), last - 1);
+      material.uniforms.uTextureA.value = textures[idxA];
+      material.uniforms.uTextureB.value = textures[idxA + 1];
+      const t = Math.max(0, Math.min((v - idxA - 0.15) / 0.70, 1.0));
+      material.uniforms.uProgress.value = t * t * (3 - 2 * t);
     },
   }));
 

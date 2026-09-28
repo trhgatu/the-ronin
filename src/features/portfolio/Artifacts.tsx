@@ -128,62 +128,128 @@ interface Project {
   kanji: string;
   category: string;
   title: string;
-  subtitle: string;
   description: string;
   image: string;
   tags: string[];
   year: string;
   accent: string;
-  layout: 'center' | 'left' | 'panoramic';
-  metrics: string;
-  architecture: string;
+  /** One line of verifiable facts shown under the title in the case study. */
+  highlights: string;
+  role: string;
+  problem: string;
+  approach: string;
+  outcome: string;
+  engineering: string[];
+  links: { label: string; href: string }[];
+  credit?: string;
 }
 
+// Every claim here is checked against the project's own repo — no invented
+// traffic numbers or architecture the code doesn't have.
 const PROJECTS: Project[] = [
   {
-    id: 'forgeos',
+    id: 'magnum-opus',
     kanji: '壹',
-    category: 'Core System & Self-Mastery OS',
+    category: 'Personal OS · Modular Monolith',
     title: 'Magnum Opus',
-    subtitle: 'Domain-Driven Design · CQRS',
-    description: 'A sovereign operating system engineered for self-mastery, cognitive telemetry, and gamified engineering growth. Built on event-sourced architecture and high-throughput real-time queues.',
-    image: '/projects/forgeos.png',
-    tags: ['TypeScript', 'Next.js', 'NestJS', 'PostgreSQL', 'Redis', 'Docker'],
+    description: 'A private operating system for observing and reshaping one\'s own life — journal, mood, memory, habits and routines woven into one loop: record, reflect, notice patterns, change, act.',
+    image: '/projects/magnum-opus.webp',
+    tags: ['TypeScript', 'NestJS', 'Next.js', 'PostgreSQL', 'Prisma', 'Redis', 'BullMQ', 'Docker'],
     year: '2026',
-    accent: '#f59e0b',
-    layout: 'center',
-    metrics: '120,000 req/s · Event Sourced · Sub-10ms p99',
-    architecture: 'CQRS & Event Sourcing, NestJS microservices, Redis Pub/Sub cluster, PostgreSQL event journal',
+    accent: '#d4a24c',
+    highlights: '330 test files · CI-enforced architecture & perf budgets · Transactional outbox',
+    role: 'Solo — product, design and engineering',
+    problem: 'Its predecessor, Forge OS, grew into 25+ gamified modules backed by two test files — impressive to demo, hard to trust or change. The product had also drifted into a productivity dashboard, the opposite of what it was for.',
+    approach: 'Rebuilt from scratch as a calm, private product, one vertical slice at a time (Journal, Mood, Memory, Timeline, then Habits and Routines), on a foundation strict enough to keep that pace: bounded contexts, CQRS, ports and adapters, and an API and a BullMQ worker as separate composition roots.',
+    outcome: '234 commits in two months, shipped through reviewed pull requests. Every slice lands with unit, API end-to-end and browser end-to-end tests, and CI refuses a merge that breaks the architecture rules, the JS budget per route or the migration chain.',
+    engineering: [
+      'Transactional outbox with idempotent, at-least-once realtime delivery',
+      'Dependency rules enforced by a test: domain code cannot import Prisma, BullMQ or infrastructure',
+      'Optimistic concurrency and per-user ownership isolation',
+      'Production compose with Caddy, encrypted off-host backups and Prometheus alerts — all validated in CI',
+      'Foundation shared with my open-source turborepo-advanced-starter',
+    ],
+    links: [
+      { label: 'Live', href: 'https://www.magnum-opus.dev' },
+      { label: 'Source', href: 'https://github.com/trhgatu/magnum-opus' },
+    ],
   },
   {
-    id: 'aether',
+    id: 'auto-wp-publisher',
     kanji: '貳',
-    category: 'Interface Infrastructure',
-    title: 'Aether System',
-    subtitle: 'Mathematical Precision & Micro-Interactions',
-    description: 'An enterprise design system tailored for high-velocity software interfaces, balancing strict layout constraints with fluid 60FPS canvas micro-interactions.',
-    image: '/projects/ecommerce.png',
-    tags: ['Next.js', 'GSAP', 'Three.js', 'TailwindCSS'],
-    year: '2024',
-    accent: '#e2e8f0',
-    layout: 'left',
-    metrics: '60 FPS Micro-Interactions · 0 CLS · 98 Lighthouse',
-    architecture: 'Custom GLSL shaders, headless primitives, atomic CSS tokens, hardware-accelerated GSAP pipelines',
+    category: 'AI Content Pipeline · Client Tool',
+    title: 'Auto WP Publisher',
+    description: 'Turns a raw Excel or Google Sheets product list into published WooCommerce listings — columns mapped, SEO copy written by Gemini, categories, brands, images and RankMath/Yoast metadata filled in.',
+    image: '/projects/auto-wp-publisher.webp',
+    tags: ['NestJS', 'React', 'Ant Design', 'PostgreSQL', 'Prisma', 'BullMQ', 'Redis', 'Gemini', 'WooCommerce'],
+    year: '2026',
+    accent: '#f87171',
+    highlights: 'Spreadsheet → Gemini → WooCommerce · Rate-limit-aware queue · Live job progress',
+    role: 'Solo — built for a real e-commerce business',
+    problem: 'Listing products by hand meant copying fields from spreadsheets, writing an SEO description for each one and uploading images one product at a time — slow, and inconsistent from one listing to the next.',
+    approach: 'A NestJS service split into hexagonal bounded contexts (catalog, IAM, settings) with CQRS, fronted by a React admin. Imports become queued jobs; a BullMQ processor writes copy with Gemini, then publishes through the WooCommerce REST API while the UI follows progress over Socket.IO.',
+    outcome: 'The whole flow — import, mapping preview, publishing, trash and restore, prompt templates, API log history and a dashboard — works end to end, with CI building and shipping a Docker image on every push.',
+    engineering: [
+      'Gemini 429 handling with retry and API-key rotation',
+      'Queue processor at concurrency 1 behind a rate limiter, with a template fallback when AI generation fails',
+      'WooCommerce integration that handles duplicate SKUs and de-duplicates media uploads',
+      'Real-time job events pushed to the admin over Socket.IO',
+    ],
+    links: [
+      { label: 'Source', href: 'https://github.com/trhgatu/auto-wp-publisher' },
+    ],
   },
   {
-    id: 'sentience',
+    id: 'the-alchemist',
     kanji: '參',
-    category: 'Intelligence & State Protocol',
-    title: 'Sentience AI',
-    subtitle: 'Topological Viz & Streaming Engine',
-    description: 'Full-stack AI analytics platform featuring real-time WebGL topological visualizations, dynamic token tracking, and high-frequency reactive state manifolds.',
-    image: '/projects/crypto.png',
-    tags: ['React', 'Three.js', 'Python', 'WebSockets'],
-    year: '2025',
-    accent: '#38bdf8',
-    layout: 'panoramic',
-    metrics: 'WebGL Topo Viz · Low-Latency WebSocket Bus · Reactive Graph',
-    architecture: 'Real-time GLSL raymarching, WebSocket event bus, Python ML telemetry, Web Worker state manifolds',
+    category: 'Immersive Portfolio · Creative Frontend',
+    title: 'The Alchemist',
+    description: 'My previous portfolio: a scroll-driven grimoire after Paulo Coelho\'s novel. A washi-paper portal burns open onto a starfield, a 3D spellbook releases the tech stack as a constellation, and the story ends in the desert — in English and Vietnamese.',
+    image: '/projects/the-alchemist.webp',
+    tags: ['Next.js', 'React Three Fiber', 'GSAP', 'OGL', 'Zustand', 'Tailwind CSS'],
+    year: '2025 — 2026',
+    accent: '#f59e0b',
+    highlights: '3D grimoire · Shader route transitions · EN / VI',
+    role: 'Solo — concept, design and engineering',
+    problem: 'A portfolio usually reads as a list. I wanted one that plays like a story, where every section is a chapter and the transitions carry the meaning.',
+    approach: 'Long pinned scroll timelines drive React Three Fiber scenes through a scroll-progress ref read inside the frame loop, so the 3D never waits on React re-renders. Route changes burn the screen through an OGL noise shader, and torn, scorched parchment is drawn with SVG displacement filters.',
+    outcome: 'Live since 2025 and refined over 186 commits across a year. Building it taught me where immersive sites lose people — pacing and weight — which is what this site was designed around.',
+    engineering: [
+      'Scroll progress kept in refs and read in useFrame, not React state',
+      'OGL simplex-noise burn transition orchestrated through a Zustand router store',
+      'Tech icons rasterised into textures and flown into a golden-angle constellation',
+      'Custom EN / VI i18n store with GSAP timelines rebuilt per language',
+    ],
+    links: [
+      { label: 'Live', href: 'https://thatu.is-a.dev' },
+      { label: 'Source', href: 'https://github.com/trhgatu/the-alchemist' },
+    ],
+  },
+  {
+    id: 'kim-khanh',
+    kanji: '肆',
+    category: 'Client Work · Personal Archive',
+    title: 'Kim Khanh',
+    description: 'A bespoke digital home built for Kim Khanh — a warm botanical scrapbook of flowers, places, notes and small everyday joys, opening on an interactive 3D azalea.',
+    image: '/projects/kim-khanh.webp',
+    tags: ['Next.js', 'Three.js', 'OGL', 'GSAP', 'Lenis', 'Tailwind CSS'],
+    year: '2026',
+    accent: '#e8837a',
+    highlights: '3D flower study · Shader pollen trail · Reduced-motion support',
+    role: 'Solo — designed and built for a client',
+    problem: 'A personal site for someone who isn\'t a developer: it had to feel like her — soft, tactile, handmade — rather than like a template, and stay gentle for visitors who prefer less motion.',
+    approach: 'An editorial scrapbook layout with paper-like surfaces, a three.js hero flower playing its own animation, and small OGL shaders for the pollen cursor trail, the fog preloader and a cover ripple reserved for precise pointers.',
+    outcome: 'Finished and polished across desktop and mobile, with real content throughout, ambient audio behind an opt-in toggle, and a reduced-motion mode.',
+    engineering: [
+      'three.js GLTF scene with baked animation for the hero flower',
+      'OGL shaders for the pollen trail, fog preloader and cover ripple (fine pointers only)',
+      'Scroll-linked flowers and a pinned editorial layout on GSAP + Lenis',
+      'prefers-reduced-motion respected across the experience',
+    ],
+    links: [
+      { label: 'Source', href: 'https://github.com/trhgatu/kimkhanh-portfolio' },
+    ],
+    credit: '3D model "Rhododendron - Azalea" by Nestaeric on Sketchfab, licensed CC BY 4.0.',
   },
 ];
 
@@ -384,8 +450,10 @@ export const Artifacts = () => {
     if (!sectionRef.current) return;
     const st = ScrollTrigger.getById('artifacts-scroll');
     if (!st) return;
-    // idx 0 lands directly at Project 01 after the tear is open; idx 1 -> Project 02; idx 2 -> Project 03
-    const targetProgress = idx === 0 ? 0.26 : idx === 1 ? 0.48 : 0.70;
+    // Each project's resting point inside the 0.22 -> 0.68 showcase band
+    // (see the ScrollTrigger below); the first sits just past the tear.
+    const rest = 0.22 + 0.46 * (idx / Math.max(1, PROJECTS.length - 1));
+    const targetProgress = Math.min(0.70, Math.max(0.225, rest));
     const targetScroll = st.start + targetProgress * (st.end - st.start);
     window.scrollTo({
       top: targetScroll,
@@ -527,20 +595,25 @@ export const Artifacts = () => {
           }
           window.dispatchEvent(new CustomEvent("dark-section", { detail: true }));
 
-          // Map scroll (0.22 -> 0.68) to project progress (0.00 -> 1.00), leaving (0.68 -> 0.78) as dwell for Project 03
+          // Map scroll (0.22 -> 0.68) to project progress (0.00 -> 1.00), leaving (0.68 -> 0.78) as dwell for the last project
           const projectP = Math.min(1.0, Math.max(0.0, (p - 0.22) / 0.46));
+          const lastIdx = PROJECTS.length - 1;
 
           // 1. Direct real-time GPU uniform updates (zero lag, bidirectional, continuous)
           portalRef.current?.setProgress(projectP);
           reflectionRef.current?.setProgress(projectP);
 
           // 2. Real-time cinematic text transition for Title & Desc (synchronized with mist portal morphing)
-          const v = Math.max(0, Math.min(projectP * 2.0, 2.0)); // 0.0 to 2.0
+          const v = projectP * lastIdx; // 0 .. lastIdx, each integer is a project at rest
           projectCardsRef.current.forEach((card, idx) => {
             if (!card) return;
             const d = v - idx; // distance from this project's resting point
             if (Math.abs(d) < 0.6) {
-              const norm = 1.0 - Math.abs(d) / 0.6;
+              // Fully sharp within 0.2 of the rest point (the mist portal
+              // likewise holds each image for 0.15 either side), fading out by
+              // 0.6 — without the plateau the copy was only crisp at one exact
+              // scroll position, and the rail's jump targets landed on blur.
+              const norm = 1.0 - Math.max(0, Math.abs(d) - 0.2) / 0.4;
               const opacity = norm * norm * (3.0 - 2.0 * norm); // Smooth cubic ease
               const y = -d * 28.0; // Floats up as you scroll past, glides in from bottom as you approach
               const blur = (1.0 - opacity) * 6.0;
@@ -556,15 +629,13 @@ export const Artifacts = () => {
             }
           });
 
-          // 3. Hysteresis buffer zones: prevents jitter for project audio and top markers
+          // 3. Hysteresis: only switch the active project once scroll is well
+          // past the halfway point between two of them (0.6 / 0.4 of the way),
+          // so hovering near a boundary doesn't flicker the rail or replay audio.
           let nextIdx = lastIndexRef.current;
-          if (lastIndexRef.current === 0) {
-            if (projectP >= 0.38) nextIdx = 1;
-          } else if (lastIndexRef.current === 1) {
-            if (projectP <= 0.28) nextIdx = 0;
-            else if (projectP >= 0.72) nextIdx = 2;
-          } else if (lastIndexRef.current === 2) {
-            if (projectP <= 0.62) nextIdx = 1;
+          const nearest = Math.round(v);
+          if (nearest !== lastIndexRef.current && Math.abs(v - nearest) < 0.4) {
+            nextIdx = nearest;
           }
 
           if (nextIdx !== lastIndexRef.current) {
@@ -589,7 +660,7 @@ export const Artifacts = () => {
           tearContainerRef.current.style.display = 'none';
         }
 
-        // Keep Project 03 textures locked at 1.0
+        // Keep the last project's textures locked at 1.0
         portalRef.current?.setProgress(1.0);
         reflectionRef.current?.setProgress(1.0);
 
@@ -630,7 +701,10 @@ export const Artifacts = () => {
       ref={sectionRef}
       id="artifacts"
       className="relative w-full bg-[#080808] text-[#f5f5f0] select-none"
-      style={{ height: "560vh" }}
+      // 560vh was tuned for three projects; every extra project adds another
+      // transition to the showcase band, so the section grows with the list
+      // to keep each one about as long a scroll as before.
+      style={{ height: `${320 + PROJECTS.length * 80}vh` }}
     >
       {/* Sticky Fullscreen Stage */}
       <div
@@ -754,6 +828,9 @@ export const Artifacts = () => {
                     <span className="font-mono text-xs tracking-[0.3em] text-white/40 uppercase">
                       0{idx + 1}
                     </span>
+                    <span className="hidden sm:inline font-mono text-[10px] tracking-[0.25em] text-white/30 uppercase">
+                      {proj.category}
+                    </span>
                   </div>
 
                   <h3 className="font-serif font-light text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white tracking-tight leading-[1.08] mb-4">
@@ -767,7 +844,8 @@ export const Artifacts = () => {
                   {/* Minimal Mono Tech Stack */}
                   <div className="font-mono text-xs sm:text-[13px] text-white/40 tracking-wider mb-6 flex items-center gap-2.5 select-none">
                     <span className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" style={{ backgroundColor: proj.accent }} />
-                    <span>{proj.tags.join(" · ")}</span>
+                    {/* The card only has room for one line; the full stack lives in the case study. */}
+                    <span>{proj.tags.slice(0, 5).join(" · ")}</span>
                   </div>
 
                   <button
@@ -778,7 +856,7 @@ export const Artifacts = () => {
                     className="inline-flex items-center gap-2 group/link cursor-pointer focus:outline-none"
                   >
                     <span className="font-mono text-xs tracking-[0.25em] uppercase text-white/50 group-hover/link:text-white transition-colors">
-                      View Specification ↗
+                      View Case Study ↗
                     </span>
                   </button>
                 </div>
@@ -832,22 +910,28 @@ export const Artifacts = () => {
         </div>
       </div>
 
-      {/* Ethereal Technical Specification Modal */}
+      {/* Case study modal */}
       {selectedProject && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/85 backdrop-blur-xl animate-in fade-in duration-300"
+          className="artifact-modal-in fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/85 backdrop-blur-xl"
           onClick={() => setSelectedProject(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="artifact-case-title"
         >
+          {/* data-lenis-prevent: Lenis otherwise swallows the wheel and the
+              page scrolls behind the modal instead of the case study itself. */}
           <div
-            className="relative w-full max-w-2xl bg-[#0b0b0b]/95 border border-white/10 p-6 sm:p-8 rounded-lg shadow-2xl overflow-hidden select-none"
+            data-lenis-prevent
+            className="relative w-full max-w-3xl max-h-[88vh] overflow-y-auto bg-[#0b0b0b]/95 border border-white/10 rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 sm:px-10 py-4 border-b border-white/10 bg-[#0b0b0b]/95 backdrop-blur">
               <div className="flex items-center gap-3">
                 <span className="font-serif text-2xl text-white/30">{selectedProject.kanji}</span>
                 <span className="font-mono text-xs tracking-[0.25em] text-white/40 uppercase">
-                  Technical Specification
+                  Case Study
                 </span>
               </div>
               <button
@@ -857,56 +941,93 @@ export const Artifacts = () => {
                 [ CLOSE ✕ ]
               </button>
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl text-white font-light tracking-tight mb-2">
-              {selectedProject.title}
-            </h2>
-            <p className="font-mono text-xs text-white/70 tracking-wide mb-6">
-              {selectedProject.metrics}
-            </p>
-            <div className="mb-6">
-              <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">
-                Architecture & Engineering
-              </h4>
-              <p className="text-xs sm:text-sm text-white/70 font-light leading-relaxed mb-3">
-                {selectedProject.description}
-              </p>
-              <div className="p-3.5 rounded bg-white/[0.03] border border-white/5 font-mono text-[11px] text-white/60 leading-relaxed">
-                {selectedProject.architecture}
-              </div>
-            </div>
 
-            {/* Tech Stack List */}
-            <div className="mb-6">
-              <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2.5">
-                Core Technologies
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {selectedProject.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
-                  >
-                    {tag}
-                  </span>
+            <div className="px-6 sm:px-10 py-8">
+              <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/40 mb-3">
+                {selectedProject.category} · {selectedProject.year}
+              </p>
+              <h2 id="artifact-case-title" className="font-serif text-4xl sm:text-5xl text-white font-light tracking-tight mb-3">
+                {selectedProject.title}
+              </h2>
+              <p className="flex items-center gap-2.5 font-mono text-xs text-white/70 tracking-wide mb-2">
+                <span className="w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: selectedProject.accent }} />
+                {selectedProject.highlights}
+              </p>
+              <p className="font-caveat text-xl text-white/50 mb-8">{selectedProject.role}</p>
+
+              {/* Problem / Approach / Outcome */}
+              <div className="space-y-7 mb-9">
+                {([
+                  ['The Problem', selectedProject.problem],
+                  ['The Approach', selectedProject.approach],
+                  ['The Outcome', selectedProject.outcome],
+                ] as const).map(([label, text]) => (
+                  <div key={label} className="grid sm:grid-cols-[150px_1fr] gap-2 sm:gap-6">
+                    <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 pt-1">
+                      {label}
+                    </h4>
+                    <p className="text-sm sm:text-[15px] text-white/75 font-light leading-relaxed">
+                      {text}
+                    </p>
+                  </div>
                 ))}
               </div>
-            </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-4 pt-4 border-t border-white/10">
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="font-mono text-xs tracking-widest uppercase text-white/60 hover:text-white px-4 py-2 cursor-pointer transition-colors"
-              >
-                Dismiss
-              </button>
-              <a
-                href="#contact"
-                onClick={() => setSelectedProject(null)}
-                className="font-mono text-xs tracking-widest uppercase bg-white text-black font-semibold px-4 py-2 rounded hover:bg-white/90 transition-colors cursor-pointer"
-              >
-                Inquire System ↗
-              </a>
+              {/* Under the hood */}
+              <div className="mb-8">
+                <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-3">
+                  Under the Hood
+                </h4>
+                <ul className="space-y-2.5">
+                  {selectedProject.engineering.map((item) => (
+                    <li key={item} className="flex gap-3 text-sm text-white/70 font-light leading-relaxed">
+                      <span className="text-white/25 font-serif">一</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Stack */}
+              <div className="mb-8">
+                <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2.5">
+                  Stack
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProject.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {selectedProject.credit && (
+                <p className="font-mono text-[10px] text-white/35 leading-relaxed mb-8">
+                  {selectedProject.credit}
+                </p>
+              )}
+
+              {/* Links */}
+              <div className="flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-white/10">
+                {selectedProject.links.map((link, i) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`font-mono text-xs tracking-widest uppercase px-4 py-2 rounded transition-colors cursor-pointer ${i === 0
+                      ? 'bg-white text-black font-semibold hover:bg-white/90'
+                      : 'border border-white/20 text-white/70 hover:text-white hover:border-white/50'
+                      }`}
+                  >
+                    {link.label} ↗
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
