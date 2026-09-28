@@ -55,6 +55,10 @@ export const Navbar = () => {
       setDarkSection((e as CustomEvent<boolean>).detail);
     };
     window.addEventListener('dark-section', onDarkSection);
+    // Catch up on an announcement made before this effect subscribed (see
+    // announceDarkSection in Artifacts.tsx).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDarkSection(document.documentElement.dataset.darkSection === 'true');
     return () => window.removeEventListener('dark-section', onDarkSection);
   }, []);
 

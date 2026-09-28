@@ -14,6 +14,16 @@ import { ArtifactsLakeBackground } from "@/components/shared/ArtifactsLakeBackgr
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Tells Navbar whether it's over this section's dark forge. Also recorded on
+// <html> as the current state, not just fired as an event: on a reload
+// mid-section the first announcement comes from ScrollTrigger's refresh
+// inside useGSAP's layout effect — before Navbar's plain effect has even
+// subscribed — so Navbar reads the attribute on mount to catch up.
+const announceDarkSection = (dark: boolean) => {
+  document.documentElement.dataset.darkSection = dark ? "true" : "false";
+  window.dispatchEvent(new CustomEvent("dark-section", { detail: dark }));
+};
+
 const SLASH_VS = `
 attribute vec2 position;
 varying vec2 vUv;
@@ -491,6 +501,7 @@ export const Artifacts = () => {
     closingRef.current = false;
     soundManager?.playSwordWhoosh();
     lenisRef.current?.stop();
+    announceDarkSection(true);
     if (katanaTrackRef.current) {
       katanaTrackRef.current.style.opacity = '0';
       katanaTrackRef.current.style.pointerEvents = 'none';
@@ -607,14 +618,12 @@ export const Artifacts = () => {
       "--foreground": "#f5f5f0",
     });
 
-    // Pinned ScrollTrigger with 1:1 hardware-accelerated GPU scrubbing
-    ScrollTrigger.create({
-      id: 'artifacts-scroll',
-      trigger: sectionRef.current,
-      start: "top top",
-      end: "bottom bottom",
-      scrub: 1,
-      onUpdate: (self) => {
+    // Pinned ScrollTrigger with 1:1 hardware-accelerated GPU scrubbing.
+    // update() also runs on refresh (page load, resize): reloading mid-section
+    // fires no scroll event, so without it nothing below ran — the stage kept
+    // its initial styles and Navbar never got 'dark-section', painting its
+    // light scrim over the dark forge.
+    const update = (self: ScrollTrigger) => {
         const p = self.progress;
         scrollPRef.current = p;
 
@@ -656,7 +665,7 @@ export const Artifacts = () => {
           // A single threshold both ways — the old down-at-0.14 / up-at-0.08
           // hysteresis left the header white over the white paper on the way
           // back up, which read as the navbar vanishing.
-          window.dispatchEvent(new CustomEvent("dark-section", { detail: p >= 0.12 }));
+          announceDarkSection(p >= 0.12);
 
           // Katana rail track on the right remains hidden during slash intro
           if (katanaTrackRef.current) {
@@ -724,7 +733,7 @@ export const Artifacts = () => {
             katanaTrackRef.current.style.opacity = '1';
             katanaTrackRef.current.style.pointerEvents = 'auto';
           }
-          window.dispatchEvent(new CustomEvent("dark-section", { detail: true }));
+          announceDarkSection(true);
 
           // Map scroll (0.22 -> 0.68) to project progress (0.00 -> 1.00), leaving (0.68 -> 0.78) as dwell for the last project
           const projectP = Math.min(1.0, Math.max(0.0, (p - 0.22) / 0.46));
@@ -828,8 +837,17 @@ export const Artifacts = () => {
         }
 
         // Seamless handover for navbar: switches to dark text as mist envelops the view
-        window.dispatchEvent(new CustomEvent("dark-section", { detail: mistProgress < 0.45 }));
-      },
+        announceDarkSection(mistProgress < 0.45);
+    };
+
+    ScrollTrigger.create({
+      id: 'artifacts-scroll',
+      trigger: sectionRef.current,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 1,
+      onUpdate: update,
+      onRefresh: update,
     });
   }, { scope: sectionRef });
 
@@ -1066,9 +1084,10 @@ export const Artifacts = () => {
                   maskImage: 'linear-gradient(to bottom, transparent, black 1.5rem, black calc(100% - 4.5rem), transparent)',
                   WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 1.5rem, black calc(100% - 4.5rem), transparent)',
                 }}
-                className="pointer-events-auto absolute inset-x-0 bottom-0 top-[calc(6rem+(100vw-2.5rem)*0.625+1.25rem)] overflow-y-auto px-8 pb-16 lg:inset-y-0 lg:right-auto lg:w-[40vw] lg:pl-[5vw] lg:pr-8 lg:pt-32 lg:pb-20"
+                className="pointer-events-auto absolute inset-x-0 bottom-0 top-[calc(6rem+(100vw-2.5rem)*0.625+1.25rem)] overflow-y-auto px-8 pb-16 lg:top-24 lg:bottom-0 lg:right-auto lg:w-[40vw] lg:pl-[5vw] lg:pr-8 lg:pt-4 lg:pb-20"
               >
-                <div className="case-reveal flex items-center justify-between gap-4 mb-8">
+                {/* Sticky so Close stays reachable however far the copy scrolls. */}
+                <div className="case-reveal sticky top-0 z-10 -mx-2 px-2 py-3 flex items-center justify-between gap-4 mb-5 bg-[#09090b]/90 backdrop-blur-sm">
                   <div className="flex items-center gap-3">
                     <span className="font-serif text-2xl text-white/30">{openProject.kanji}</span>
                     <span className="font-mono text-xs tracking-[0.25em] text-white/40 uppercase">
