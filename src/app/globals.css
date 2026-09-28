@@ -37,14 +37,13 @@ body {
   z-index: 999;
 }
 
-/* Artifacts case study modal entrance */
-@keyframes artifact-modal-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.artifact-modal-in {
-  animation: artifact-modal-in 0.3s ease-out both;
+/* Lenis: regions it leaves to native scrolling (the Artifacts case study
+   column) shouldn't chain their overscroll into the page. Deliberately not
+   lenis.css's `.lenis-stopped { overflow: clip }` — clipping <html> turns off
+   the viewport's scrolling, which un-sticks Artifacts' sticky stage while a
+   case study is open. */
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
 }
 
 /* Custom Scrollbar */

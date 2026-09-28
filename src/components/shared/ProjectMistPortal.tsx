@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
+import gsap from '@/lib/gsap';
 import { watchVisibility } from '@/lib/visibility';
-import { Renderer, Program, Mesh, Triangle, Transform, Texture } from 'ogl';
+import { Renderer, Program, Mesh, Plane, Transform, Texture } from 'ogl';
 
 export interface ProjectPortalItem {
   id: string;
@@ -13,21 +14,35 @@ export interface ProjectPortalItem {
 
 export interface ProjectMistPortalHandle {
   setProgress: (scrollProgress: number) => void;
+  /** Grow the portal out of its mist frame into `target`'s box (the case
+   * study's hero slot), showing project `index`. */
+  open: (target: HTMLElement, index: number) => void;
+  /** Shrink back into the resting frame; `onDone` fires once it has landed. */
+  close: (onDone?: () => void) => void;
 }
 
 interface ProjectMistPortalProps {
   projects: ProjectPortalItem[];
+  /** Element the (full-stage) canvas is appended to. The portal's own div is
+   * only the anchor that says where the resting frame sits. */
+  canvasHostRef: React.RefObject<HTMLElement | null>;
   currentIndex?: number;
   className?: string;
-  onSelectProject?: (index: number) => void;
 }
 
+// The canvas covers the whole sticky stage so the portal can grow to any size
+// without ever resizing its drawing buffer, re-creating the GL context or
+// re-uploading a texture — the image the visitor clicked is already on the
+// GPU, so the case study opens on the very next frame. Only a quad around the
+// portal's current rect is drawn, so a full-stage canvas costs no more fill
+// than the old frame-sized one.
 const VERTEX_SHADER = `
-attribute vec2 position;
-varying vec2 vUv;
+attribute vec3 position;
+attribute vec2 uv;
+uniform vec4 uBounds; // clip space: minX, minY, maxX, maxY
 void main() {
-  vUv = position * 0.5 + 0.5;
-  gl_Position = vec4(position, 0.0, 1.0);
+  vec2 t = position.xy + 0.5;
+  gl_Position = vec4(mix(uBounds.xy, uBounds.zw, t), 0.0, 1.0);
 }
 `;
 
@@ -38,16 +53,15 @@ uniform sampler2D uTexA;
 uniform sampler2D uTexB;
 uniform float uProgress;
 uniform float uTime;
-uniform vec2 uResolution;
+uniform vec4 uRect;       // image rect in drawing-buffer px: x, y (bottom-left), w, h
+uniform float uExpand;    // 0 = resting in its mist frame, 1 = opened into the case study
 uniform vec2 uImageSizeA;
 uniform vec2 uImageSizeB;
 uniform vec3 uAccentA;
 uniform vec3 uAccentB;
-uniform vec2 uMouse;
+uniform vec2 uMouse;      // drawing-buffer px
 uniform float uMouseStrength;
 uniform float uHover;
-
-varying vec2 vUv;
 
 // Stefan Gustavson classic 2D Simplex Noise
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -93,20 +107,6 @@ float fbm(vec2 p) {
   return v;
 }
 
-// Multi-frequency organic liquid water height
-float waterHeight(vec2 p, float t) {
-  vec2 p1 = p * vec2(3.5, 9.0) + vec2(t * 0.35, -t * 0.85);
-  float n1 = snoise(p1);
-
-  vec2 p2 = p * vec2(7.0, 18.0) + vec2(-t * 0.65, -t * 1.35) + vec2(n1 * 0.45);
-  float n2 = snoise(p2);
-
-  vec2 p3 = p * vec2(15.0, 32.0) + vec2(t * 1.2, -t * 2.1);
-  float n3 = snoise(p3);
-
-  return n1 * 0.52 + n2 * 0.34 + n3 * 0.14;
-}
-
 // Signed distance to a rounded rectangle
 float sdRoundedBox(vec2 p, vec2 b, float r) {
   vec2 q = abs(p) - b + vec2(r);
@@ -126,16 +126,25 @@ vec2 getCoverUv(vec2 uv, vec2 imgSize, vec2 targetSize) {
 }
 
 void main() {
-  vec2 uv = vUv;
-  float aspect = uResolution.x / uResolution.y;
+  vec2 frag = gl_FragCoord.xy;
+  vec2 halfPx = uRect.zw * 0.5;
+  vec2 center = uRect.xy + halfPx;
+
+  // Everything below was tuned in units of the old frame-sized canvas, whose
+  // height the image filled 88% of — keep that unit (H) so the mist reads the
+  // same at rest.
+  float H = uRect.w / 0.88;
+  vec2 halfC = halfPx / 0.88;
+  vec2 uv = (frag - (center - halfC)) / (2.0 * halfC);
+  float aspect = halfC.x / halfC.y;
+
+  // calm: the resting mist fades out as the portal opens; travel: a brief
+  // bloom of mist while it's in flight, gone again once it lands.
+  float calm = 1.0 - uExpand;
+  float travel = sin(uExpand * 3.14159);
 
   // Single monochrome ethereal mist color (silver-white twilight smoke)
   vec3 mistColor = vec3(0.92, 0.94, 0.98);
-
-  // Portal geometry parameters: centered in canvas
-  vec2 portalCenter = vec2(0.5, 0.5);
-  vec2 portalHalfSize = vec2(0.44 * aspect, 0.44);
-  float cornerRadius = 0.04;
 
   // --- 1. Natural Smoke / Mist Turbulence at the Perimeter ---
   vec2 smokeP1 = uv * vec2(2.5, 2.0) + vec2(uTime * 0.05, -uTime * 0.08);
@@ -144,44 +153,41 @@ void main() {
   vec2 smokeP2 = uv * vec2(5.5, 4.5) + vec2(-uTime * 0.09, uTime * 0.12) + smoke1 * 0.4;
   float smoke2 = fbm(smokeP2);
 
-  // --- 1. Natural Smoke / Mist Turbulence at the Perimeter & Cursor ---
-  vec2 mDelta = (uv - uMouse) * vec2(aspect, 1.0);
+  // --- Cursor: ripple + mist vortex (resting state only) ---
+  vec2 mDelta = (frag - uMouse) / H;
   float mDist = length(mDelta);
+  float hover = uHover * calm;
 
-  // Dynamic liquid ripple wave radiating from cursor when hovered
-  float rippleWave = sin(mDist * 28.0 - uTime * 6.5) * exp(-mDist * 4.2) * uHover;
+  float rippleWave = sin(mDist * 28.0 - uTime * 6.5) * exp(-mDist * 4.2) * hover;
   vec2 rippleDisp = normalize(mDelta + vec2(0.0001)) * rippleWave * 0.022;
 
-  // Swirling mist vortex around cursor
-  float mSwirl = exp(-mDist * 3.5) * (uHover * 0.75 + uMouseStrength * 0.25);
+  float mSwirl = exp(-mDist * 3.5) * (hover * 0.75 + uMouseStrength * calm * 0.25);
   vec2 swirlDisp = vec2(-mDelta.y, mDelta.x) * mSwirl * 0.045;
   vec2 totalHoverDisp = rippleDisp + swirlDisp;
 
-  // Organic edge displacement (dissolves the hard rectangular border into living mist)
-  vec2 mistDisplace = vec2(smoke1, smoke2) * 0.055 + totalHoverDisp * 1.4;
+  // Organic edge displacement — dissolves into a clean edge as it opens
+  vec2 mistDisplace = vec2(smoke1, smoke2) * (0.055 * calm + 0.03 * travel) + totalHoverDisp * 1.4;
 
-  // Distance to portal boundary with organic mist turbulence
-  vec2 pAspect = (uv - portalCenter) * vec2(aspect, 1.0);
+  vec2 pAspect = (frag - center) / H;
   vec2 warpedP = pAspect + mistDisplace * vec2(aspect, 1.0);
-  float dist = sdRoundedBox(warpedP, portalHalfSize, cornerRadius);
+  vec2 halfSize = halfPx / H;
+  float cornerRadius = mix(0.04, 0.006, uExpand);
+  float dist = sdRoundedBox(warpedP, halfSize, cornerRadius);
 
-  // Soft organic portal mask: 1.0 inside, feathers out to 0.0 at perimeter
-  float portalAlpha = smoothstep(0.015, -0.035, dist);
-
-  // CRITICAL: Strictly discard/zero outside pixels so there is ZERO milky white film outside!
+  float portalAlpha = smoothstep(0.015 * calm + 0.0005, -mix(0.035, 0.0015, uExpand), dist);
   if (portalAlpha <= 0.001) {
     gl_FragColor = vec4(0.0);
     return;
   }
 
-  // Compute local portal UV for image mapping
-  vec2 localUv = (uv - (portalCenter - portalHalfSize)) / (portalHalfSize * 2.0);
+  // Local image UV
+  vec2 localUv = (frag - (center - halfPx)) / (2.0 * halfPx);
   vec2 clampedLocalUv = clamp(localUv, 0.0, 1.0);
 
-  vec2 imgUvA = getCoverUv(clampedLocalUv, uImageSizeA, portalHalfSize * 2.0);
-  vec2 imgUvB = getCoverUv(clampedLocalUv, uImageSizeB, portalHalfSize * 2.0);
+  vec2 imgUvA = getCoverUv(clampedLocalUv, uImageSizeA, uRect.zw);
+  vec2 imgUvB = getCoverUv(clampedLocalUv, uImageSizeB, uRect.zw);
 
-  // --- 2. In-Place Project Morphing & Interactive OGL Liquid Refraction ---
+  // --- 2. In-Place Project Morphing & Interactive Liquid Refraction ---
   float morphNoise = fbm(clampedLocalUv * 4.0 + vec2(uTime * 0.07, -uTime * 0.10)) * 0.35;
   float p = smoothstep(0.0, 1.0, uProgress);
   float morphThreshold = p * 1.5 - 0.25 + morphNoise;
@@ -190,11 +196,9 @@ void main() {
   float transEnergy = sin(uProgress * 3.14159);
   vec2 transDisp = vec2(cos(morphNoise * 6.28), sin(morphNoise * 6.28)) * transEnergy * 0.04;
 
-  // Total image coordinate displacement combining morph scroll and mouse hover liquid lens
   vec2 finalImgDispA = transDisp + totalHoverDisp;
   vec2 finalImgDispB = -transDisp + totalHoverDisp;
 
-  // Subtle chromatic dispersion on hover
   float chroma = length(totalHoverDisp) * 1.6;
 
   vec3 colA, colB;
@@ -208,26 +212,22 @@ void main() {
 
   vec3 imgColor = mix(colA, colB, morphMask);
 
-  // Interactive luminous focus spotlight following cursor
-  float spotlight = exp(-mDist * 3.2) * uHover;
+  float spotlight = exp(-mDist * 3.2) * hover;
   vec3 hoverGlowColor = mix(vec3(1.0), uAccentA, 0.40);
   imgColor += hoverGlowColor * spotlight * 0.32;
 
-  // Expanding luminous focus ring
-  float focusRing = exp(-pow((mDist - 0.12 - sin(uTime * 3.5) * 0.018) * 18.0, 2.0)) * uHover * 0.25;
+  float focusRing = exp(-pow((mDist - 0.12 - sin(uTime * 3.5) * 0.018) * 18.0, 2.0)) * hover * 0.25;
   imgColor += vec3(0.95, 0.98, 1.0) * focusRing;
 
-  // Transition frontier energy aura in pure monochrome mist
   float frontier = exp(-pow((morphThreshold - 0.5) * 8.0, 2.0)) * transEnergy;
   imgColor += mistColor * frontier * 0.85;
 
-  // --- 3. Delicate Ethereal Mist Rim (Subtle, Translucent, Excited by Hover) ---
-  float rimMist = exp(-pow((dist + 0.008) * 36.0, 2.0)) * 0.35;
-  float hoverRim = exp(-pow((dist + 0.004) * 32.0, 2.0)) * uHover * 0.40;
+  // --- 3. Ethereal mist rim (fades with calm, blooms briefly in flight) ---
+  float rimMist = exp(-pow((dist + 0.008) * 36.0, 2.0)) * (0.35 * calm + 0.5 * travel);
+  float hoverRim = exp(-pow((dist + 0.004) * 32.0, 2.0)) * hover * 0.40;
   rimMist += hoverRim;
 
-  // Very faint internal floating smoke wisps
-  float internalSmoke = (smoke1 * 0.5 + smoke2 * 0.5) * 0.06;
+  float internalSmoke = (smoke1 * 0.5 + smoke2 * 0.5) * 0.06 * calm;
 
   vec3 finalColor = imgColor + vec3(internalSmoke) + mistColor * rimMist;
 
@@ -235,23 +235,33 @@ void main() {
 }
 `;
 
+// Share of the anchor box the image occupies at rest; the rest is room for
+// the mist to breathe (matches the old canvas's 0.44 half-size).
+const REST_FILL = 0.88;
+
+type Box = { x: number; y: number; w: number; h: number };
+
 export const ProjectMistPortal = React.forwardRef<
   ProjectMistPortalHandle,
   ProjectMistPortalProps
 >(({
   projects,
+  canvasHostRef,
   currentIndex = 0,
   className = '',
-  onSelectProject,
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // References for state management across renders
-  const prevIndexRef = useRef(currentIndex);
   const programRef = useRef<Program | null>(null);
   const texturesRef = useRef<Texture[]>([]);
   const imageSizesRef = useRef<[number, number][]>([]);
+
+  // Opening state lives in refs: the render loop reads it every frame, and
+  // nothing about it should re-render React.
+  const expandRef = useRef({ value: 0 });
+  const targetRef = useRef<HTMLElement | null>(null);
+  const lastProgressRef = useRef(0);
+  const expandTweenRef = useRef<gsap.core.Tween | null>(null);
 
   // Hex color to [R, G, B] normalized
   const parseHex = (hex: string): [number, number, number] => {
@@ -264,56 +274,106 @@ export const ProjectMistPortal = React.forwardRef<
     ];
   };
 
-  // Expose real-time scroll scrub handler
+  const applyProgress = (scrollProgress: number) => {
+    const program = programRef.current;
+    const textures = texturesRef.current;
+    const sizes = imageSizesRef.current;
+    if (!program || textures.length === 0) return;
+
+    const totalTransitions = Math.max(1, projects.length - 1);
+    const v = Math.max(0, Math.min(scrollProgress * totalTransitions, totalTransitions));
+
+    const idxA = Math.min(Math.floor(v), projects.length - 2);
+    const idxB = idxA + 1;
+    const localV = v - idxA;
+
+    program.uniforms.uTexA.value = textures[idxA];
+    program.uniforms.uTexB.value = textures[idxB] || textures[idxA];
+    program.uniforms.uImageSizeA.value = sizes[idxA] || [16, 9];
+    program.uniforms.uImageSizeB.value = sizes[idxB] || sizes[idxA] || [16, 9];
+    program.uniforms.uAccentA.value = parseHex(projects[idxA].accent);
+    program.uniforms.uAccentB.value = parseHex(projects[idxB]?.accent || projects[idxA].accent);
+
+    // Smooth hermite interpolation for mist morphing
+    const t = Math.max(0, Math.min((localV - 0.15) / 0.70, 1.0));
+    program.uniforms.uProgress.value = t * t * (3 - 2 * t);
+  };
+
+  const showSingle = (index: number) => {
+    const program = programRef.current;
+    const textures = texturesRef.current;
+    const sizes = imageSizesRef.current;
+    if (!program || textures.length === 0) return;
+    const idx = Math.min(Math.max(0, index), projects.length - 1);
+    program.uniforms.uTexA.value = textures[idx];
+    program.uniforms.uTexB.value = textures[idx];
+    program.uniforms.uImageSizeA.value = sizes[idx] || [16, 9];
+    program.uniforms.uImageSizeB.value = sizes[idx] || [16, 9];
+    program.uniforms.uAccentA.value = parseHex(projects[idx].accent);
+    program.uniforms.uAccentB.value = parseHex(projects[idx].accent);
+    program.uniforms.uProgress.value = 0;
+  };
+
   React.useImperativeHandle(ref, () => ({
     setProgress: (scrollProgress: number) => {
-      const program = programRef.current;
-      const textures = texturesRef.current;
-      const sizes = imageSizesRef.current;
-      if (!program || textures.length === 0) return;
-
-      const totalTransitions = Math.max(1, projects.length - 1);
-      const v = Math.max(0, Math.min(scrollProgress * totalTransitions, totalTransitions));
-      
-      const idxA = Math.min(Math.floor(v), projects.length - 2);
-      const idxB = idxA + 1;
-      const localV = v - idxA;
-
-      program.uniforms.uTexA.value = textures[idxA];
-      program.uniforms.uTexB.value = textures[idxB] || textures[idxA];
-      program.uniforms.uImageSizeA.value = sizes[idxA] || [16, 9];
-      program.uniforms.uImageSizeB.value = sizes[idxB] || sizes[idxA] || [16, 9];
-      program.uniforms.uAccentA.value = parseHex(projects[idxA].accent);
-      program.uniforms.uAccentB.value = parseHex(projects[idxB]?.accent || projects[idxA].accent);
-
-      // Smooth hermite interpolation for mist morphing
-      const t = Math.max(0, Math.min((localV - 0.15) / 0.70, 1.0));
-      program.uniforms.uProgress.value = t * t * (3 - 2 * t);
+      lastProgressRef.current = scrollProgress;
+      // While a case study is open the image belongs to it; scroll is locked
+      // anyway, but never let a stray scrub swap the texture mid-flight.
+      if (targetRef.current) return;
+      applyProgress(scrollProgress);
+    },
+    open: (target: HTMLElement, index: number) => {
+      targetRef.current = target;
+      showSingle(index);
+      expandTweenRef.current?.kill();
+      expandTweenRef.current = gsap.to(expandRef.current, {
+        value: 1,
+        duration: 0.85,
+        ease: 'expo.out',
+      });
+    },
+    close: (onDone?: () => void) => {
+      expandTweenRef.current?.kill();
+      expandTweenRef.current = gsap.to(expandRef.current, {
+        value: 0,
+        duration: 0.7,
+        ease: 'power3.inOut',
+        onComplete: () => {
+          targetRef.current = null;
+          applyProgress(lastProgressRef.current);
+          onDone?.();
+        },
+      });
     },
   }));
 
   useEffect(() => {
     const container = containerRef.current;
-    const canvas = canvasRef.current;
-    if (!container || !canvas || typeof window === 'undefined') return;
+    const host = canvasHostRef.current;
+    if (!container || !host || typeof window === 'undefined') return;
 
     let isActive = true;
     let rafId = 0;
     const startTime = performance.now();
 
-    // 1. Initialize OGL Renderer
     const renderer = new Renderer({
-      canvas,
       alpha: true,
       premultipliedAlpha: false,
       dpr: Math.min(window.devicePixelRatio || 1, 2),
     });
     const gl = renderer.gl;
+    const canvas = gl.canvas as HTMLCanvasElement;
+    canvas.style.position = 'absolute';
+    canvas.style.inset = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    host.appendChild(canvas);
 
     const scene = new Transform();
-    const geometry = new Triangle(gl);
+    const geometry = new Plane(gl);
 
-    // 2. Preload all project textures
+    // Preload all project textures
     const loadedTextures: Texture[] = [];
     const loadedSizes: [number, number][] = [];
 
@@ -334,10 +394,8 @@ export const ProjectMistPortal = React.forwardRef<
         // ~150ms hitch mid-scroll.
         tex.update();
         loadedSizes[idx] = [img.naturalWidth || 16, img.naturalHeight || 9];
-        if (programRef.current) {
-          if (idx === currentIndex) {
-            programRef.current.uniforms.uImageSizeA.value = loadedSizes[idx];
-          }
+        if (programRef.current && idx === currentIndex) {
+          programRef.current.uniforms.uImageSizeA.value = loadedSizes[idx];
         }
       };
       img.src = proj.image;
@@ -346,37 +404,22 @@ export const ProjectMistPortal = React.forwardRef<
     texturesRef.current = loadedTextures;
     imageSizesRef.current = loadedSizes;
 
-    // 3. Mouse pointer tracking & hover detection
-    const mouse = { x: 0.5, y: 0.5, strength: 0 };
+    // Pointer tracking (client px) & hover over the resting frame
+    const mouse = { x: -9999, y: -9999, strength: 0 };
     let isHovered = false;
     let currentHover = 0;
 
     const onPointerMove = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
       const rect = container.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = 1.0 - (e.clientY - rect.top) / rect.height; // Invert for GL coordinates
-      if (x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0) {
-        mouse.x = x;
-        mouse.y = y;
-        mouse.strength = Math.min(mouse.strength + 0.35, 1.0);
-        isHovered = true;
-      } else {
-        isHovered = false;
-      }
+      isHovered = rect.width > 0
+        && e.clientX >= rect.left && e.clientX <= rect.right
+        && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (isHovered) mouse.strength = Math.min(mouse.strength + 0.35, 1.0);
     };
     window.addEventListener('mousemove', onPointerMove, { passive: true });
 
-    const onPointerEnter = () => {
-      isHovered = true;
-    };
-    const onPointerLeave = () => {
-      isHovered = false;
-    };
-    container.addEventListener('pointerenter', onPointerEnter);
-    container.addEventListener('pointerleave', onPointerLeave);
-
-    // 4. Create OGL Shader Program
     const initialIndex = Math.min(currentIndex, projects.length - 1);
     const initialAccent = parseHex(projects[initialIndex].accent);
 
@@ -388,51 +431,96 @@ export const ProjectMistPortal = React.forwardRef<
         uTexB: { value: loadedTextures[initialIndex] },
         uProgress: { value: 0 },
         uTime: { value: 0 },
-        uResolution: { value: [container.clientWidth, container.clientHeight] },
+        uRect: { value: [0, 0, 1, 1] },
+        uBounds: { value: [-1, -1, 1, 1] },
+        uExpand: { value: 0 },
         uImageSizeA: { value: loadedSizes[initialIndex] || [16, 9] },
         uImageSizeB: { value: loadedSizes[initialIndex] || [16, 9] },
         uAccentA: { value: initialAccent },
         uAccentB: { value: initialAccent },
-        uMouse: { value: [0.5, 0.5] },
+        uMouse: { value: [-9999, -9999] },
         uMouseStrength: { value: 0 },
         uHover: { value: 0 },
       },
       transparent: true,
+      depthTest: false,
     });
     programRef.current = program;
 
     const mesh = new Mesh(gl, { geometry, program });
     mesh.setParent(scene);
 
-    // 5. Responsive Resize Handling
     const handleResize = () => {
-      if (!container || !isActive) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      if (w > 0 && h > 0) {
-        renderer.setSize(w, h);
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        program.uniforms.uResolution.value = [w * renderer.dpr, h * renderer.dpr];
-      }
+      if (!isActive) return;
+      const w = host.clientWidth;
+      const h = host.clientHeight;
+      if (w > 0 && h > 0) renderer.setSize(w, h);
     };
-
     const ro = new ResizeObserver(handleResize);
-    ro.observe(container);
+    ro.observe(host);
     handleResize();
 
-    // 6. Animation Render Loop
+    const toBox = (r: DOMRect, origin: DOMRect): Box => ({
+      x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height,
+    });
+
     const render = () => {
       if (!isActive || paused) return;
 
-      const elapsed = (performance.now() - startTime) * 0.001;
-      program.uniforms.uTime.value = elapsed;
-      program.uniforms.uMouse.value = [mouse.x, mouse.y];
-      program.uniforms.uMouseStrength.value = mouse.strength;
-      mouse.strength *= 0.94; // Smooth decay
+      const hostRect = host.getBoundingClientRect();
+      const dpr = renderer.dpr;
+      const bufH = hostRect.height * dpr;
 
-      const targetHover = isHovered ? 1.0 : 0.0;
-      currentHover += (targetHover - currentHover) * 0.12;
+      // Resting frame: the anchor box, inset so the mist has room around the
+      // image. Opening: interpolate toward the case study's hero slot.
+      const a = toBox(container.getBoundingClientRect(), hostRect);
+      let box: Box = {
+        x: a.x + a.w * (1 - REST_FILL) / 2,
+        y: a.y + a.h * (1 - REST_FILL) / 2,
+        w: a.w * REST_FILL,
+        h: a.h * REST_FILL,
+      };
+      const e = expandRef.current.value;
+      const target = targetRef.current;
+      if (target && e > 0) {
+        const t = toBox(target.getBoundingClientRect(), hostRect);
+        box = {
+          x: box.x + (t.x - box.x) * e,
+          y: box.y + (t.y - box.y) * e,
+          w: box.w + (t.w - box.w) * e,
+          h: box.h + (t.h - box.h) * e,
+        };
+      }
+
+      // Drawing-buffer px, GL origin bottom-left
+      const rx = box.x * dpr;
+      const ry = bufH - (box.y + box.h) * dpr;
+      const rw = box.w * dpr;
+      const rh = box.h * dpr;
+      program.uniforms.uRect.value = [rx, ry, rw, rh];
+      program.uniforms.uExpand.value = e;
+
+      // Quad = image rect plus room for the mist, so fragments outside it are
+      // never shaded at all.
+      const H = rh / REST_FILL;
+      const margin = H * (0.12 * (1 - e) + 0.06 * Math.sin(e * Math.PI)) + 4;
+      const bufW = hostRect.width * dpr;
+      program.uniforms.uBounds.value = [
+        ((rx - margin) / bufW) * 2 - 1,
+        ((ry - margin) / bufH) * 2 - 1,
+        ((rx + rw + margin) / bufW) * 2 - 1,
+        ((ry + rh + margin) / bufH) * 2 - 1,
+      ];
+
+      program.uniforms.uTime.value = (performance.now() - startTime) * 0.001;
+      program.uniforms.uMouse.value = [
+        (mouse.x - hostRect.left) * dpr,
+        bufH - (mouse.y - hostRect.top) * dpr,
+      ];
+      program.uniforms.uMouseStrength.value = mouse.strength;
+      mouse.strength *= 0.94;
+
+      currentHover += ((isHovered ? 1 : 0) - currentHover) * 0.12;
       program.uniforms.uHover.value = currentHover;
 
       renderer.render({ scene });
@@ -455,44 +543,28 @@ export const ProjectMistPortal = React.forwardRef<
       unwatch();
       cancelAnimationFrame(rafId);
       ro.disconnect();
+      expandTweenRef.current?.kill();
       window.removeEventListener('mousemove', onPointerMove);
-      container.removeEventListener('pointerenter', onPointerEnter);
-      container.removeEventListener('pointerleave', onPointerLeave);
       programRef.current = null;
       geometry.remove();
+      if (canvas.parentElement === host) host.removeChild(canvas);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount
 
   // Fallback sync if currentIndex changes directly without scrubbing
   useEffect(() => {
-    if (currentIndex === undefined) return;
-    const program = programRef.current;
-    const textures = texturesRef.current;
-    const sizes = imageSizesRef.current;
-    if (!program || textures.length === 0) return;
-
-    const idx = Math.min(Math.max(0, currentIndex), projects.length - 1);
-    prevIndexRef.current = idx;
-
-    program.uniforms.uTexA.value = textures[idx];
-    program.uniforms.uTexB.value = textures[idx];
-    program.uniforms.uImageSizeA.value = sizes[idx] || [16, 9];
-    program.uniforms.uImageSizeB.value = sizes[idx] || [16, 9];
-    program.uniforms.uAccentA.value = parseHex(projects[idx].accent);
-    program.uniforms.uAccentB.value = parseHex(projects[idx].accent);
-    program.uniforms.uProgress.value = 0;
+    if (targetRef.current) return;
+    showSingle(currentIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, projects]);
 
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden select-none pointer-events-auto ${className}`}
-    >
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full block pointer-events-none select-none"
-      />
-    </div>
+      className={`relative select-none pointer-events-auto ${className}`}
+    />
   );
 });
 

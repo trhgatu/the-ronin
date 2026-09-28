@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useState, useEffect } from "react";
-import Image from "next/image";
+import { useRef, useState, useEffect, useLayoutEffect } from "react";
+import { useLenis } from "lenis/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -278,7 +278,11 @@ export const Artifacts = () => {
 
   const [mounted, setMounted] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const portalCanvasHostRef = useRef<HTMLDivElement>(null);
+  const slotRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const detailRef = useRef<HTMLDivElement>(null);
   const lastIndexRef = useRef(0);
 
   useEffect(() => {
@@ -445,16 +449,20 @@ export const Artifacts = () => {
     };
   }, []);
 
-  // Quick navigation to project on click
-  const scrollToProject = (idx: number) => {
-    if (!sectionRef.current) return;
+  // Scroll position where project `idx` sits at rest inside the 0.22 -> 0.68
+  // showcase band (see the ScrollTrigger below); the first sits just past the tear.
+  const projectRestScroll = (idx: number) => {
     const st = ScrollTrigger.getById('artifacts-scroll');
-    if (!st) return;
-    // Each project's resting point inside the 0.22 -> 0.68 showcase band
-    // (see the ScrollTrigger below); the first sits just past the tear.
+    if (!st) return null;
     const rest = 0.22 + 0.46 * (idx / Math.max(1, PROJECTS.length - 1));
     const targetProgress = Math.min(0.70, Math.max(0.225, rest));
-    const targetScroll = st.start + targetProgress * (st.end - st.start);
+    return st.start + targetProgress * (st.end - st.start);
+  };
+
+  // Quick navigation to project on click
+  const scrollToProject = (idx: number) => {
+    const targetScroll = projectRestScroll(idx);
+    if (targetScroll === null) return;
     window.scrollTo({
       top: targetScroll,
       behavior: 'smooth',
@@ -462,13 +470,134 @@ export const Artifacts = () => {
     soundManager?.playSwordWhoosh();
   };
 
-  // Close specification modal on Escape key
+  // ---------------------------------------------------------------------------
+  // Case study: the portal itself grows into the page. Nothing is loaded on
+  // click — the image is already a texture on the GPU and the canvas already
+  // covers the stage, so ProjectMistPortal only animates the rect it draws
+  // into, from its mist frame to the hero slot below. The copy is plain DOM
+  // fading in beside it. Each case study gets its own ?project= URL, and the
+  // browser's Back button closes it.
+  // ---------------------------------------------------------------------------
+  const lenis = useLenis();
+  const lenisRef = useRef(lenis);
+  useEffect(() => { lenisRef.current = lenis; }, [lenis]);
+
+  const openIdxRef = useRef<number | null>(null);
+  const closingRef = useRef(false);
+
+  const openCaseStudy = (idx: number, { push = true } = {}) => {
+    if (openIdxRef.current !== null) return;
+    openIdxRef.current = idx;
+    closingRef.current = false;
+    soundManager?.playSwordWhoosh();
+    lenisRef.current?.stop();
+    if (katanaTrackRef.current) {
+      katanaTrackRef.current.style.opacity = '0';
+      katanaTrackRef.current.style.pointerEvents = 'none';
+    }
+    if (push) {
+      window.history.pushState({ artifact: PROJECTS[idx].id }, '', `?project=${PROJECTS[idx].id}`);
+    }
+    setOpenIdx(idx);
+  };
+
+  // Layout effect, not a plain effect: the hero slot exists as soon as React
+  // commits the overlay, and starting the portal before the first paint is
+  // what makes the click feel instant.
+  useLayoutEffect(() => {
+    if (openIdx === null || !slotRef.current) return;
+    portalRef.current?.open(slotRef.current, openIdx);
+    gsap.fromTo(backdropRef.current, { opacity: 0 }, { opacity: 1, duration: 0.6, ease: 'power2.out' });
+    const reveal = detailRef.current?.querySelectorAll('.case-reveal');
+    if (reveal?.length) {
+      gsap.fromTo(reveal, { opacity: 0, y: 24 }, {
+        opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.04, delay: 0.2,
+      });
+    }
+  }, [openIdx]);
+
+  const finishClose = () => {
+    if (openIdxRef.current === null || closingRef.current) return;
+    closingRef.current = true;
+    const reveal = detailRef.current?.querySelectorAll('.case-reveal');
+    if (reveal?.length) gsap.to(reveal, { opacity: 0, y: 12, duration: 0.25, ease: 'power2.in' });
+    gsap.to(backdropRef.current, { opacity: 0, duration: 0.5, delay: 0.15, ease: 'power2.inOut' });
+    portalRef.current?.close(() => {
+      openIdxRef.current = null;
+      closingRef.current = false;
+      setOpenIdx(null);
+      lenisRef.current?.start();
+      if (katanaTrackRef.current) {
+        katanaTrackRef.current.style.opacity = '1';
+        katanaTrackRef.current.style.pointerEvents = 'auto';
+      }
+    });
+  };
+
+  const closeCaseStudy = () => {
+    // Opened in this visit: step back through history so Back/Forward stay
+    // coherent (popstate below does the closing). Deep-linked on arrival:
+    // there's nothing to go back to on this page, so just drop the param.
+    if (window.history.state?.artifact) {
+      window.history.back();
+    } else {
+      window.history.replaceState(null, '', window.location.pathname);
+      finishClose();
+    }
+  };
+
+  const projectFromUrl = () => {
+    const id = new URLSearchParams(window.location.search).get('project');
+    return PROJECTS.findIndex((p) => p.id === id);
+  };
+
+  // Jump the stage to the project at rest, let the scrub settle, then open.
+  const jumpAndOpen = (idx: number) => {
+    const y = projectRestScroll(idx);
+    if (y === null) return;
+    if (lenisRef.current) lenisRef.current.scrollTo(y, { immediate: true, force: true });
+    else window.scrollTo(0, y);
+    setTimeout(() => openCaseStudy(idx, { push: false }), 1200);
+  };
+
   useEffect(() => {
+    // lenis.stop() only stops wheel-driven scrolling; keys would still move
+    // the page (and the scrubbed stage) behind an open case study.
+    const SCROLL_KEYS = new Set([' ', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End']);
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedProject(null);
+      if (openIdxRef.current === null) return;
+      if (e.key === 'Escape') closeCaseStudy();
+      else if (SCROLL_KEYS.has(e.key) && !(e.target as Element | null)?.closest?.('[data-lenis-prevent]')) {
+        e.preventDefault();
+      }
+    };
+    const onPopState = () => {
+      const idx = projectFromUrl();
+      if (idx < 0) finishClose();
+      else if (openIdxRef.current === null) jumpAndOpen(idx);
     };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('popstate', onPopState);
+
+    // Deep link (?project=…): wait for the preloader, like Hero does.
+    let onPreloader: (() => void) | null = null;
+    const deepLinked = projectFromUrl();
+    if (deepLinked >= 0) {
+      const go = () => setTimeout(() => jumpAndOpen(deepLinked), 300);
+      if (sessionStorage.getItem('preloader-seen') === 'true') go();
+      else {
+        onPreloader = go;
+        window.addEventListener('preloader-complete', onPreloader, { once: true });
+      }
+    }
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('popstate', onPopState);
+      if (onPreloader) window.removeEventListener('preloader-complete', onPreloader);
+    };
+    // Handlers only touch refs and stable setters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useGSAP(() => {
@@ -580,6 +709,10 @@ export const Artifacts = () => {
           }
 
           // Reset nocturnal lake elements while in project browsing
+          if (portalCanvasHostRef.current) {
+            portalCanvasHostRef.current.style.opacity = '1';
+            portalCanvasHostRef.current.style.filter = 'none';
+          }
           if (portalWrapperRef.current) {
             portalWrapperRef.current.style.opacity = '1';
             portalWrapperRef.current.style.transform = 'none';
@@ -669,6 +802,12 @@ export const Artifacts = () => {
         const lakeFade = Math.max(0, 1.0 - mistProgress * 1.25);
 
         // Lake elements fade softly as mist rolls in
+        // The portal's canvas lives in its own full-stage layer now (see
+        // ProjectMistPortal), so it has to fade with the lake explicitly.
+        if (portalCanvasHostRef.current) {
+          portalCanvasHostRef.current.style.opacity = lakeFade.toFixed(3);
+          portalCanvasHostRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+        }
         if (portalWrapperRef.current) {
           portalWrapperRef.current.style.opacity = lakeFade.toFixed(3);
           portalWrapperRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
@@ -695,6 +834,8 @@ export const Artifacts = () => {
       },
     });
   }, { scope: sectionRef });
+
+  const openProject = openIdx !== null ? PROJECTS[openIdx] : null;
 
   return (
     <section
@@ -770,6 +911,11 @@ export const Artifacts = () => {
           </svg>
         </div>
 
+        {/* Full-stage layer the mist portal draws into (see ProjectMistPortal):
+            above the lake, text card and case-study backdrop, below the tear
+            paper and the closing mist veil. */}
+        <div ref={portalCanvasHostRef} className="pointer-events-none absolute inset-0 z-[25]" aria-hidden="true" />
+
         {/* Central Stage: Split 2-Column Layout (Portal Left, Title & Desc Right) */}
         <div className="relative w-full max-w-[1560px] mx-auto flex items-center justify-between z-10 py-2 sm:py-4 px-2 sm:px-4">
           <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-center">
@@ -780,15 +926,13 @@ export const Artifacts = () => {
             >
               {/* The OGL Mist Portal (Expanded size with interactive inspection trigger) */}
               <div
-                onClick={() => {
-                  soundManager?.playSwordWhoosh();
-                  setSelectedProject(PROJECTS[activeIdx]);
-                }}
+                onClick={() => openCaseStudy(activeIdx)}
                 className="relative w-full aspect-[16/10] max-w-[680px] xl:max-w-[760px] flex items-center justify-center cursor-pointer group/portal"
               >
                 <ProjectMistPortal
                   ref={portalRef}
                   projects={PROJECTS}
+                  canvasHostRef={portalCanvasHostRef}
                   currentIndex={activeIdx}
                   className="w-full h-full"
                 />
@@ -849,10 +993,7 @@ export const Artifacts = () => {
                   </div>
 
                   <button
-                    onClick={() => {
-                      soundManager?.playSwordWhoosh();
-                      setSelectedProject(proj);
-                    }}
+                    onClick={() => openCaseStudy(idx)}
                     className="inline-flex items-center gap-2 group/link cursor-pointer focus:outline-none"
                   >
                     <span className="font-mono text-xs tracking-[0.25em] uppercase text-white/50 group-hover/link:text-white transition-colors">
@@ -891,6 +1032,139 @@ export const Artifacts = () => {
           })}
         </div>
 
+        {/* Case study. Backdrop and copy are separate layers so the portal's
+            canvas (z-25) sits between them: over the dimmed lake, under the
+            text. The slot is only a target box — the image itself is drawn by
+            the portal, which grows into it. */}
+        {openProject && (
+          <>
+            <div
+              ref={backdropRef}
+              // touch-none: on touch devices Lenis doesn't own scrolling, so a
+              // swipe on the backdrop would otherwise scroll the page behind.
+              className="absolute inset-0 z-[22] bg-[#080808] touch-none"
+              style={{ opacity: 0 }}
+              onClick={closeCaseStudy}
+              aria-hidden="true"
+            />
+            <div
+              ref={detailRef}
+              className="absolute inset-0 z-[35] pointer-events-none"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="artifact-case-title"
+            >
+              <div
+                ref={slotRef}
+                aria-hidden="true"
+                className="absolute left-5 right-5 top-24 aspect-[16/10] lg:left-auto lg:right-[5vw] lg:top-1/2 lg:-translate-y-1/2 lg:w-[52vw] lg:max-w-[980px]"
+              />
+
+              {/* data-lenis-prevent: Lenis is stopped while this is open, and
+                  this column scrolls natively on its own. */}
+              <div
+                data-lenis-prevent
+                className="pointer-events-auto absolute inset-x-0 bottom-0 top-[calc(6rem+(100vw-2.5rem)*0.625+1.25rem)] overflow-y-auto px-5 pb-16 lg:inset-y-0 lg:right-auto lg:w-[40vw] lg:pl-[5vw] lg:pr-8 lg:pt-32 lg:pb-20"
+              >
+                <div className="case-reveal flex items-center justify-between gap-4 mb-8">
+                  <div className="flex items-center gap-3">
+                    <span className="font-serif text-2xl text-white/30">{openProject.kanji}</span>
+                    <span className="font-mono text-xs tracking-[0.25em] text-white/40 uppercase">
+                      Case Study · 0{(openIdx ?? 0) + 1}
+                    </span>
+                  </div>
+                  <button
+                    onClick={closeCaseStudy}
+                    className="font-mono text-[11px] tracking-widest text-white/50 hover:text-white transition-colors cursor-pointer px-2 py-1"
+                  >
+                    [ CLOSE ✕ ]
+                  </button>
+                </div>
+
+                <p className="case-reveal font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/40 mb-3">
+                  {openProject.category} · {openProject.year}
+                </p>
+                <h2 id="artifact-case-title" className="case-reveal font-serif text-4xl sm:text-5xl xl:text-6xl text-white font-light tracking-tight leading-[1.05] mb-4">
+                  {openProject.title}
+                </h2>
+                <p className="case-reveal flex items-start gap-2.5 font-mono text-xs text-white/70 tracking-wide leading-relaxed mb-2">
+                  <span className="mt-1 w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: openProject.accent }} />
+                  {openProject.highlights}
+                </p>
+                <p className="case-reveal font-caveat text-xl text-white/50 mb-10">{openProject.role}</p>
+
+                {([
+                  ['The Problem', openProject.problem],
+                  ['The Approach', openProject.approach],
+                  ['The Outcome', openProject.outcome],
+                ] as const).map(([label, text]) => (
+                  <div key={label} className="case-reveal mb-8">
+                    <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2.5">
+                      {label}
+                    </h4>
+                    <p className="text-sm sm:text-[15px] text-white/75 font-light leading-relaxed">
+                      {text}
+                    </p>
+                  </div>
+                ))}
+
+                <div className="case-reveal mb-8">
+                  <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-3">
+                    Under the Hood
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {openProject.engineering.map((item) => (
+                      <li key={item} className="flex gap-3 text-sm text-white/70 font-light leading-relaxed">
+                        <span className="text-white/25 font-serif">一</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="case-reveal mb-8">
+                  <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2.5">
+                    Stack
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {openProject.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {openProject.credit && (
+                  <p className="case-reveal font-mono text-[10px] text-white/35 leading-relaxed mb-8">
+                    {openProject.credit}
+                  </p>
+                )}
+
+                <div className="case-reveal flex flex-wrap items-center gap-3 pt-6 border-t border-white/10">
+                  {openProject.links.map((link, i) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`font-mono text-xs tracking-widest uppercase px-4 py-2 rounded transition-colors cursor-pointer ${i === 0
+                        ? 'bg-white text-black font-semibold hover:bg-white/90'
+                        : 'border border-white/20 text-white/70 hover:text-white hover:border-white/50'
+                        }`}
+                    >
+                      {link.label} ↗
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Phase 3: Ethereal Sumi-e Mist / Morning Fog Transition Layer */}
         <div
           ref={mistVeilRef}
@@ -910,128 +1184,6 @@ export const Artifacts = () => {
         </div>
       </div>
 
-      {/* Case study modal */}
-      {selectedProject && (
-        <div
-          className="artifact-modal-in fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/85 backdrop-blur-xl"
-          onClick={() => setSelectedProject(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="artifact-case-title"
-        >
-          {/* data-lenis-prevent: Lenis otherwise swallows the wheel and the
-              page scrolls behind the modal instead of the case study itself. */}
-          <div
-            data-lenis-prevent
-            className="relative w-full max-w-3xl max-h-[88vh] overflow-y-auto bg-[#0b0b0b]/95 border border-white/10 rounded-lg shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 sm:px-10 py-4 border-b border-white/10 bg-[#0b0b0b]/95 backdrop-blur">
-              <div className="flex items-center gap-3">
-                <span className="font-serif text-2xl text-white/30">{selectedProject.kanji}</span>
-                <span className="font-mono text-xs tracking-[0.25em] text-white/40 uppercase">
-                  Case Study
-                </span>
-              </div>
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="font-mono text-[11px] tracking-widest text-white/40 hover:text-white transition-colors cursor-pointer px-2 py-1"
-              >
-                [ CLOSE ✕ ]
-              </button>
-            </div>
-
-            <div className="px-6 sm:px-10 py-8">
-              <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/40 mb-3">
-                {selectedProject.category} · {selectedProject.year}
-              </p>
-              <h2 id="artifact-case-title" className="font-serif text-4xl sm:text-5xl text-white font-light tracking-tight mb-3">
-                {selectedProject.title}
-              </h2>
-              <p className="flex items-center gap-2.5 font-mono text-xs text-white/70 tracking-wide mb-2">
-                <span className="w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: selectedProject.accent }} />
-                {selectedProject.highlights}
-              </p>
-              <p className="font-caveat text-xl text-white/50 mb-8">{selectedProject.role}</p>
-
-              {/* Problem / Approach / Outcome */}
-              <div className="space-y-7 mb-9">
-                {([
-                  ['The Problem', selectedProject.problem],
-                  ['The Approach', selectedProject.approach],
-                  ['The Outcome', selectedProject.outcome],
-                ] as const).map(([label, text]) => (
-                  <div key={label} className="grid sm:grid-cols-[150px_1fr] gap-2 sm:gap-6">
-                    <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 pt-1">
-                      {label}
-                    </h4>
-                    <p className="text-sm sm:text-[15px] text-white/75 font-light leading-relaxed">
-                      {text}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Under the hood */}
-              <div className="mb-8">
-                <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-3">
-                  Under the Hood
-                </h4>
-                <ul className="space-y-2.5">
-                  {selectedProject.engineering.map((item) => (
-                    <li key={item} className="flex gap-3 text-sm text-white/70 font-light leading-relaxed">
-                      <span className="text-white/25 font-serif">一</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Stack */}
-              <div className="mb-8">
-                <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2.5">
-                  Stack
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedProject.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {selectedProject.credit && (
-                <p className="font-mono text-[10px] text-white/35 leading-relaxed mb-8">
-                  {selectedProject.credit}
-                </p>
-              )}
-
-              {/* Links */}
-              <div className="flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-white/10">
-                {selectedProject.links.map((link, i) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`font-mono text-xs tracking-widest uppercase px-4 py-2 rounded transition-colors cursor-pointer ${i === 0
-                      ? 'bg-white text-black font-semibold hover:bg-white/90'
-                      : 'border border-white/20 text-white/70 hover:text-white hover:border-white/50'
-                      }`}
-                  >
-                    {link.label} ↗
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };
