@@ -92,11 +92,11 @@ export const Navbar = () => {
 
       setActiveSection(activeId);
       // activeSection flips to "about" while Hero's dark tail is still behind
-      // the header, so the scrim's tone can't key off it alone. About's ink
-      // bleed carries that black ~60px past Hero's own bottom edge, so this
-      // stays true until the ink has also cleared the wordmark (~y 40).
+      // the header, so the scrim's tone can't key off it alone. About's torn
+      // paper edge (drawn in Hero) covers Hero's last ~64px, so Hero's own
+      // tone is behind the wordmark (~y 40) only until bottom reaches ~104.
       const hero = document.getElementById("hero");
-      setHeroUnderHeader(hero ? hero.getBoundingClientRect().bottom > -24 : false);
+      setHeroUnderHeader(hero ? hero.getBoundingClientRect().bottom > 104 : false);
     };
 
     // Coalesced to one layout read per frame — scroll can fire several times

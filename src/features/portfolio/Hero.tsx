@@ -264,6 +264,30 @@ export const Hero = () => {
           explicit pale parchment tone instead. revealColor still flashes the
           model's true pink wherever the cursor's torn hole passes near one,
           consistent with how it reveals the text/emblem. */}
+      {/* About's paper tearing up over Hero's bottom edge, so the two don't
+          meet on a hard horizontal cut. It's a strip of About's own paper
+          tone (not Hero's black) because Hero has two very different
+          bottoms — the black veil, or in swap mode the parchment 3D tree —
+          and a torn sheet of paper over either reads right; the earlier
+          black ink bleed drawn in About only matched the veil and showed as
+          a black band in swap mode. Pushed partly below the section (clipped
+          by overflow-hidden) so its bottom stays flush with About; above the
+          veil/3D/blur layers, below the copy. */}
+      <svg className="absolute h-0 w-0" aria-hidden="true">
+        <defs>
+          <filter id="hero-paper-edge-filter" x="-5%" y="-30%" width="110%" height="160%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.009 0.04" numOctaves="4" seed="7" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="110" xChannelSelector="R" yChannelSelector="G" result="torn" />
+            <feGaussianBlur in="torn" stdDeviation="0.8" />
+          </filter>
+        </defs>
+      </svg>
+      <div
+        className="pointer-events-none absolute inset-x-[-5%] -bottom-24 z-[5] h-40 md:h-44"
+        aria-hidden="true"
+        style={{ backgroundColor: '#fdfdfd', filter: 'url(#hero-paper-edge-filter)' }}
+      />
+
       <SumiLeaves
         containerRef={containerRef}
         count={12}
