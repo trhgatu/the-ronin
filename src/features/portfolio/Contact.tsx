@@ -44,7 +44,7 @@ export const Contact = () => {
         className="absolute top-[-2px] left-0 w-full h-[3px] bg-foreground/20 z-30 pointer-events-none"
         style={{ filter: "url(#line-torn-filter-contact)" }}
       />
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat z-0" />
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('/textures/noise.svg')] bg-repeat z-0" />
 
       {/* Self-contained SVG filters for torn lines and stamp */}
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">

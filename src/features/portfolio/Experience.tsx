@@ -181,7 +181,7 @@ export const Experience = () => {
         className="absolute top-0 left-0 w-full h-[3px] bg-foreground/15 opacity-60"
         style={{ filter: "url(#line-torn-filter)" }}
       />
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat z-0" />
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('/textures/noise.svg')] bg-repeat z-0" />
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
         <defs>
           <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">

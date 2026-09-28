@@ -98,7 +98,7 @@ export const Philosophy = () => {
           </filter>
         </defs>
       </svg>
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat z-0" />
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('/textures/noise.svg')] bg-repeat z-0" />
 
       {/* The Void's Meditative Wind (WebGL Fluid) */}
       <div

@@ -222,7 +222,7 @@ export const Navbar = () => {
             className="fixed inset-0 z-[9990] flex flex-col justify-center overflow-hidden bg-background/95 px-8 backdrop-blur-3xl md:px-16"
           >
             {/* Grain Noise Overlay */}
-            <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
+            <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none bg-[url('/textures/noise.svg')] bg-repeat" />
 
             <div className="relative w-full max-w-sm mx-auto flex flex-col gap-6 select-none pl-6 border-l border-foreground/5">
               {navItems.map((item, idx) => {

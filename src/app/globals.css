@@ -30,7 +30,7 @@ body {
 .grain-overlay {
   position: fixed;
   inset: 0;
-  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+  background-image: url("/textures/noise.svg");
   filter: contrast(150%) brightness(1000%);
   opacity: 0.03;
   pointer-events: none;
