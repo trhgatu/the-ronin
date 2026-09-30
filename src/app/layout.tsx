@@ -106,7 +106,6 @@ export default function RootLayout({
         <InkTransitionCanvas />
         <PageBackdrop />
         <GlobalCanvas />
-        <div className="grain-overlay" />
         <SmoothScroll>
           <CustomCursor />
           <Navbar />

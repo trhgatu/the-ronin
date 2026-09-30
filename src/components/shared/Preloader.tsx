@@ -128,9 +128,6 @@ export const Preloader = () => {
       suppressHydrationWarning={true}
       className="fixed inset-0 w-full h-full bg-background text-foreground z-[9999] flex flex-col items-center justify-center select-none"
     >
-      {/* Texture grain overlay */}
-      <div className="absolute inset-0 opacity-[0.035] pointer-events-none bg-[url('/textures/noise.svg')] bg-repeat z-0" />
-
       {/* SVG torn line filter definition */}
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
         <defs>

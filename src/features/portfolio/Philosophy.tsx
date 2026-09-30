@@ -98,7 +98,6 @@ export const Philosophy = () => {
           </filter>
         </defs>
       </svg>
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('/textures/noise.svg')] bg-repeat z-0" />
 
       {/* The Void's Meditative Wind (WebGL Fluid) */}
       <div
@@ -115,7 +114,7 @@ export const Philosophy = () => {
           className="absolute inset-0 h-full w-full grayscale"
         />
       </div>
-      <div className="phil-sumi-tree absolute left-[-20%] md:left-[-15%] top-0 w-96 md:w-[900px] h-[800px] md:h-[1000px] pointer-events-none z-[1]"
+      <div className="phil-sumi-tree absolute left-[-20%] md:left-[-15%] top-0 w-96 md:w-[900px] h-[800px] md:h-[1000px] pointer-events-none z-[1] opacity-35 md:opacity-45 mix-blend-multiply"
         style={{ filter: "invert(0) grayscale(0)" }}>
         <Image
           src="/images/sumi-tree.png"
@@ -127,7 +126,7 @@ export const Philosophy = () => {
         />
       </div>
 
-      <div className="phil-musashi absolute left-[2%] md:left-[8%] bottom-[5%] md:bottom-[8%] w-48 md:w-[320px] h-96 md:h-[600px] pointer-events-none z-0"
+      <div className="phil-musashi absolute left-[2%] md:left-[8%] bottom-[5%] md:bottom-[8%] w-48 md:w-[320px] h-96 md:h-[600px] pointer-events-none z-0 opacity-40 md:opacity-50 mix-blend-multiply"
         style={{ filter: "invert(0) grayscale(0)" }}>
         <Image
           src="/images/musashi-samurai.png"

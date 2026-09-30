@@ -362,7 +362,7 @@ export const Hero = () => {
           <h1 ref={headlineRef} className="max-w-6xl text-foreground">
             <span className="block w-fit mx-auto overflow-hidden">
               <span className="hero-kicker-inner block font-mono text-sm font-semibold uppercase tracking-[0.5em] text-foreground/55 sm:text-base">
-                ARCHITECTED WITH
+                THE SYNTHESIS OF
               </span>
             </span>
             {/* Two separate elements (not one string left to line-wrap) so
@@ -373,10 +373,10 @@ export const Hero = () => {
                 instant. */}
             <span className="mt-2 block w-fit mx-auto pb-2 sm:mt-3">
               <span className="hero-title-inner block font-serif text-[clamp(3.2rem,9.5vw,8.5rem)] font-light italic leading-[0.92] tracking-[-0.02em]">
-                SAMURAI
+                LOGIC &
               </span>
               <span className="hero-title-inner block font-serif text-[clamp(3.2rem,9.5vw,8.5rem)] font-light italic leading-[0.92] tracking-[-0.02em]">
-                DISCIPLINE.
+                ARTISTRY.
               </span>
             </span>
           </h1>
@@ -454,10 +454,15 @@ export const Hero = () => {
 
             <h1 className="max-w-6xl text-black">
               <span className="block w-fit mx-auto font-mono text-sm font-semibold uppercase tracking-[0.5em] text-black/55 sm:text-base">
-                ARCHITECTED WITH
+                THE SYNTHESIS OF
               </span>
-              <span className="mt-2 block w-fit mx-auto pb-2 font-serif text-[clamp(3.2rem,9.5vw,8.5rem)] font-light italic leading-[0.92] tracking-[-0.02em] text-black/70 sm:mt-3">
-                SAMURAI DISCIPLINE.
+              <span className="mt-2 block w-fit mx-auto pb-2 sm:mt-3">
+                <span className="block font-serif text-[clamp(3.2rem,9.5vw,8.5rem)] font-light italic leading-[0.92] tracking-[-0.02em] text-black/70">
+                  LOGIC &
+                </span>
+                <span className="block font-serif text-[clamp(3.2rem,9.5vw,8.5rem)] font-light italic leading-[0.92] tracking-[-0.02em] text-black/70">
+                  ARTISTRY.
+                </span>
               </span>
             </h1>
           </div>

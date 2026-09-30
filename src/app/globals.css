@@ -26,17 +26,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Grain Overlay */
-.grain-overlay {
-  position: fixed;
-  inset: 0;
-  background-image: url("/textures/noise.svg");
-  filter: contrast(150%) brightness(1000%);
-  opacity: 0.03;
-  pointer-events: none;
-  z-index: 999;
-}
-
 /* Lenis: regions it leaves to native scrolling (the Artifacts case study
    column) shouldn't chain their overscroll into the page. Deliberately not
    lenis.css's `.lenis-stopped { overflow: clip }` — clipping <html> turns off

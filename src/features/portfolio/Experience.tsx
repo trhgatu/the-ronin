@@ -9,7 +9,7 @@ import { soundManager } from '@/lib/sound';
 const EXPERIENCES = [
   {
     company: "8eyond Infinite",
-    role: "Founder | The Alchemist",
+    role: "Founder",
     period: "2025 — PRESENT",
     description: "Forging 'Vertical Infinity' through the alchemy of code. Establishing architectural paradigms that defy obsolescence, transmuting raw logic into immortal digital legacies.",
     achievements: [
@@ -58,7 +58,7 @@ const EXPERIENCES = [
   },
   {
     company: "CyberSkill",
-    role: "Fullstack Developer (formerly Frontend Intern)",
+    role: "Fullstack Developer",
     period: "2024 — 2025",
     description: "Began as a Frontend Developer Intern, rapidly advancing to a Fullstack Developer. Engineered high-impact client interfaces and optimized robust data architectures across multiple active production projects.",
     achievements: [
@@ -181,7 +181,6 @@ export const Experience = () => {
         className="absolute top-0 left-0 w-full h-[3px] bg-foreground/15 opacity-60"
         style={{ filter: "url(#line-torn-filter)" }}
       />
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('/textures/noise.svg')] bg-repeat z-0" />
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
         <defs>
           <filter id="line-torn-filter" x="-20%" y="-20%" width="140%" height="140%">
@@ -285,22 +284,22 @@ export const Experience = () => {
                       </p>
 
                       <div className="flex flex-col gap-8">
-                        <div className="flex flex-col gap-4">
-                          <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Chronicles of Battle //</span>
-                          <ul className="space-y-4">
+                        <div className="flex flex-col gap-3.5">
+                          <span className="text-[10px] sm:text-[11px] font-mono text-foreground/50 uppercase tracking-[0.3em] font-bold">Chronicles of Battle //</span>
+                          <ul className="space-y-3.5">
                             {exp.achievements.map((item, idx) => (
-                              <li key={idx} className="flex gap-4 items-start group">
-                                <span className="text-foreground/30 font-serif text-sm mt-0.5 group-hover:translate-x-1 transition-transform duration-500">一</span>
-                                <span className="text-xs md:text-sm font-serif font-light text-foreground/60 group-hover:text-foreground transition-colors duration-500 leading-relaxed">{item}</span>
+                              <li key={idx} className="flex gap-3.5 items-start group">
+                                <span className="text-red-700/60 font-serif text-base select-none mt-0.5 group-hover:translate-x-1 group-hover:text-red-700 transition-all duration-300">一</span>
+                                <span className="text-sm sm:text-[15px] md:text-base font-serif font-normal text-foreground/80 group-hover:text-foreground transition-colors duration-300 leading-relaxed">{item}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
-                        <div className="flex flex-col gap-4 w-full">
-                          <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Arsenal & Weapons //</span>
+                        <div className="flex flex-col gap-3.5 w-full">
+                          <span className="text-[10px] sm:text-[11px] font-mono text-foreground/50 uppercase tracking-[0.3em] font-bold">Arsenal & Weapons //</span>
                           {exp.techBooks ? (
-                            <div className="flex flex-col gap-4 w-full">
-                              <div className="grid grid-cols-5 gap-1 pb-2 border-b border-foreground/10 relative">
+                            <div className="flex flex-col gap-3 w-full">
+                              <div className="flex flex-wrap gap-2 pb-2.5 border-b border-foreground/15 relative">
                                 {exp.techBooks.map((book) => {
                                   const isSelected = activeBook === book.id;
                                   return (
@@ -310,42 +309,38 @@ export const Experience = () => {
                                         setActiveBook(book.id);
                                         soundManager?.playBookOpen();
                                       }}
-                                      className="flex flex-col items-center gap-1 py-1.5 transition-all duration-300 relative group pointer-events-auto cursor-pointer"
+                                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] transition-all duration-300 pointer-events-auto cursor-pointer border text-xs sm:text-[13px] ${isSelected
+                                        ? "border-red-800/40 bg-red-800/10 text-red-800 font-bold shadow-sm"
+                                        : "border-foreground/15 bg-background/80 text-foreground/60 hover:text-foreground hover:border-foreground/35"
+                                        }`}
                                     >
-                                      <span className={`font-serif text-xl transition-all duration-300 ${isSelected ? "text-[#8b0000] font-bold scale-110" : "text-foreground/30 group-hover:text-foreground/75"}`}>
-                                        {book.kanji}
-                                      </span>
-                                      <span className={`text-[7px] font-mono tracking-widest uppercase transition-colors duration-300 ${isSelected ? "text-[#8b0000] font-black" : "text-foreground/35"}`}>
+                                      <span className="font-serif text-base">{book.kanji}</span>
+                                      <span className="font-mono tracking-wider uppercase text-[10px] sm:text-[11px]">
                                         {book.id}
                                       </span>
-
-                                      {isSelected && (
-                                        <div
-                                          className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#8b0000] animate-in slide-in-from-bottom-1 fade-in duration-300"
-                                          style={{ filter: "url(#line-torn-filter)" }}
-                                        />
-                                      )}
                                     </button>
                                   );
                                 })}
                               </div>
-                              <div className="min-h-[90px]">
+                              <div className="min-h-[80px]">
                                 {exp.techBooks.map((book) => {
                                   if (book.id !== activeBook) return null;
                                   return (
                                     <div
                                       key={book.id}
-                                      className="flex flex-col gap-2.5 w-full animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both"
+                                      className="flex flex-col gap-3 w-full animate-in fade-in zoom-in-[0.99] duration-300 ease-out fill-mode-both"
                                     >
-                                      <div className="flex flex-col">
-                                        <span className="text-[10px] font-serif font-black text-foreground uppercase tracking-[0.2em]">{book.title}</span>
-                                        <span className="text-[8px] font-serif text-foreground/40 italic tracking-wider mt-0.5">{book.subtitle}</span>
+                                      <div className="flex flex-wrap items-baseline gap-2">
+                                        <span className="text-xs sm:text-sm font-serif font-bold text-foreground tracking-wide">{book.title}</span>
+                                        <span className="text-xs font-serif text-foreground/50 italic tracking-wide">— {book.subtitle}</span>
                                       </div>
-                                      <div className="flex flex-wrap gap-1.5">
+                                      <div className="flex flex-wrap gap-2">
                                         {book.items.map((t) => (
-                                          <span key={t} className="px-2 py-1 border border-foreground/15 bg-background text-[8px] font-mono text-foreground/50 uppercase tracking-widest relative overflow-hidden group select-none">
-                                            <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
-                                            <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                          <span
+                                            key={t}
+                                            className="px-3 py-1.5 rounded-[2px] border border-foreground/15 bg-background/90 text-xs sm:text-[12.5px] font-mono text-foreground/80 hover:text-foreground hover:border-foreground/40 transition-colors duration-200 select-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                                          >
+                                            {t}
                                           </span>
                                         ))}
                                       </div>
@@ -355,11 +350,13 @@ export const Experience = () => {
                               </div>
                             </div>
                           ) : (
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 pt-0.5">
                               {exp.tech?.map(t => (
-                                <span key={t} className="px-3 py-1.5 border border-foreground/15 bg-background text-[8px] font-mono text-foreground/50 uppercase tracking-widest relative overflow-hidden group select-none">
-                                  <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
-                                  <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                <span
+                                  key={t}
+                                  className="px-3 py-1.5 rounded-[2px] border border-foreground/15 bg-background/90 text-xs sm:text-[12.5px] font-mono text-foreground/80 hover:text-foreground hover:border-foreground/40 transition-colors duration-200 select-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                                >
+                                  {t}
                                 </span>
                               ))}
                             </div>
@@ -386,65 +383,64 @@ export const Experience = () => {
                       </p>
 
                       <div className="flex flex-col gap-8">
-                        <div className="flex flex-col gap-4">
-                          <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Chronicles of Battle //</span>
-                          <ul className="space-y-4">
+                        <div className="flex flex-col gap-3.5">
+                          <span className="text-[10px] sm:text-[11px] font-mono text-foreground/50 uppercase tracking-[0.3em] font-bold">Chronicles of Battle //</span>
+                          <ul className="space-y-3.5">
                             {exp.achievements.map((item, idx) => (
-                              <li key={idx} className="flex gap-4 items-start group">
-                                <span className="text-foreground/30 font-serif text-sm mt-0.5 group-hover:translate-x-1 transition-transform duration-500">一</span>
-                                <span className="text-xs md:text-sm font-serif font-light text-foreground/60 group-hover:text-foreground transition-colors duration-500 leading-relaxed">{item}</span>
+                              <li key={idx} className="flex gap-3.5 items-start group">
+                                <span className="text-red-700/60 font-serif text-base select-none mt-0.5 group-hover:translate-x-1 group-hover:text-red-700 transition-all duration-300">一</span>
+                                <span className="text-sm sm:text-[15px] md:text-base font-serif font-normal text-foreground/80 group-hover:text-foreground transition-colors duration-300 leading-relaxed">{item}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
 
-                        <div className="flex flex-col gap-4 w-full">
-                          <span className="text-[9px] font-mono text-foreground/45 uppercase tracking-[0.4em] font-bold">Arsenal & Weapons //</span>
+                        <div className="flex flex-col gap-3.5 w-full">
+                          <span className="text-[10px] sm:text-[11px] font-mono text-foreground/50 uppercase tracking-[0.3em] font-bold">Arsenal & Weapons //</span>
                           {exp.techBooks ? (
-                            <div className="flex flex-col gap-4 w-full">
-                              <div className="grid grid-cols-5 gap-1 pb-2 border-b border-foreground/10 relative">
+                            <div className="flex flex-col gap-3 w-full">
+                              <div className="flex flex-wrap gap-2 pb-2.5 border-b border-foreground/15 relative">
                                 {exp.techBooks.map((book) => {
                                   const isSelected = activeBook === book.id;
                                   return (
                                     <button
                                       key={book.id}
-                                      onClick={() => setActiveBook(book.id)}
-                                      className="flex flex-col items-center gap-1 py-1.5 transition-all duration-300 relative group pointer-events-auto cursor-pointer"
+                                      onClick={() => {
+                                        setActiveBook(book.id);
+                                        soundManager?.playBookOpen();
+                                      }}
+                                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] transition-all duration-300 pointer-events-auto cursor-pointer border text-xs sm:text-[13px] ${isSelected
+                                        ? "border-red-800/40 bg-red-800/10 text-red-800 font-bold shadow-sm"
+                                        : "border-foreground/15 bg-background/80 text-foreground/60 hover:text-foreground hover:border-foreground/35"
+                                        }`}
                                     >
-                                      <span className={`font-serif text-xl transition-all duration-300 ${isSelected ? "text-[#8b0000] font-bold scale-110" : "text-foreground/30 group-hover:text-foreground/75"}`}>
-                                        {book.kanji}
-                                      </span>
-                                      <span className={`text-[7px] font-mono tracking-widest uppercase transition-colors duration-300 ${isSelected ? "text-[#8b0000] font-black" : "text-foreground/35"}`}>
+                                      <span className="font-serif text-base">{book.kanji}</span>
+                                      <span className="font-mono tracking-wider uppercase text-[10px] sm:text-[11px]">
                                         {book.id}
                                       </span>
-
-                                      {isSelected && (
-                                        <div
-                                          className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#8b0000] animate-in slide-in-from-bottom-1 fade-in duration-300"
-                                          style={{ filter: "url(#line-torn-filter)" }}
-                                        />
-                                      )}
                                     </button>
                                   );
                                 })}
                               </div>
-                              <div className="min-h-[90px]">
+                              <div className="min-h-[80px]">
                                 {exp.techBooks.map((book) => {
                                   if (book.id !== activeBook) return null;
                                   return (
                                     <div
                                       key={book.id}
-                                      className="flex flex-col gap-2.5 w-full animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both"
+                                      className="flex flex-col gap-3 w-full animate-in fade-in zoom-in-[0.99] duration-300 ease-out fill-mode-both"
                                     >
-                                      <div className="flex flex-col">
-                                        <span className="text-[10px] font-serif font-black text-foreground uppercase tracking-[0.2em]">{book.title}</span>
-                                        <span className="text-[8px] font-serif text-foreground/40 italic tracking-wider mt-0.5">{book.subtitle}</span>
+                                      <div className="flex flex-wrap items-baseline gap-2">
+                                        <span className="text-xs sm:text-sm font-serif font-bold text-foreground tracking-wide">{book.title}</span>
+                                        <span className="text-xs font-serif text-foreground/50 italic tracking-wide">— {book.subtitle}</span>
                                       </div>
-                                      <div className="flex flex-wrap gap-1.5">
+                                      <div className="flex flex-wrap gap-2">
                                         {book.items.map((t) => (
-                                          <span key={t} className="px-2 py-1 border border-foreground/15 bg-background text-[8px] font-mono text-foreground/50 uppercase tracking-widest relative overflow-hidden group select-none">
-                                            <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
-                                            <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                          <span
+                                            key={t}
+                                            className="px-3 py-1.5 rounded-[2px] border border-foreground/15 bg-background/90 text-xs sm:text-[12.5px] font-mono text-foreground/80 hover:text-foreground hover:border-foreground/40 transition-colors duration-200 select-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                                          >
+                                            {t}
                                           </span>
                                         ))}
                                       </div>
@@ -454,11 +450,13 @@ export const Experience = () => {
                               </div>
                             </div>
                           ) : (
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 pt-0.5">
                               {exp.tech?.map(t => (
-                                <span key={t} className="px-3 py-1.5 border border-foreground/15 bg-background text-[8px] font-mono text-foreground/50 uppercase tracking-widest relative overflow-hidden group select-none">
-                                  <span className="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out z-0" style={{ filter: "url(#line-torn-filter)" }} />
-                                  <span className="relative z-10 group-hover:text-background transition-colors duration-500">{t}</span>
+                                <span
+                                  key={t}
+                                  className="px-3 py-1.5 rounded-[2px] border border-foreground/15 bg-background/90 text-xs sm:text-[12.5px] font-mono text-foreground/80 hover:text-foreground hover:border-foreground/40 transition-colors duration-200 select-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                                >
+                                  {t}
                                 </span>
                               ))}
                             </div>

@@ -11,6 +11,9 @@ import { watchVisibility } from "@/lib/visibility";
 import { ProjectMistPortal, ProjectMistPortalHandle } from "@/components/shared/ProjectMistPortal";
 import { ProjectWaterReflection, ProjectWaterReflectionHandle } from "@/components/shared/ProjectWaterReflection";
 import { ArtifactsLakeBackground } from "@/components/shared/ArtifactsLakeBackground";
+import { PROJECTS } from "./artifacts/artifacts.data";
+import { SLASH_VS, SLASH_FS } from "./artifacts/slashShader";
+import { CaseStudyModal } from "./artifacts/CaseStudyModal";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,268 +26,6 @@ const announceDarkSection = (dark: boolean) => {
   document.documentElement.dataset.darkSection = dark ? "true" : "false";
   window.dispatchEvent(new CustomEvent("dark-section", { detail: dark }));
 };
-
-const SLASH_VS = `
-attribute vec2 position;
-varying vec2 vUv;
-void main() {
-    vUv = position * 0.5 + 0.5;
-    gl_Position = vec4(position, 0.0, 1.0);
-}
-`;
-
-const SLASH_FS = `
-precision highp float;
-uniform vec2 u_resolution;
-uniform float u_progress;
-uniform float u_time;
-varying vec2 vUv;
-
-float hash(vec2 p) {
-    p = fract(p * vec2(127.1, 311.7));
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
-float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
-               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
-}
-
-float fbm(vec2 p) {
-    float v = 0.0;
-    float a = 0.5;
-    vec2 shift = vec2(100.0);
-    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
-    for (int i = 0; i < 4; ++i) {
-        v += a * noise(p);
-        p = rot * p * 2.0 + shift;
-        a *= 0.5;
-    }
-    return v;
-}
-
-void main() {
-    if (u_progress >= 0.999) {
-        gl_FragColor = vec4(0.0);
-        return;
-    }
-
-    // Exact pure background matching --background (#fdfdfd)
-    vec3 paperColor = vec3(253.0 / 255.0, 253.0 / 255.0, 253.0 / 255.0);
-
-    if (u_progress <= 0.001) {
-        gl_FragColor = vec4(paperColor, 1.0);
-        return;
-    }
-
-    // Slash goes from BOTTOM-LEFT to TOP-RIGHT (~35 degrees)
-    vec2 pA = vec2(0.0, 0.0);
-    vec2 pB = u_resolution;
-    vec2 lineDir = normalize(pB - pA);
-    vec2 normal = vec2(-lineDir.y, lineDir.x);
-
-    vec2 center = u_resolution * 0.5;
-    vec2 toFrag = gl_FragCoord.xy - center;
-
-    float along = abs(dot(toFrag, lineDir));
-    float across = abs(dot(toFrag, normal));
-
-    vec2 polarUv = vec2(atan(toFrag.y, toFrag.x), length(toFrag) / length(u_resolution));
-    float angleWobble = fbm(vec2(polarUv.x * 2.5, polarUv.y * 1.5)) * 0.35;
-
-    float morphTear = smoothstep(0.20, 0.80, u_progress);
-    float p = mix(0.52, 1.85, morphTear);
-    float invP = 1.0 / p;
-    float a = mix(4.0 + angleWobble, 1.0, morphTear);
-    float b = mix(1.05 + angleWobble * 0.45, 1.0, morphTear);
-    float safeAlong = max(along / a, 0.0001);
-    float safeAcross = max(across / b, 0.0001);
-    float r = pow(pow(safeAlong, p) + pow(safeAcross, p), invP);
-
-    vec2 flowUv = vUv * 6.0 + vec2(u_time * 0.04, -u_time * 0.03);
-    float nChunk = (fbm(flowUv * 0.8) - 0.5) * 2.0;
-    float nRip = (fbm(flowUv * 2.4) - 0.5) * 2.0;
-    float nFine = (fbm(vUv * 45.0) - 0.5) * 2.0;
-    float nMicro = (fbm(vUv * 110.0) - 0.5) * 2.0;
-
-    float violentTearNoise = (nChunk * 95.0 + nRip * 65.0 + nFine * 35.0 + nMicro * 15.0);
-
-    // Natural reach to clear 4 corners without racing across screen (0.85x diagonal)
-    float maxReachPx = length(u_resolution) * 0.85;
-    float currentTearPx = u_progress * maxReachPx;
-
-    float displaceScale = 1.0 - smoothstep(0.75, 0.95, u_progress);
-    float displacedEdgePx = r - violentTearNoise * displaceScale;
-
-    float edgeFeatherPx = 1.6;
-    float torn = 1.0 - smoothstep(currentTearPx - edgeFeatherPx, currentTearPx, displacedEdgePx);
-
-    float finalSafety = smoothstep(0.92, 0.99, u_progress);
-    torn = mix(torn, 1.0, finalSafety);
-
-    // Outside the tear: paper remains visible (alpha = 1.0) with pure #fdfdfd
-    // Inside the tear: paper vanishes (alpha = 0.0), revealing Magnum Opus & dark forge beneath
-    float paperAlpha = 1.0 - torn;
-
-    gl_FragColor = vec4(paperColor, paperAlpha);
-}
-`;
-
-interface Project {
-  id: string;
-  kanji: string;
-  category: string;
-  title: string;
-  description: string;
-  image: string;
-  tags: string[];
-  year: string;
-  accent: string;
-  /** One line of verifiable facts shown under the title in the case study. */
-  highlights: string;
-  role: string;
-  problem: string;
-  approach: string;
-  outcome: string;
-  engineering: string[];
-  links: { label: string; href: string }[];
-  credit?: string;
-  /** Extra images shown in the case study after the cover (`image`). */
-  gallery: { src: string; caption: string }[];
-}
-
-// Every claim here is checked against the project's own repo — no invented
-// traffic numbers or architecture the code doesn't have.
-const PROJECTS: Project[] = [
-  {
-    id: 'magnum-opus',
-    kanji: '壹',
-    category: 'Personal OS · Modular Monolith',
-    title: 'Magnum Opus',
-    description: 'A private operating system for observing and reshaping one\'s own life — journal, mood, memory, habits and routines woven into one loop: record, reflect, notice patterns, change, act.',
-    image: '/projects/magnum-opus.webp',
-    tags: ['TypeScript', 'NestJS', 'Next.js', 'PostgreSQL', 'Prisma', 'Redis', 'BullMQ', 'Docker'],
-    year: '2026',
-    accent: '#d4a24c',
-    highlights: '330 test files · CI-enforced architecture & perf budgets · Transactional outbox',
-    role: 'Solo — product, design and engineering',
-    problem: 'Its predecessor, Forge OS, grew into 25+ gamified modules backed by two test files — impressive to demo, hard to trust or change. The product had also drifted into a productivity dashboard, the opposite of what it was for.',
-    approach: 'Rebuilt from scratch as a calm, private product, one vertical slice at a time (Journal, Mood, Memory, Timeline, then Habits and Routines), on a foundation strict enough to keep that pace: bounded contexts, CQRS, ports and adapters, and an API and a BullMQ worker as separate composition roots.',
-    outcome: '234 commits in two months, shipped through reviewed pull requests. Every slice lands with unit, API end-to-end and browser end-to-end tests, and CI refuses a merge that breaks the architecture rules, the JS budget per route or the migration chain.',
-    engineering: [
-      'Transactional outbox with idempotent, at-least-once realtime delivery',
-      'Dependency rules enforced by a test: domain code cannot import Prisma, BullMQ or infrastructure',
-      'Optimistic concurrency and per-user ownership isolation',
-      'Production compose with Caddy, encrypted off-host backups and Prometheus alerts — all validated in CI',
-      'Foundation shared with my open-source turborepo-advanced-starter',
-    ],
-    links: [
-      { label: 'Live', href: 'https://www.magnum-opus.dev' },
-      { label: 'Source', href: 'https://github.com/trhgatu/magnum-opus' },
-    ],
-    gallery: [
-      { src: '/projects/magnum-opus.webp', caption: "Landing — life as the raw material of a masterpiece" },
-      { src: '/projects/gallery/magnum-opus-architecture.webp', caption: "Architecture — one API process, bounded contexts, a separate worker" },
-      { src: '/projects/gallery/magnum-opus-sign-in.webp', caption: "Sign-in — the same quiet, private tone as the rest of the product" },
-    ],
-  },
-  {
-    id: 'auto-wp-publisher',
-    kanji: '貳',
-    category: 'AI Content Pipeline · Client Tool',
-    title: 'Auto WP Publisher',
-    description: 'Turns a raw Excel or Google Sheets product list into published WooCommerce listings — columns mapped, SEO copy written by Gemini, categories, brands, images and RankMath/Yoast metadata filled in.',
-    image: '/projects/auto-wp-publisher.webp',
-    tags: ['NestJS', 'React', 'Ant Design', 'PostgreSQL', 'Prisma', 'BullMQ', 'Redis', 'Gemini', 'WooCommerce'],
-    year: '2026',
-    accent: '#f87171',
-    highlights: 'Spreadsheet → Gemini → WooCommerce · Rate-limit-aware queue · Live job progress',
-    role: 'Solo — built for a real e-commerce business',
-    problem: 'Listing products by hand meant copying fields from spreadsheets, writing an SEO description for each one and uploading images one product at a time — slow, and inconsistent from one listing to the next.',
-    approach: 'A NestJS service split into hexagonal bounded contexts (catalog, IAM, settings) with CQRS, fronted by a React admin. Imports become queued jobs; a BullMQ processor writes copy with Gemini, then publishes through the WooCommerce REST API while the UI follows progress over Socket.IO.',
-    outcome: 'The whole flow — import, mapping preview, publishing, trash and restore, prompt templates, API log history and a dashboard — works end to end, with CI building and shipping a Docker image on every push.',
-    engineering: [
-      'Gemini 429 handling with retry and API-key rotation',
-      'Queue processor at concurrency 1 behind a rate limiter, with a template fallback when AI generation fails',
-      'WooCommerce integration that handles duplicate SKUs and de-duplicates media uploads',
-      'Real-time job events pushed to the admin over Socket.IO',
-    ],
-    links: [
-      { label: 'Source', href: 'https://github.com/trhgatu/auto-wp-publisher' },
-    ],
-    gallery: [
-      { src: '/projects/auto-wp-publisher.webp', caption: "Pipeline — spreadsheet to storefront" },
-      { src: '/projects/gallery/auto-wp-publisher-failures.webp', caption: "Failure handling — rate limits, key rotation, template fallback" },
-    ],
-  },
-  {
-    id: 'the-alchemist',
-    kanji: '參',
-    category: 'Immersive Portfolio · Creative Frontend',
-    title: 'The Alchemist',
-    description: 'My previous portfolio: a scroll-driven grimoire after Paulo Coelho\'s novel. A washi-paper portal burns open onto a starfield, a 3D spellbook releases the tech stack as a constellation, and the story ends in the desert — in English and Vietnamese.',
-    image: '/projects/the-alchemist.webp',
-    tags: ['Next.js', 'React Three Fiber', 'GSAP', 'OGL', 'Zustand', 'Tailwind CSS'],
-    year: '2025 — 2026',
-    accent: '#f59e0b',
-    highlights: '3D grimoire · Shader route transitions · EN / VI',
-    role: 'Solo — concept, design and engineering',
-    problem: 'A portfolio usually reads as a list. I wanted one that plays like a story, where every section is a chapter and the transitions carry the meaning.',
-    approach: 'Long pinned scroll timelines drive React Three Fiber scenes through a scroll-progress ref read inside the frame loop, so the 3D never waits on React re-renders. Route changes burn the screen through an OGL noise shader, and torn, scorched parchment is drawn with SVG displacement filters.',
-    outcome: 'Live since 2025 and refined over 186 commits across a year. Building it taught me where immersive sites lose people — pacing and weight — which is what this site was designed around.',
-    engineering: [
-      'Scroll progress kept in refs and read in useFrame, not React state',
-      'OGL simplex-noise burn transition orchestrated through a Zustand router store',
-      'Tech icons rasterised into textures and flown into a golden-angle constellation',
-      'Custom EN / VI i18n store with GSAP timelines rebuilt per language',
-    ],
-    links: [
-      { label: 'Live', href: 'https://thatu.is-a.dev' },
-      { label: 'Source', href: 'https://github.com/trhgatu/the-alchemist' },
-    ],
-    gallery: [
-      { src: '/projects/the-alchemist.webp', caption: "The grimoire — the tech stack released as a constellation" },
-      { src: '/projects/gallery/the-alchemist-hero.webp', caption: "Hero — the name burned through washi paper" },
-      { src: '/projects/gallery/the-alchemist-journal.webp', caption: "The alchemist's journal — Nigredo, Albedo, Citrinitas, Rubedo" },
-      { src: '/projects/gallery/the-alchemist-desert.webp', caption: "The ending — the desert, and 'Maktub'" },
-    ],
-  },
-  {
-    id: 'kim-khanh',
-    kanji: '肆',
-    category: 'Client Work · Personal Archive',
-    title: 'Kim Khanh',
-    description: 'A bespoke digital home built for Kim Khanh — a warm botanical scrapbook of flowers, places, notes and small everyday joys, opening on an interactive 3D azalea.',
-    image: '/projects/kim-khanh.webp',
-    tags: ['Next.js', 'Three.js', 'OGL', 'GSAP', 'Lenis', 'Tailwind CSS'],
-    year: '2026',
-    accent: '#e8837a',
-    highlights: '3D flower study · Shader pollen trail · Reduced-motion support',
-    role: 'Solo — designed and built for a client',
-    problem: 'A personal site for someone who isn\'t a developer: it had to feel like her — soft, tactile, handmade — rather than like a template, and stay gentle for visitors who prefer less motion.',
-    approach: 'An editorial scrapbook layout with paper-like surfaces, a three.js hero flower playing its own animation, and small OGL shaders for the pollen cursor trail, the fog preloader and a cover ripple reserved for precise pointers.',
-    outcome: 'Finished and polished across desktop and mobile, with real content throughout, ambient audio behind an opt-in toggle, and a reduced-motion mode.',
-    engineering: [
-      'three.js GLTF scene with baked animation for the hero flower',
-      'OGL shaders for the pollen trail, fog preloader and cover ripple (fine pointers only)',
-      'Scroll-linked flowers and a pinned editorial layout on GSAP + Lenis',
-      'prefers-reduced-motion respected across the experience',
-    ],
-    links: [
-      { label: 'Source', href: 'https://github.com/trhgatu/kimkhanh-portfolio' },
-    ],
-    credit: '3D model "Rhododendron - Azalea" by Nestaeric on Sketchfab, licensed CC BY 4.0.',
-    gallery: [
-      { src: '/projects/kim-khanh.webp', caption: "Hero — an interactive 3D azalea" },
-      { src: '/projects/gallery/kim-khanh-about.webp', caption: "About — a life shaped by work and small joys" },
-      { src: '/projects/gallery/kim-khanh-journey.webp', caption: "The paths that shaped me — a pinned editorial journey" },
-      { src: '/projects/gallery/kim-khanh-notes.webp', caption: "A few things that shaped me — scrapbook notes" },
-    ],
-  },
-];
 
 export const Artifacts = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -408,14 +149,14 @@ export const Artifacts = () => {
     const section = sectionRef.current;
     const unwatch = section
       ? watchVisibility(section, (visible) => {
-          paused = !visible;
-          cancelAnimationFrame(rafId);
-          if (visible) rafId = requestAnimationFrame(tick);
-          // A full viewport of margin: the paper this canvas paints is what
-          // hides the dark forge at p=0, so it must have drawn before the
-          // section's top edge actually scrolls in.
-        }, '100% 0px')
-      : () => {};
+        paused = !visible;
+        cancelAnimationFrame(rafId);
+        if (visible) rafId = requestAnimationFrame(tick);
+        // A full viewport of margin: the paper this canvas paints is what
+        // hides the dark forge at p=0, so it must have drawn before the
+        // section's top edge actually scrolls in.
+      }, '100% 0px')
+      : () => { };
     rafId = requestAnimationFrame(tick);
 
     return () => {
@@ -700,174 +441,89 @@ export const Artifacts = () => {
     // its initial styles and Navbar never got 'dark-section', painting its
     // light scrim over the dark forge.
     const update = (self: ScrollTrigger) => {
-        const p = self.progress;
-        scrollPRef.current = p;
+      const p = self.progress;
+      scrollPRef.current = p;
 
-        // =========================================================================
-        // PHASE 1: STILLNESS, KATANA SLASH & PAPER TEAR REVEAL (p: 0.00 -> 0.22)
-        // =========================================================================
-        if (p < 0.22) {
-          if (tearContainerRef.current) {
-            tearContainerRef.current.style.display = 'block';
-          }
-
-          // 1. Stillness quote: rests serenely, then dissolves with motion blur (0.00 -> 0.06)
-          const pStillness = Math.min(1.0, Math.max(0.0, p / 0.06));
-          if (stillnessQuoteRef.current) {
-            const quoteOpacity = 1.0 - pStillness;
-            stillnessQuoteRef.current.style.opacity = quoteOpacity.toFixed(3);
-            stillnessQuoteRef.current.style.filter = pStillness > 0.01 ? `blur(${(pStillness * 8).toFixed(1)}px)` : 'none';
-            stillnessQuoteRef.current.style.transform = `scale(${(1.0 - pStillness * 0.06).toFixed(3)})`;
-            stillnessQuoteRef.current.style.pointerEvents = quoteOpacity > 0.1 ? 'auto' : 'none';
-          }
-
-          // 2. Katana blade slice stroke: drives target with generous scroll space (0.04 -> 0.14)
-          const targetSlash = Math.min(1.0, Math.max(0.0, (p - 0.04) / 0.10));
-          slashProgressRef.current.target = targetSlash;
-
-          // Razor cut sound trigger right at blade impact
-          if (p >= 0.06 && !hasPlayedSlashSound.current && self.direction > 0) {
-            soundManager?.playSwordWhoosh();
-            hasPlayedSlashSound.current = true;
-          } else if (p < 0.03) {
-            hasPlayedSlashSound.current = false;
-          }
-
-          // 3. OGL Tear Shader: drives target tear smoothly across (0.08 -> 0.22)
-          const targetTear = Math.min(1.0, Math.max(0.0, (p - 0.08) / 0.14));
-          tearProgressRef.current.target = targetTear;
-
-          // 4. Navbar theme: switch to dark mode once tear begins to reveal the black forge
-          // A single threshold both ways — the old down-at-0.14 / up-at-0.08
-          // hysteresis left the header white over the white paper on the way
-          // back up, which read as the navbar vanishing.
-          announceDarkSection(p >= 0.12);
-
-          // Katana rail track on the right remains hidden during slash intro
-          if (katanaTrackRef.current) {
-            katanaTrackRef.current.style.opacity = '0';
-            katanaTrackRef.current.style.pointerEvents = 'none';
-          }
-
-          // Keep Project 01 at rest (p = 0) so it shines directly inside the tear
-          portalRef.current?.setProgress(0);
-          reflectionRef.current?.setProgress(0);
-
-          projectCardsRef.current.forEach((card, idx) => {
-            if (!card) return;
-            if (idx === 0) {
-              card.style.opacity = '1';
-              card.style.transform = 'translate3d(0, 0px, 0)';
-              card.style.filter = 'none';
-              card.style.pointerEvents = 'auto';
-            } else {
-              card.style.opacity = '0';
-              card.style.transform = 'translate3d(0, 28px, 0)';
-              card.style.filter = 'blur(6px)';
-              card.style.pointerEvents = 'none';
-            }
-          });
-          return;
+      // =========================================================================
+      // PHASE 1: STILLNESS, KATANA SLASH & PAPER TEAR REVEAL (p: 0.00 -> 0.22)
+      // =========================================================================
+      if (p < 0.22) {
+        if (tearContainerRef.current) {
+          tearContainerRef.current.style.display = 'block';
         }
 
-        // =========================================================================
-        // PHASE 2: PROJECT SHOWCASE & REAL-TIME MORPHING (p: 0.22 -> 0.78)
-        // Generous resting dwell on Project 03 (0.68 -> 0.78)
-        // =========================================================================
-        if (p < 0.78) {
-          slashProgressRef.current.target = 1.0;
-          tearProgressRef.current.target = 1.0;
-
-          // Ensure intro quote and tear container are completely hidden on reload
-          if (tearProgressRef.current.current < 0.99) {
-            tearProgressRef.current.current = 1.0;
-            slashProgressRef.current.current = 1.0;
-          }
-          if (stillnessQuoteRef.current) {
-            stillnessQuoteRef.current.style.opacity = '0';
-            stillnessQuoteRef.current.style.pointerEvents = 'none';
-          }
-          if (tearContainerRef.current) {
-            tearContainerRef.current.style.display = 'none';
-          }
-
-          // Reset nocturnal lake elements while in project browsing
-          if (portalCanvasHostRef.current) {
-            portalCanvasHostRef.current.style.opacity = '1';
-            portalCanvasHostRef.current.style.filter = 'none';
-          }
-          if (portalWrapperRef.current) {
-            portalWrapperRef.current.style.opacity = '1';
-            portalWrapperRef.current.style.transform = 'none';
-            portalWrapperRef.current.style.filter = 'none';
-          }
-          if (textCardRef.current) {
-            textCardRef.current.style.transform = 'none';
-            textCardRef.current.style.filter = 'none';
-          }
-          if (katanaTrackRef.current) {
-            katanaTrackRef.current.style.opacity = '1';
-            katanaTrackRef.current.style.pointerEvents = 'auto';
-          }
-          announceDarkSection(true);
-
-          // Map scroll (0.22 -> 0.68) to project progress (0.00 -> 1.00), leaving (0.68 -> 0.78) as dwell for the last project
-          const projectP = Math.min(1.0, Math.max(0.0, (p - 0.22) / 0.46));
-          const lastIdx = PROJECTS.length - 1;
-
-          // 1. Direct real-time GPU uniform updates (zero lag, bidirectional, continuous)
-          portalRef.current?.setProgress(projectP);
-          reflectionRef.current?.setProgress(projectP);
-
-          // 2. Real-time cinematic text transition for Title & Desc (synchronized with mist portal morphing)
-          const v = projectP * lastIdx; // 0 .. lastIdx, each integer is a project at rest
-          projectCardsRef.current.forEach((card, idx) => {
-            if (!card) return;
-            const d = v - idx; // distance from this project's resting point
-            if (Math.abs(d) < 0.6) {
-              // Fully sharp within 0.2 of the rest point (the mist portal
-              // likewise holds each image for 0.15 either side), fading out by
-              // 0.6 — without the plateau the copy was only crisp at one exact
-              // scroll position, and the rail's jump targets landed on blur.
-              const norm = 1.0 - Math.max(0, Math.abs(d) - 0.2) / 0.4;
-              const opacity = norm * norm * (3.0 - 2.0 * norm); // Smooth cubic ease
-              const y = -d * 28.0; // Floats up as you scroll past, glides in from bottom as you approach
-              const blur = (1.0 - opacity) * 6.0;
-              card.style.opacity = opacity.toFixed(3);
-              card.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`;
-              card.style.filter = blur > 0.1 ? `blur(${blur.toFixed(1)}px)` : 'none';
-              card.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
-            } else {
-              card.style.opacity = '0';
-              card.style.transform = `translate3d(0, ${d > 0 ? -28 : 28}px, 0)`;
-              card.style.filter = 'blur(6px)';
-              card.style.pointerEvents = 'none';
-            }
-          });
-
-          // 3. Hysteresis: only switch the active project once scroll is well
-          // past the halfway point between two of them (0.6 / 0.4 of the way),
-          // so hovering near a boundary doesn't flicker the rail or replay audio.
-          let nextIdx = lastIndexRef.current;
-          const nearest = Math.round(v);
-          if (nearest !== lastIndexRef.current && Math.abs(v - nearest) < 0.4) {
-            nextIdx = nearest;
-          }
-
-          if (nextIdx !== lastIndexRef.current) {
-            soundManager?.playSwordWhoosh();
-            lastIndexRef.current = nextIdx;
-            setActiveIdx(nextIdx);
-          }
-          return;
+        // 1. Stillness quote: rests serenely, then dissolves with motion blur (0.00 -> 0.06)
+        const pStillness = Math.min(1.0, Math.max(0.0, p / 0.06));
+        if (stillnessQuoteRef.current) {
+          const quoteOpacity = 1.0 - pStillness;
+          stillnessQuoteRef.current.style.opacity = quoteOpacity.toFixed(3);
+          stillnessQuoteRef.current.style.filter = pStillness > 0.01 ? `blur(${(pStillness * 8).toFixed(1)}px)` : 'none';
+          stillnessQuoteRef.current.style.transform = `scale(${(1.0 - pStillness * 0.06).toFixed(3)})`;
+          stillnessQuoteRef.current.style.pointerEvents = quoteOpacity > 0.1 ? 'auto' : 'none';
         }
 
-        // =========================================================================
-        // PHASE 3: ETHEREAL SUMI-E MIST VEIL TRANSITION (p: 0.78 -> 1.00)
-        // Hồ đêm và Project 03 dần được bao bọc trong màn sương mù trắng Washi
-        // Khi sương mù tan, người xem đã đứng trọn vẹn trong không gian Philosophy
-        // =========================================================================
-        // Ensure intro quote and tear container are completely hidden
+        // 2. Katana blade slice stroke: drives target with generous scroll space (0.04 -> 0.14)
+        const targetSlash = Math.min(1.0, Math.max(0.0, (p - 0.04) / 0.10));
+        slashProgressRef.current.target = targetSlash;
+
+        // Razor cut sound trigger right at blade impact
+        if (p >= 0.06 && !hasPlayedSlashSound.current && self.direction > 0) {
+          soundManager?.playSwordWhoosh();
+          hasPlayedSlashSound.current = true;
+        } else if (p < 0.03) {
+          hasPlayedSlashSound.current = false;
+        }
+
+        // 3. OGL Tear Shader: drives target tear smoothly across (0.08 -> 0.22)
+        const targetTear = Math.min(1.0, Math.max(0.0, (p - 0.08) / 0.14));
+        tearProgressRef.current.target = targetTear;
+
+        // 4. Navbar theme: switch to dark mode once tear begins to reveal the black forge
+        // A single threshold both ways — the old down-at-0.14 / up-at-0.08
+        // hysteresis left the header white over the white paper on the way
+        // back up, which read as the navbar vanishing.
+        announceDarkSection(p >= 0.12);
+
+        // Katana rail track on the right remains hidden during slash intro
+        if (katanaTrackRef.current) {
+          katanaTrackRef.current.style.opacity = '0';
+          katanaTrackRef.current.style.pointerEvents = 'none';
+        }
+
+        // Keep Project 01 at rest (p = 0) so it shines directly inside the tear
+        portalRef.current?.setProgress(0);
+        reflectionRef.current?.setProgress(0);
+
+        projectCardsRef.current.forEach((card, idx) => {
+          if (!card) return;
+          if (idx === 0) {
+            card.style.opacity = '1';
+            card.style.transform = 'translate3d(0, 0px, 0)';
+            card.style.filter = 'none';
+            card.style.pointerEvents = 'auto';
+          } else {
+            card.style.opacity = '0';
+            card.style.transform = 'translate3d(0, 28px, 0)';
+            card.style.filter = 'blur(6px)';
+            card.style.pointerEvents = 'none';
+          }
+        });
+        return;
+      }
+
+      // =========================================================================
+      // PHASE 2: PROJECT SHOWCASE & REAL-TIME MORPHING (p: 0.22 -> 0.78)
+      // Generous resting dwell on Project 03 (0.68 -> 0.78)
+      // =========================================================================
+      if (p < 0.78) {
+        slashProgressRef.current.target = 1.0;
+        tearProgressRef.current.target = 1.0;
+
+        // Ensure intro quote and tear container are completely hidden on reload
+        if (tearProgressRef.current.current < 0.99) {
+          tearProgressRef.current.current = 1.0;
+          slashProgressRef.current.current = 1.0;
+        }
         if (stillnessQuoteRef.current) {
           stillnessQuoteRef.current.style.opacity = '0';
           stillnessQuoteRef.current.style.pointerEvents = 'none';
@@ -876,44 +532,129 @@ export const Artifacts = () => {
           tearContainerRef.current.style.display = 'none';
         }
 
-        // Keep the last project's textures locked at 1.0
-        portalRef.current?.setProgress(1.0);
-        reflectionRef.current?.setProgress(1.0);
-
-        // Smooth mist expansion from p = 0.78 to 0.98
-        const mistProgress = Math.min(1.0, Math.max(0.0, (p - 0.78) / 0.18));
-        const lakeFade = Math.max(0, 1.0 - mistProgress * 1.25);
-
-        // Lake elements fade softly as mist rolls in
-        // The portal's canvas lives in its own full-stage layer now (see
-        // ProjectMistPortal), so it has to fade with the lake explicitly.
+        // Reset nocturnal lake elements while in project browsing
         if (portalCanvasHostRef.current) {
-          portalCanvasHostRef.current.style.opacity = lakeFade.toFixed(3);
-          portalCanvasHostRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+          portalCanvasHostRef.current.style.opacity = '1';
+          portalCanvasHostRef.current.style.filter = 'none';
         }
         if (portalWrapperRef.current) {
-          portalWrapperRef.current.style.opacity = lakeFade.toFixed(3);
-          portalWrapperRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+          portalWrapperRef.current.style.opacity = '1';
+          portalWrapperRef.current.style.transform = 'none';
+          portalWrapperRef.current.style.filter = 'none';
         }
         if (textCardRef.current) {
-          textCardRef.current.style.opacity = lakeFade.toFixed(3);
-          textCardRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+          textCardRef.current.style.transform = 'none';
+          textCardRef.current.style.filter = 'none';
         }
-
-        // Katana rail track fades out smoothly as mist rises
         if (katanaTrackRef.current) {
-          katanaTrackRef.current.style.opacity = lakeFade.toFixed(3);
-          katanaTrackRef.current.style.pointerEvents = lakeFade > 0.5 ? 'auto' : 'none';
+          katanaTrackRef.current.style.opacity = '1';
+          katanaTrackRef.current.style.pointerEvents = 'auto';
+        }
+        announceDarkSection(true);
+
+        // Map scroll (0.22 -> 0.68) to project progress (0.00 -> 1.00), leaving (0.68 -> 0.78) as dwell for the last project
+        const projectP = Math.min(1.0, Math.max(0.0, (p - 0.22) / 0.46));
+        const lastIdx = PROJECTS.length - 1;
+
+        // 1. Direct real-time GPU uniform updates (zero lag, bidirectional, continuous)
+        portalRef.current?.setProgress(projectP);
+        reflectionRef.current?.setProgress(projectP);
+
+        // 2. Real-time cinematic text transition for Title & Desc (synchronized with mist portal morphing)
+        const v = projectP * lastIdx; // 0 .. lastIdx, each integer is a project at rest
+        projectCardsRef.current.forEach((card, idx) => {
+          if (!card) return;
+          const d = v - idx; // distance from this project's resting point
+          if (Math.abs(d) < 0.6) {
+            // Fully sharp within 0.2 of the rest point (the mist portal
+            // likewise holds each image for 0.15 either side), fading out by
+            // 0.6 — without the plateau the copy was only crisp at one exact
+            // scroll position, and the rail's jump targets landed on blur.
+            const norm = 1.0 - Math.max(0, Math.abs(d) - 0.2) / 0.4;
+            const opacity = norm * norm * (3.0 - 2.0 * norm); // Smooth cubic ease
+            const y = -d * 28.0; // Floats up as you scroll past, glides in from bottom as you approach
+            const blur = (1.0 - opacity) * 6.0;
+            card.style.opacity = opacity.toFixed(3);
+            card.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`;
+            card.style.filter = blur > 0.1 ? `blur(${blur.toFixed(1)}px)` : 'none';
+            card.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
+          } else {
+            card.style.opacity = '0';
+            card.style.transform = `translate3d(0, ${d > 0 ? -28 : 28}px, 0)`;
+            card.style.filter = 'blur(6px)';
+            card.style.pointerEvents = 'none';
+          }
+        });
+
+        // 3. Hysteresis: only switch the active project once scroll is well
+        // past the halfway point between two of them (0.6 / 0.4 of the way),
+        // so hovering near a boundary doesn't flicker the rail or replay audio.
+        let nextIdx = lastIndexRef.current;
+        const nearest = Math.round(v);
+        if (nearest !== lastIndexRef.current && Math.abs(v - nearest) < 0.4) {
+          nextIdx = nearest;
         }
 
-        // The dense white Washi mist veil covers the screen
-        if (mistVeilRef.current) {
-          mistVeilRef.current.style.opacity = mistProgress.toFixed(3);
-          mistVeilRef.current.style.pointerEvents = mistProgress > 0.7 ? 'auto' : 'none';
+        if (nextIdx !== lastIndexRef.current) {
+          soundManager?.playSwordWhoosh();
+          lastIndexRef.current = nextIdx;
+          setActiveIdx(nextIdx);
         }
+        return;
+      }
 
-        // Seamless handover for navbar: switches to dark text as mist envelops the view
-        announceDarkSection(mistProgress < 0.45);
+      // =========================================================================
+      // PHASE 3: ETHEREAL SUMI-E MIST VEIL TRANSITION (p: 0.78 -> 1.00)
+      // Hồ đêm và Project 03 dần được bao bọc trong màn sương mù trắng Washi
+      // Khi sương mù tan, người xem đã đứng trọn vẹn trong không gian Philosophy
+      // =========================================================================
+      // Ensure intro quote and tear container are completely hidden
+      if (stillnessQuoteRef.current) {
+        stillnessQuoteRef.current.style.opacity = '0';
+        stillnessQuoteRef.current.style.pointerEvents = 'none';
+      }
+      if (tearContainerRef.current) {
+        tearContainerRef.current.style.display = 'none';
+      }
+
+      // Keep the last project's textures locked at 1.0
+      portalRef.current?.setProgress(1.0);
+      reflectionRef.current?.setProgress(1.0);
+
+      // Smooth mist expansion from p = 0.78 to 0.98
+      const mistProgress = Math.min(1.0, Math.max(0.0, (p - 0.78) / 0.18));
+      const lakeFade = Math.max(0, 1.0 - mistProgress * 1.25);
+
+      // Lake elements fade softly as mist rolls in
+      // The portal's canvas lives in its own full-stage layer now (see
+      // ProjectMistPortal), so it has to fade with the lake explicitly.
+      if (portalCanvasHostRef.current) {
+        portalCanvasHostRef.current.style.opacity = lakeFade.toFixed(3);
+        portalCanvasHostRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+      }
+      if (portalWrapperRef.current) {
+        portalWrapperRef.current.style.opacity = lakeFade.toFixed(3);
+        portalWrapperRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+      }
+      if (textCardRef.current) {
+        textCardRef.current.style.opacity = lakeFade.toFixed(3);
+        textCardRef.current.style.filter = mistProgress > 0.04 ? `blur(${(mistProgress * 8).toFixed(1)}px)` : 'none';
+      }
+
+      // Katana rail track fades out smoothly as mist rises
+      if (katanaTrackRef.current) {
+        katanaTrackRef.current.style.opacity = lakeFade.toFixed(3);
+        katanaTrackRef.current.style.pointerEvents = lakeFade > 0.5 ? 'auto' : 'none';
+      }
+
+      // The dense white Washi mist veil covers the screen
+      if (mistVeilRef.current) {
+        mistVeilRef.current.style.opacity = mistProgress.toFixed(3);
+        mistVeilRef.current.style.pointerEvents = mistProgress > 0.7 ? 'auto' : 'none';
+      }
+
+      // Seamless handover for navbar: switches to dark text as mist envelops the view
+      announceDarkSection(mistProgress < 0.45);
     };
 
     ScrollTrigger.create({
@@ -1057,14 +798,12 @@ export const Artifacts = () => {
                     pointerEvents: idx === 0 ? 'auto' : 'none',
                   }}
                 >
-                  <div className="flex items-center gap-3.5 mb-3">
-                    <span className="font-serif text-3xl lg:text-4xl text-white/25 select-none">
-                      {proj.kanji}
-                    </span>
+                  <div className="flex items-center gap-3 mb-3">
                     <span className="font-mono text-xs tracking-[0.3em] text-white/40 uppercase">
                       0{idx + 1}
                     </span>
-                    <span className="hidden sm:inline font-mono text-[10px] tracking-[0.25em] text-white/30 uppercase">
+                    <div className="h-px w-3 bg-white/20" />
+                    <span className="hidden sm:inline font-mono text-[10px] tracking-[0.25em] text-white/35 uppercase">
                       {proj.category}
                     </span>
                   </div>
@@ -1073,25 +812,19 @@ export const Artifacts = () => {
                     {proj.title}
                   </h3>
 
-                  <p className="font-light text-white/70 text-sm sm:text-base lg:text-[17px] leading-relaxed max-w-xl mb-4">
+                  <p className="font-light text-white/70 text-sm sm:text-base lg:text-[17px] leading-relaxed max-w-xl mb-6">
                     {proj.description}
                   </p>
-
-                  {/* Minimal Mono Tech Stack */}
-                  <div className="font-mono text-xs sm:text-[13px] text-white/40 tracking-wider mb-6 flex items-center gap-2.5 select-none">
-                    <span className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" style={{ backgroundColor: proj.accent }} />
-                    {/* The card only has room for one line; the full stack lives in the case study. */}
-                    <span>{proj.tags.slice(0, 5).join(" · ")}</span>
+                  <div className="flex flex-wrap items-center gap-2 select-none">
+                    {proj.tags.slice(0, 5).map((tag) => (
+                      <span
+                        key={tag}
+                        className="font-mono text-[11px] sm:text-xs tracking-wider px-2.5 py-1 rounded bg-white/[0.04] border border-white/10 text-white/75 shadow-[0_1px_3px_rgba(0,0,0,0.3)] transition-colors hover:border-white/25 hover:text-white"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
-
-                  <button
-                    onClick={() => openCaseStudy(idx)}
-                    className="inline-flex items-center gap-2 group/link cursor-pointer focus:outline-none"
-                  >
-                    <span className="font-mono text-xs tracking-[0.25em] uppercase text-white/50 group-hover/link:text-white transition-colors">
-                      View Case Study ↗
-                    </span>
-                  </button>
                 </div>
               ))}
             </div>
@@ -1124,174 +857,16 @@ export const Artifacts = () => {
           })}
         </div>
 
-        {/* Case study. The panel isn't DOM: the portal's mist frame grows into
-            the sheet box below and becomes it, while the image settles into
-            the slot box — both are only targets. The copy sits above the
-            portal canvas (z-25). */}
-        {openProject && (
-          <>
-            {/* touch-none: on touch devices Lenis doesn't own scrolling, so a
-                swipe outside the copy would otherwise scroll the page behind. */}
-            <div className="absolute inset-0 z-[22] touch-none" aria-hidden="true" />
-            <div
-              ref={detailRef}
-              className="absolute inset-0 z-[35] pointer-events-none"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="artifact-case-title"
-            >
-              {/* The sheet box is where the mist panel lands; everything in
-                  the case study lives inside it, padded clear of its torn
-                  edge. The slot is only a target box for the image. */}
-              <div
-                ref={sheetRef}
-                className="absolute inset-3 sm:inset-5 lg:inset-[4vmin]"
-              >
-                <div className="absolute inset-0 flex flex-col gap-6 px-7 pt-20 pb-8 sm:px-12 sm:pt-24 lg:grid lg:grid-cols-12 lg:gap-[4vw] lg:px-[5vw] lg:pt-28 lg:pb-[5vmin]">
-                  <div className="shrink-0 flex flex-col gap-3 sm:gap-4 lg:order-last lg:col-span-6 lg:self-center">
-                    <div ref={slotRef} aria-hidden="true" className="w-full aspect-[16/10]" />
-
-                    {/* Gallery: thumbnails are plain images; picking one mist-morphs
-                        the portal (already on the GPU, preloaded on open). */}
-                    {openProject.gallery.length > 1 && (
-                      <div className="case-reveal pointer-events-auto flex items-center gap-4">
-                        <div className="flex gap-2 sm:gap-2.5">
-                          {openProject.gallery.map((item, i) => (
-                            <button
-                              key={item.src}
-                              onClick={() => showGallery(i)}
-                              aria-label={item.caption}
-                              aria-current={i === galleryIdx}
-                              className={`relative w-12 sm:w-16 aspect-[16/10] overflow-hidden rounded-[2px] border transition-all duration-500 cursor-pointer ${i === galleryIdx
-                                ? 'border-white/60 opacity-100'
-                                : 'border-white/10 opacity-40 hover:opacity-80'
-                                }`}
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={item.src} alt="" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
-                            </button>
-                          ))}
-                        </div>
-                        <p className="min-w-0 font-mono text-[10px] sm:text-[11px] tracking-wider text-white/45 leading-snug">
-                          <span className="text-white/70">{String(galleryIdx + 1).padStart(2, '0')} / {String(openProject.gallery.length).padStart(2, '0')}</span>
-                          <span className="hidden sm:inline"> — {openProject.gallery[galleryIdx]?.caption}</span>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* data-lenis-prevent: Lenis is stopped while this is open,
-                      and this column scrolls natively on its own. The mask
-                      fades copy out at the bottom instead of cutting it. */}
-                  <div
-                    data-lenis-prevent
-                    style={{
-                      maskImage: 'linear-gradient(to bottom, black calc(100% - 4rem), transparent)',
-                      WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 4rem), transparent)',
-                    }}
-                    className="case-scroll pointer-events-auto min-h-0 flex-1 overflow-y-auto pr-4 pb-16 lg:col-span-6 lg:h-full"
-                  >
-                    {/* Sticky so Close stays reachable however far the copy scrolls. */}
-                    <div className="case-reveal sticky top-0 z-10 -mx-2 px-2 pb-3 flex items-center justify-between gap-4 mb-6 bg-[#0a0a0c]/90 backdrop-blur-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="font-serif text-2xl text-white/30">{openProject.kanji}</span>
-                        <span className="whitespace-nowrap font-mono text-[11px] sm:text-xs tracking-[0.18em] sm:tracking-[0.25em] text-white/40 uppercase">
-                          Case Study · 0{(openIdx ?? 0) + 1}
-                        </span>
-                      </div>
-                      <button
-                        onClick={closeCaseStudy}
-                        className="whitespace-nowrap font-mono text-[11px] tracking-widest text-white/50 hover:text-white transition-colors cursor-pointer px-2 py-1"
-                      >
-                        [ CLOSE ✕ ]
-                      </button>
-                    </div>
-
-                    <p className="case-reveal font-mono text-[11px] sm:text-xs uppercase tracking-[0.25em] text-white/45 mb-4">
-                      {openProject.category} · {openProject.year}
-                    </p>
-                    <h2 id="artifact-case-title" className="case-reveal font-serif text-[2.75rem] sm:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[1.02] mb-5">
-                      {openProject.title}
-                    </h2>
-                    <p className="case-reveal flex items-start gap-2.5 font-mono text-[13px] text-white/75 tracking-wide leading-relaxed mb-3">
-                      <span className="mt-1 w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: openProject.accent }} />
-                      {openProject.highlights}
-                    </p>
-                    <p className="case-reveal font-caveat text-2xl text-white/55 mb-12">{openProject.role}</p>
-
-                    {([
-                      ['The Problem', openProject.problem],
-                      ['The Approach', openProject.approach],
-                      ['The Outcome', openProject.outcome],
-                    ] as const).map(([label, text]) => (
-                      <div key={label} className="case-reveal mb-10">
-                        <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-2.5">
-                          {label}
-                        </h4>
-                        <p className="text-base lg:text-[17px] text-white/80 font-light leading-[1.75]">
-                          {text}
-                        </p>
-                      </div>
-                    ))}
-
-                    <div className="case-reveal mb-10">
-                      <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-3">
-                        Under the Hood
-                      </h4>
-                      <ul className="space-y-2.5">
-                        {openProject.engineering.map((item) => (
-                          <li key={item} className="flex gap-3 text-[15px] lg:text-base text-white/75 font-light leading-relaxed">
-                            <span className="text-white/25 font-serif">一</span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="case-reveal mb-10">
-                      <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-2.5">
-                        Stack
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {openProject.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {openProject.credit && (
-                      <p className="case-reveal font-mono text-[10px] text-white/35 leading-relaxed mb-8">
-                        {openProject.credit}
-                      </p>
-                    )}
-
-                    <div className="case-reveal flex flex-wrap items-center gap-3 pt-6 border-t border-white/10">
-                      {openProject.links.map((link, i) => (
-                        <a
-                          key={link.href}
-                          href={link.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`font-mono text-xs tracking-widest uppercase px-4 py-2 rounded transition-colors cursor-pointer ${i === 0
-                            ? 'bg-white text-black font-semibold hover:bg-white/90'
-                            : 'border border-white/20 text-white/70 hover:text-white hover:border-white/50'
-                            }`}
-                        >
-                          {link.label} ↗
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Case Study Modal */}
+        <CaseStudyModal
+          openProject={openProject}
+          galleryIdx={galleryIdx}
+          onClose={closeCaseStudy}
+          onSelectGallery={showGallery}
+          detailRef={detailRef}
+          sheetRef={sheetRef}
+          slotRef={slotRef}
+        />
 
         {/* Phase 3: Ethereal Sumi-e Mist / Morning Fog Transition Layer */}
         <div
@@ -1299,7 +874,7 @@ export const Artifacts = () => {
           className="absolute inset-0 w-full h-full z-40 pointer-events-none opacity-0 flex flex-col items-center justify-center overflow-hidden bg-[#fdfdfd]"
         >
           {/* Layered swirling mist gradients */}
-          <div 
+          <div
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{
               background: `
