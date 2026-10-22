@@ -13,7 +13,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const navItems = [
   { label: "Prologue", href: "#hero", id: "hero", roman: "序" },
-  { label: "The Architect", href: "#about", id: "about", roman: "I" },
+  { label: "The Engineer", href: "#about", id: "about", roman: "I" },
   { label: "Artifacts", href: "#artifacts", id: "artifacts", roman: "II" },
   { label: "The Void", href: "#philosophy", id: "philosophy", roman: "III" },
   { label: "The Battles", href: "#experience", id: "experience", roman: "IV" },
@@ -177,7 +177,7 @@ export const Navbar = () => {
             onClick={(e) => { e.preventDefault(); handleNavClick("#hero"); }}
             className="outline-none"
           >
-            <span className="font-serif text-2xl font-bold tracking-[-0.04em] text-current md:text-[28px]">THATU.</span>
+            <span className="font-serif text-2xl font-bold tracking-[-0.04em] text-current md:text-[28px]">TRHGATU.</span>
           </Link>
 
           <div className="flex items-center gap-2">

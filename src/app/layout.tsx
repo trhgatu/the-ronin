@@ -43,24 +43,24 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Tran Hoang Anh Tu — Software Architect & Creative Developer",
+  title: "Tran Hoang Anh Tu — Software Engineer & Creative Developer",
   description: "Personal portfolio of Tran Hoang Anh Tu (TRHGATU). Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
   keywords: [
     "Trần Hoàng Anh Tú",
     "TRHGATU",
-    "Software Architect",
+    "Software Engineer",
     "Fullstack Developer",
     "Creative Coding",
     "Next.js Portfolio",
     "Three.js",
     "Go Developer",
-    "NestJS Architect",
+    "NestJS Engineer",
     "Vietnam Developer"
   ],
   authors: [{ name: "Trần Hoàng Anh Tú", url: "https://thatu.dev" }],
   creator: "Trần Hoàng Anh Tú",
   openGraph: {
-    title: "Trần Hoàng Anh Tú — Software Architect & Creative Developer",
+    title: "Trần Hoàng Anh Tú — Software Engineer & Creative Developer",
     description: "Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
     url: "https://thatu.dev",
     siteName: "TRHGATU Portfolio",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trần Hoàng Anh Tú — Software Architect & Creative Developer",
+    title: "Trần Hoàng Anh Tú — Software Engineer & Creative Developer",
     description: "Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
   },
 };
@@ -95,6 +95,20 @@ export default function RootLayout({
                   document.documentElement.classList.add('is-loading');
                 }
               } catch (e) {}
+              // Filter out known harmless third-party Three.js deprecation & DirectX ANGLE shader info warnings
+              (function() {
+                var origWarn = console.warn;
+                console.warn = function() {
+                  var msg = typeof arguments[0] === 'string' ? arguments[0] : '';
+                  if (
+                    msg.indexOf('THREE.Clock: This module has been deprecated') !== -1 ||
+                    (msg.indexOf('THREE.WebGLProgram') !== -1 && msg.indexOf('warning X4122') !== -1)
+                  ) {
+                    return;
+                  }
+                  origWarn.apply(console, arguments);
+                };
+              })();
             `,
           }}
         />

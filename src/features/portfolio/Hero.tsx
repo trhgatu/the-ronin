@@ -309,7 +309,7 @@ export const Hero = () => {
               Tran Hoang Anh Tu
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-foreground/40 md:text-xs">
-              Software Architect × Creative Developer
+              Software Engineer × Creative Developer
             </span>
           </div>
 
@@ -425,7 +425,7 @@ export const Hero = () => {
                 Tran Hoang Anh Tu
               </span>
               <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-black/70 md:text-xs">
-                Software Architect × Creative Developer
+                Software Engineer × Creative Developer
               </span>
             </div>
             <div className="mb-4 w-full max-w-[860px] sm:mb-6">
@@ -448,6 +448,8 @@ export const Hero = () => {
                   fill
                   sizes="(max-width: 640px) 90vw, 860px"
                   className="object-cover"
+                  priority
+                  loading="eager"
                 />
               </div>
             </div>

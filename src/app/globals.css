@@ -70,3 +70,9 @@ html.lenis.lenis-stopped {
 .is-loading #preloader-overlay {
   display: flex !important;
 }
+
+body.case-study-open header {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s ease;
+}

@@ -324,7 +324,11 @@ export const Artifacts = () => {
   // commits the overlay, and starting the portal before the first paint is
   // what makes the click feel instant.
   useLayoutEffect(() => {
-    if (openIdx === null || !slotRef.current || !sheetRef.current) return;
+    if (openIdx === null || !slotRef.current || !sheetRef.current) {
+      document.body.classList.remove('case-study-open');
+      return;
+    }
+    document.body.classList.add('case-study-open');
     portalRef.current?.open(sheetRef.current, slotRef.current, openIdx);
     // The resting card and reflection would otherwise show through the
     // sheet's soft mist edge (the portal's own anchor stays measurable at
@@ -336,11 +340,16 @@ export const Artifacts = () => {
         opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.04, delay: 0.2,
       });
     }
+
+    return () => {
+      document.body.classList.remove('case-study-open');
+    };
   }, [openIdx]);
 
   const finishClose = () => {
     if (openIdxRef.current === null || closingRef.current) return;
     closingRef.current = true;
+    document.body.classList.remove('case-study-open');
     // Land back in the resting frame on the cover, not a gallery image.
     portalRef.current?.showImage(PROJECTS[openIdxRef.current].image);
     const reveal = detailRef.current?.querySelectorAll('.case-reveal');

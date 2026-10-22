@@ -1,4 +1,4 @@
-# 侍 the ronin architect
+# 侍 the software engineer
 
 A personal portfolio built as a samurai-themed visual novel. Every section is a "chapter", scrolling turns the page, and the whole thing leans on sumi-e ink, torn washi paper and kanji instead of generic SaaS-portfolio patterns.
 
@@ -11,7 +11,7 @@ A personal portfolio built as a samurai-themed visual novel. Every section is a 
 ### Prologue — Hero
 The Musashi × Tu crest and the "Architected with Samurai Discipline" title card sit on a WebGL fluid-ink veil. Moving the cursor stirs the ink and reveals the 3D scene behind it (a samurai resting under a pink-leafed tree). A torn-paper hole follows the cursor and inverts the text and crest underneath it. The eye button in the header swaps to an unveiled parchment mode with a water-ripple pass over the 3D scene.
 
-### Chapter I — The Ronin Architect (About)
+### Chapter I — The Software Engineer (About)
 Hero's black bleeds into the paper through a ragged ink edge. The name headline reveals word by word. A portrait and the origin statement follow, under a continuous rain of ink leaves.
 
 ![About — Origins](.github/assets/about.png)

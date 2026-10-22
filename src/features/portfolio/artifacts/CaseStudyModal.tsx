@@ -26,9 +26,12 @@ export const CaseStudyModal = ({
 
   return (
     <>
-      {/* touch-none: on touch devices Lenis doesn't own scrolling, so a
-          swipe outside the copy would otherwise scroll the page behind. */}
-      <div className="absolute inset-0 z-[22] touch-none" aria-hidden="true" />
+      {/* Backdrop click to close */}
+      <div
+        onClick={onClose}
+        className="absolute inset-0 z-[22] cursor-pointer touch-none"
+        aria-hidden="true"
+      />
       <div
         ref={detailRef}
         className="absolute inset-0 z-[35] pointer-events-none"
@@ -43,14 +46,27 @@ export const CaseStudyModal = ({
           ref={sheetRef}
           className="absolute inset-3 sm:inset-5 lg:inset-[4vmin]"
         >
-          {/* Floating Top-Right Close Button */}
+          {/* Close Button: High Contrast Ink-Stone Crest */}
           <button
             onClick={onClose}
             aria-label="Close project detail"
-            className="case-reveal pointer-events-auto absolute top-4 right-4 sm:top-6 sm:right-6 lg:top-7 lg:right-8 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-black/60 hover:bg-white/10 hover:border-white/50 backdrop-blur-md text-white/70 hover:text-white transition-all duration-300 group cursor-pointer shadow-xl select-none"
+            title="Close (ESC)"
+            className="case-reveal pointer-events-auto absolute top-5 right-5 sm:top-6 sm:right-6 lg:top-7 lg:right-8 z-50 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full border border-white/30 bg-[#0e0e0e]/95 hover:bg-black text-white hover:border-white/80 shadow-[0_4px_24px_rgba(0,0,0,0.85)] transition-all duration-300 hover:scale-105 active:scale-95 group cursor-pointer select-none"
           >
-            <span className="font-mono text-[10px] tracking-widest uppercase">CLOSE</span>
-            <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[10px] group-hover:bg-white/20 transition-colors">✕</span>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-white transition-transform duration-300 group-hover:rotate-90"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
 
           <div className="absolute inset-0 flex flex-col gap-6 px-7 pt-20 pb-8 sm:px-12 sm:pt-24 lg:grid lg:grid-cols-12 lg:gap-[4vw] lg:px-[5vw] lg:pt-28 lg:pb-[5vmin]">

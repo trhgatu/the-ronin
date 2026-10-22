@@ -11,11 +11,11 @@ const EXPERIENCES = [
     company: "8eyond Infinite",
     role: "Founder",
     period: "2025 — PRESENT",
-    description: "Forging 'Vertical Infinity' through the alchemy of code. Establishing architectural paradigms that defy obsolescence, transmuting raw logic into immortal digital legacies.",
+    description: "Independent technical practice focused on high-discipline software engineering. Exploring modern architecture paradigms, building production-grade fullstack ecosystems, and crafting high-performance developer tooling.",
     achievements: [
       "Architecting production-grade, multi-stack core ecosystems (Go, NestJS, Next.js, Angular)",
-      "Distilling system chaos into elegant Clean Architecture, DDD, and Event-Driven cosmos",
-      "Engineering advanced starter templates and CLI tools to transcend conventional development limits"
+      "Refining complex distributed systems with Clean Architecture, DDD, and Event-Driven patterns",
+      "Engineering advanced starter templates and CLI tools designed for scalability and long-term maintainability"
     ],
     techBooks: [
       {
@@ -29,28 +29,28 @@ const EXPERIENCES = [
         id: "water",
         kanji: "水",
         title: "The Book of Water",
-        subtitle: "Fluid Dynamics & Visual Mastery",
+        subtitle: "Fluid Dynamics & Creative WebGL",
         items: ["Three.js", "OGL", "Canvas", "8eyond UI"]
       },
       {
         id: "fire",
         kanji: "火",
         title: "The Book of Fire",
-        subtitle: "Scaling, Monitoring & Infra Forge",
+        subtitle: "DevOps, Cloud & Infrastructure",
         items: ["Docker", "K8s", "Grafana", "Prometheus"]
       },
       {
         id: "wind",
         kanji: "風",
         title: "The Book of Wind",
-        subtitle: "Empire Styling & Community Starters",
+        subtitle: "Developer Tooling & Advanced Starters",
         items: ["Advanced Starters", "8eyond CLI"]
       },
       {
         id: "void",
         kanji: "空",
         title: "The Book of Void",
-        subtitle: "Obsolescence-Defying Paradigms",
+        subtitle: "Architecture Paradigms & System Design",
         items: ["Clean Architecture", "Domain-Driven Design", "Event-Driven Architecture"]
       }
     ],
@@ -63,7 +63,7 @@ const EXPERIENCES = [
     description: "Began as a Frontend Developer Intern, rapidly advancing to a Fullstack Developer. Engineered high-impact client interfaces and optimized robust data architectures across multiple active production projects.",
     achievements: [
       "Engineered 'Colvemat' hybrid mobile platform utilizing Ionic and Angular for seamless cross-platform performance",
-      "Architected the backend for 'NextPro' e-commerce solution, leveraging Django to drive flexible and scalable product structures",
+      "Designed and engineered the backend for 'NextPro' e-commerce solution, leveraging Django to drive flexible and scalable product structures",
       "Built 'DPD' (Day Past Due) financial tracking backend using NestJS and GraphQL for rapid, highly-efficient data querying"
     ],
     tech: ["Ionic", "Angular", "NestJS", "GraphQL", "Django"],

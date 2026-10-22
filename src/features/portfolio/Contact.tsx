@@ -37,7 +37,7 @@ export const Contact = () => {
     <section
       id="contact"
       ref={containerRef}
-      className="py-32 md:py-48 bg-background relative overflow-hidden select-none z-20"
+      className="py-32 md:py-48 bg-background relative overflow-hidden select-none z-20 shadow-[0_30px_70px_rgba(0,0,0,0.85)]"
     >
       {/* Torn Paper Edge Transition */}
       <div

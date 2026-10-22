@@ -302,7 +302,7 @@ export const About = () => {
         <div className="flex items-center gap-4 mb-12">
           <span className="block overflow-hidden">
             <span className="about-kicker-inner block font-mono text-[10px] tracking-[0.3em] text-foreground/50 uppercase font-bold sm:text-xs sm:tracking-[0.5em]">
-              [ Chapter I : The Ronin Architect ]
+              [ Chapter I : The Software Engineer ]
             </span>
           </span>
           <div className="h-px flex-1 bg-foreground/10" />
@@ -332,7 +332,7 @@ export const About = () => {
           </span>
         </h2>
         <p className="about-fade-in font-caveat text-2xl md:text-3xl lg:text-4xl text-foreground/60 lowercase mt-4">
-          the ronin architect — the way of the sword &amp; code
+          software engineering &amp; creative development
         </p>
 
         {/* Portrait + Origins — text column widened from 7/12 to 8/12 (and
