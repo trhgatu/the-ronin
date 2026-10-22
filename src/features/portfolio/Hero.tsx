@@ -309,7 +309,7 @@ export const Hero = () => {
               Tran Hoang Anh Tu
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-foreground/40 md:text-xs">
-              Software Engineer × Creative Developer
+              Software Engineer
             </span>
           </div>
 
@@ -425,7 +425,7 @@ export const Hero = () => {
                 Tran Hoang Anh Tu
               </span>
               <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-black/70 md:text-xs">
-                Software Engineer × Creative Developer
+                Software Engineer
               </span>
             </div>
             <div className="mb-4 w-full max-w-[860px] sm:mb-6">

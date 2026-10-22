@@ -43,7 +43,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Tran Hoang Anh Tu — Software Engineer & Creative Developer",
+  title: "Tran Hoang Anh Tu — Software Engineer",
   description: "Personal portfolio of Tran Hoang Anh Tu (TRHGATU). Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
   keywords: [
     "Trần Hoàng Anh Tú",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Trần Hoàng Anh Tú", url: "https://thatu.dev" }],
   creator: "Trần Hoàng Anh Tú",
   openGraph: {
-    title: "Trần Hoàng Anh Tú — Software Engineer & Creative Developer",
+    title: "Trần Hoàng Anh Tú — Software Engineer",
     description: "Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
     url: "https://thatu.dev",
     siteName: "TRHGATU Portfolio",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trần Hoàng Anh Tú — Software Engineer & Creative Developer",
+    title: "Trần Hoàng Anh Tú — Software Engineer",
     description: "Fusing systems engineering, NestJS/Go architectures, and interactive WebGL experiences into high-performance digital solutions.",
   },
 };
