@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useRef } from 'react';
-import { ArrowUp } from 'lucide-react';
-import gsap, { ScrollTrigger } from '@/lib/gsap';
-import { useGSAP } from '@gsap/react';
+import { useRef } from "react";
+import { ArrowUp } from "lucide-react";
+import gsap, { ScrollTrigger } from "@/lib/gsap";
+import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,7 +13,7 @@ export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   useGSAP(
@@ -27,17 +27,17 @@ export const Footer = () => {
         {
           yPercent: 0,
           opacity: 1,
-          ease: 'none',
+          ease: "none",
           scrollTrigger: {
             trigger: containerRef.current,
-            start: 'top bottom',
-            end: 'bottom bottom',
+            start: "top bottom",
+            end: "bottom bottom",
             scrub: true,
           },
-        }
+        },
       );
     },
-    { scope: containerRef }
+    { scope: containerRef },
   );
 
   return (
@@ -51,7 +51,7 @@ export const Footer = () => {
       >
         {/* Top subtle bar */}
         <div className="flex justify-between items-center text-[11px] font-mono tracking-[0.25em] uppercase text-white/40 border-b border-white/10 pb-4">
-          <span>PORTFOLIO ARCHIVE</span>
+          <span>Built with Three.js, React Three Fiber, GSAP & Lenis</span>
           <span>SAIGON, VIETNAM</span>
         </div>
 
@@ -64,7 +64,7 @@ export const Footer = () => {
 
         {/* Bottom Bar & Return Trigger */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-5 border-t border-white/10 text-[11px] font-mono tracking-[0.25em] uppercase text-white/45">
-          <p>© {currentYear} TRAN HOANG ANH TU · ALL RIGHTS RESERVED.</p>
+          <p>© {currentYear} TRAN HOANG ANH TU.</p>
 
           <button
             onClick={scrollToTop}
