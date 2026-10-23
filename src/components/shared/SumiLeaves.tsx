@@ -71,19 +71,32 @@ export const SumiLeaves = ({ containerRef, count = 15, color = '#161412', reveal
     };
 
     const onMove = (e: MouseEvent) => {
-      pointer = { x: e.clientX, y: e.clientY };
-      schedule();
+      const rect = container.getBoundingClientRect();
+      if (
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+      ) {
+        pointer = { x: e.clientX, y: e.clientY };
+        schedule();
+      } else {
+        if (pointer) {
+          pointer = null;
+          schedule();
+        }
+      }
     };
     const onLeave = () => {
       pointer = null;
       schedule();
     };
 
-    container.addEventListener('mousemove', onMove);
-    container.addEventListener('mouseleave', onLeave);
+    window.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseleave', onLeave);
     return () => {
-      container.removeEventListener('mousemove', onMove);
-      container.removeEventListener('mouseleave', onLeave);
+      window.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseleave', onLeave);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [mounted, revealColor, containerRef]);

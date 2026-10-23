@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 export type HeroFluidRevealProps = {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -20,13 +20,17 @@ export type HeroFluidRevealProps = {
  * is what gives the reveal genuinely organic, swirling, fluid-like edges
  * instead of hand-stamped circles.
  */
-export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0196], className }: HeroFluidRevealProps) {
+export function HeroFluidReveal({
+  containerRef,
+  veilColor = [0.0196, 0.0196, 0.0196],
+  className,
+}: HeroFluidRevealProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
-    if (!canvas || !container || typeof window === 'undefined') return;
+    if (!canvas || !container || typeof window === "undefined") return;
 
     let isActive = true;
 
@@ -38,7 +42,7 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       PRESSURE: 0.1,
       PRESSURE_ITERATIONS: 20,
       CURL: 3,
-      SPLAT_RADIUS: 0.055,
+      SPLAT_RADIUS: 0.1,
       SPLAT_FORCE: 3200,
     };
 
@@ -53,35 +57,58 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
     }
     const pointer = new (pointerPrototype as any)();
 
-    const params: WebGLContextAttributes = { alpha: true, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: false };
-    let gl = canvas.getContext('webgl2', params) as WebGL2RenderingContext | null;
+    const params: WebGLContextAttributes = {
+      alpha: true,
+      depth: false,
+      stencil: false,
+      antialias: false,
+      preserveDrawingBuffer: false,
+    };
+    let gl = canvas.getContext(
+      "webgl2",
+      params,
+    ) as WebGL2RenderingContext | null;
     const isWebGL2 = !!gl;
-    if (!gl) gl = (canvas.getContext('webgl', params) || canvas.getContext('experimental-webgl', params)) as any;
+    if (!gl)
+      gl = (canvas.getContext("webgl", params) ||
+        canvas.getContext("experimental-webgl", params)) as any;
     if (!gl) return;
 
     let halfFloat: any;
     let supportLinearFiltering: any;
     if (isWebGL2) {
-      (gl as WebGL2RenderingContext).getExtension('EXT_color_buffer_float');
-      supportLinearFiltering = gl.getExtension('OES_texture_float_linear');
+      (gl as WebGL2RenderingContext).getExtension("EXT_color_buffer_float");
+      supportLinearFiltering = gl.getExtension("OES_texture_float_linear");
     } else {
-      halfFloat = gl.getExtension('OES_texture_half_float');
-      supportLinearFiltering = gl.getExtension('OES_texture_half_float_linear');
+      halfFloat = gl.getExtension("OES_texture_half_float");
+      supportLinearFiltering = gl.getExtension("OES_texture_half_float_linear");
     }
 
-    const halfFloatTexType = isWebGL2 ? (gl as WebGL2RenderingContext).HALF_FLOAT : halfFloat && halfFloat.HALF_FLOAT_OES;
+    const halfFloatTexType = isWebGL2
+      ? (gl as WebGL2RenderingContext).HALF_FLOAT
+      : halfFloat && halfFloat.HALF_FLOAT_OES;
 
-    function getSupportedFormat(internalFormat: number, format: number, type: number): { internalFormat: number; format: number } | null {
+    function getSupportedFormat(
+      internalFormat: number,
+      format: number,
+      type: number,
+    ): { internalFormat: number; format: number } | null {
       if (!supportRenderTextureFormat(internalFormat, format, type)) {
         const g = gl as WebGL2RenderingContext;
-        if (internalFormat === g.R16F) return getSupportedFormat(g.RG16F, g.RG, type);
-        if (internalFormat === g.RG16F) return getSupportedFormat(g.RGBA16F, g.RGBA, type);
+        if (internalFormat === g.R16F)
+          return getSupportedFormat(g.RG16F, g.RG, type);
+        if (internalFormat === g.RG16F)
+          return getSupportedFormat(g.RGBA16F, g.RGBA, type);
         return null;
       }
       return { internalFormat, format };
     }
 
-    function supportRenderTextureFormat(internalFormat: number, format: number, type: number): boolean {
+    function supportRenderTextureFormat(
+      internalFormat: number,
+      format: number,
+      type: number,
+    ): boolean {
       const g = gl!;
       const texture = g.createTexture();
       g.bindTexture(g.TEXTURE_2D, texture);
@@ -89,24 +116,63 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.NEAREST);
       g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE);
       g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE);
-      g.texImage2D(g.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
+      g.texImage2D(
+        g.TEXTURE_2D,
+        0,
+        internalFormat,
+        4,
+        4,
+        0,
+        format,
+        type,
+        null,
+      );
       const fbo = g.createFramebuffer();
       g.bindFramebuffer(g.FRAMEBUFFER, fbo);
-      g.framebufferTexture2D(g.FRAMEBUFFER, g.COLOR_ATTACHMENT0, g.TEXTURE_2D, texture, 0);
+      g.framebufferTexture2D(
+        g.FRAMEBUFFER,
+        g.COLOR_ATTACHMENT0,
+        g.TEXTURE_2D,
+        texture,
+        0,
+      );
       return g.checkFramebufferStatus(g.FRAMEBUFFER) === g.FRAMEBUFFER_COMPLETE;
     }
 
-    const rgba = isWebGL2 ? getSupportedFormat((gl as WebGL2RenderingContext).RGBA16F, gl.RGBA, halfFloatTexType) : { internalFormat: gl.RGBA, format: gl.RGBA };
-    const rg = isWebGL2 ? getSupportedFormat((gl as WebGL2RenderingContext).RG16F, (gl as WebGL2RenderingContext).RG, halfFloatTexType) : { internalFormat: gl.RGBA, format: gl.RGBA };
-    const rFmt = isWebGL2 ? getSupportedFormat((gl as WebGL2RenderingContext).R16F, (gl as WebGL2RenderingContext).RED, halfFloatTexType) : { internalFormat: gl.RGBA, format: gl.RGBA };
+    const rgba = isWebGL2
+      ? getSupportedFormat(
+          (gl as WebGL2RenderingContext).RGBA16F,
+          gl.RGBA,
+          halfFloatTexType,
+        )
+      : { internalFormat: gl.RGBA, format: gl.RGBA };
+    const rg = isWebGL2
+      ? getSupportedFormat(
+          (gl as WebGL2RenderingContext).RG16F,
+          (gl as WebGL2RenderingContext).RG,
+          halfFloatTexType,
+        )
+      : { internalFormat: gl.RGBA, format: gl.RGBA };
+    const rFmt = isWebGL2
+      ? getSupportedFormat(
+          (gl as WebGL2RenderingContext).R16F,
+          (gl as WebGL2RenderingContext).RED,
+          halfFloatTexType,
+        )
+      : { internalFormat: gl.RGBA, format: gl.RGBA };
 
-    function compileShader(type: number, source: string, keywords?: string[]): WebGLShader {
+    function compileShader(
+      type: number,
+      source: string,
+      keywords?: string[],
+    ): WebGLShader {
       let src = source;
-      if (keywords) src = keywords.map((k) => `#define ${k}\n`).join('') + src;
+      if (keywords) src = keywords.map((k) => `#define ${k}\n`).join("") + src;
       const shader = gl!.createShader(type)!;
       gl!.shaderSource(shader, src);
       gl!.compileShader(shader);
-      if (!gl!.getShaderParameter(shader, gl!.COMPILE_STATUS)) console.error(gl!.getShaderInfoLog(shader));
+      if (!gl!.getShaderParameter(shader, gl!.COMPILE_STATUS))
+        console.error(gl!.getShaderInfoLog(shader));
       return shader;
     }
 
@@ -115,11 +181,14 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       gl!.attachShader(program, vs);
       gl!.attachShader(program, fs);
       gl!.linkProgram(program);
-      if (!gl!.getProgramParameter(program, gl!.LINK_STATUS)) console.error(gl!.getProgramInfoLog(program));
+      if (!gl!.getProgramParameter(program, gl!.LINK_STATUS))
+        console.error(gl!.getProgramInfoLog(program));
       return program;
     }
 
-    function getUniforms(program: WebGLProgram): Record<string, WebGLUniformLocation> {
+    function getUniforms(
+      program: WebGLProgram,
+    ): Record<string, WebGLUniformLocation> {
       const uniforms: Record<string, WebGLUniformLocation> = {};
       const count = gl!.getProgramParameter(program, gl!.ACTIVE_UNIFORMS);
       for (let i = 0; i < count; i++) {
@@ -136,10 +205,14 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         this.program = createProgram(vs, fs);
         this.uniforms = getUniforms(this.program);
       }
-      bind() { gl!.useProgram(this.program); }
+      bind() {
+        gl!.useProgram(this.program);
+      }
     }
 
-    const baseVertexShader = compileShader(gl.VERTEX_SHADER, `
+    const baseVertexShader = compileShader(
+      gl.VERTEX_SHADER,
+      `
       precision highp float;
       attribute vec2 aPosition;
       varying vec2 vUv;
@@ -153,17 +226,24 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         vB = vUv - vec2(0.0, texelSize.y);
         gl_Position = vec4(aPosition, 0.0, 1.0);
       }
-    `);
+    `,
+    );
 
-    const copyShader = compileShader(gl.FRAGMENT_SHADER, `
+    const copyShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision mediump float; precision mediump sampler2D; varying highp vec2 vUv; uniform sampler2D uTexture;
       void main () { gl_FragColor = texture2D(uTexture, vUv); }
-    `);
+    `,
+    );
 
-    const clearShader = compileShader(gl.FRAGMENT_SHADER, `
+    const clearShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision mediump float; precision mediump sampler2D; varying highp vec2 vUv; uniform sampler2D uTexture; uniform float value;
       void main () { gl_FragColor = value * texture2D(uTexture, vUv); }
-    `);
+    `,
+    );
 
     // The one meaningful change from a stock "splash cursor": instead of
     // displaying dye as color on a transparent background, this outputs the
@@ -186,7 +266,9 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       }
     `;
 
-    const splatShader = compileShader(gl.FRAGMENT_SHADER, `
+    const splatShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision highp float; precision highp sampler2D; varying vec2 vUv;
       uniform sampler2D uTarget; uniform float aspectRatio; uniform vec3 color; uniform vec2 point; uniform float radius;
       void main () {
@@ -195,9 +277,12 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         vec3 base = texture2D(uTarget, vUv).xyz;
         gl_FragColor = vec4(base + splat, 1.0);
       }
-    `);
+    `,
+    );
 
-    const advectionShader = compileShader(gl.FRAGMENT_SHADER, `
+    const advectionShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision highp float; precision highp sampler2D; varying vec2 vUv;
       uniform sampler2D uVelocity; uniform sampler2D uSource; uniform vec2 texelSize; uniform float dt; uniform float dissipation;
       void main () {
@@ -206,9 +291,12 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         float decay = 1.0 + dissipation * dt;
         gl_FragColor = result / decay;
       }
-    `);
+    `,
+    );
 
-    const divergenceShader = compileShader(gl.FRAGMENT_SHADER, `
+    const divergenceShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision mediump float; precision mediump sampler2D; varying highp vec2 vUv; varying highp vec2 vL, vR, vT, vB;
       uniform sampler2D uVelocity;
       void main () {
@@ -218,9 +306,12 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         if (vL.x < 0.0) L = -C.x; if (vR.x > 1.0) R = -C.x; if (vT.y > 1.0) T = -C.y; if (vB.y < 0.0) B = -C.y;
         gl_FragColor = vec4(0.5 * (R - L + T - B), 0.0, 0.0, 1.0);
       }
-    `);
+    `,
+    );
 
-    const curlShader = compileShader(gl.FRAGMENT_SHADER, `
+    const curlShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision mediump float; precision mediump sampler2D; varying highp vec2 vUv; varying highp vec2 vL, vR, vT, vB;
       uniform sampler2D uVelocity;
       void main () {
@@ -228,9 +319,12 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         float T = texture2D(uVelocity, vT).x; float B = texture2D(uVelocity, vB).x;
         gl_FragColor = vec4(0.5 * (R - L - T + B), 0.0, 0.0, 1.0);
       }
-    `);
+    `,
+    );
 
-    const vorticityShader = compileShader(gl.FRAGMENT_SHADER, `
+    const vorticityShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision highp float; precision highp sampler2D; varying vec2 vUv; varying vec2 vL, vR, vT, vB;
       uniform sampler2D uVelocity; uniform sampler2D uCurl; uniform float curl; uniform float dt;
       void main () {
@@ -243,9 +337,12 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         velocity = min(max(velocity, -1000.0), 1000.0);
         gl_FragColor = vec4(velocity, 0.0, 1.0);
       }
-    `);
+    `,
+    );
 
-    const pressureShader = compileShader(gl.FRAGMENT_SHADER, `
+    const pressureShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision mediump float; precision mediump sampler2D; varying highp vec2 vUv; varying highp vec2 vL, vR, vT, vB;
       uniform sampler2D uPressure; uniform sampler2D uDivergence;
       void main () {
@@ -254,9 +351,12 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         float divergence = texture2D(uDivergence, vUv).x;
         gl_FragColor = vec4((L + R + B + T - divergence) * 0.25, 0.0, 0.0, 1.0);
       }
-    `);
+    `,
+    );
 
-    const gradientSubtractShader = compileShader(gl.FRAGMENT_SHADER, `
+    const gradientSubtractShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      `
       precision mediump float; precision mediump sampler2D; varying highp vec2 vUv; varying highp vec2 vL, vR, vT, vB;
       uniform sampler2D uPressure; uniform sampler2D uVelocity;
       void main () {
@@ -266,14 +366,26 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         velocity.xy -= vec2(R - L, T - B);
         gl_FragColor = vec4(velocity, 0.0, 1.0);
       }
-    `);
+    `,
+    );
 
-    const displayFragmentShader = compileShader(gl.FRAGMENT_SHADER, displayShaderSource);
+    const displayFragmentShader = compileShader(
+      gl.FRAGMENT_SHADER,
+      displayShaderSource,
+    );
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]),
+      gl.STATIC_DRAW,
+    );
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ELEMENT_ARRAY_BUFFER,
+      new Uint16Array([0, 1, 2, 0, 2, 3]),
+      gl.STATIC_DRAW,
+    );
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(0);
 
@@ -293,7 +405,14 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       g.drawElements(g.TRIANGLES, 6, g.UNSIGNED_SHORT, 0);
     }
 
-    function createFBO(w: number, h: number, internalFormat: number, format: number, type: number, param: number) {
+    function createFBO(
+      w: number,
+      h: number,
+      internalFormat: number,
+      format: number,
+      type: number,
+      param: number,
+    ) {
       const g = gl!;
       g.activeTexture(g.TEXTURE0);
       const texture = g.createTexture()!;
@@ -302,27 +421,75 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, param);
       g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE);
       g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE);
-      g.texImage2D(g.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+      g.texImage2D(
+        g.TEXTURE_2D,
+        0,
+        internalFormat,
+        w,
+        h,
+        0,
+        format,
+        type,
+        null,
+      );
       const fbo = g.createFramebuffer()!;
       g.bindFramebuffer(g.FRAMEBUFFER, fbo);
-      g.framebufferTexture2D(g.FRAMEBUFFER, g.COLOR_ATTACHMENT0, g.TEXTURE_2D, texture, 0);
+      g.framebufferTexture2D(
+        g.FRAMEBUFFER,
+        g.COLOR_ATTACHMENT0,
+        g.TEXTURE_2D,
+        texture,
+        0,
+      );
       g.viewport(0, 0, w, h);
       g.clear(g.COLOR_BUFFER_BIT);
       return {
-        texture, fbo, width: w, height: h,
-        texelSizeX: 1 / w, texelSizeY: 1 / h,
-        attach(id: number) { g.activeTexture(g.TEXTURE0 + id); g.bindTexture(g.TEXTURE_2D, texture); return id; },
+        texture,
+        fbo,
+        width: w,
+        height: h,
+        texelSizeX: 1 / w,
+        texelSizeY: 1 / h,
+        attach(id: number) {
+          g.activeTexture(g.TEXTURE0 + id);
+          g.bindTexture(g.TEXTURE_2D, texture);
+          return id;
+        },
       };
     }
 
-    function createDoubleFBO(w: number, h: number, internalFormat: number, format: number, type: number, param: number) {
+    function createDoubleFBO(
+      w: number,
+      h: number,
+      internalFormat: number,
+      format: number,
+      type: number,
+      param: number,
+    ) {
       let fbo1 = createFBO(w, h, internalFormat, format, type, param);
       let fbo2 = createFBO(w, h, internalFormat, format, type, param);
       return {
-        width: w, height: h, texelSizeX: fbo1.texelSizeX, texelSizeY: fbo1.texelSizeY,
-        get read() { return fbo1; }, set read(v) { fbo1 = v; },
-        get write() { return fbo2; }, set write(v) { fbo2 = v; },
-        swap() { const t = fbo1; fbo1 = fbo2; fbo2 = t; },
+        width: w,
+        height: h,
+        texelSizeX: fbo1.texelSizeX,
+        texelSizeY: fbo1.texelSizeY,
+        get read() {
+          return fbo1;
+        },
+        set read(v) {
+          fbo1 = v;
+        },
+        get write() {
+          return fbo2;
+        },
+        set write(v) {
+          fbo2 = v;
+        },
+        swap() {
+          const t = fbo1;
+          fbo1 = fbo2;
+          fbo2 = t;
+        },
       };
     }
 
@@ -331,7 +498,9 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       if (aspectRatio < 1) aspectRatio = 1 / aspectRatio;
       const min = Math.round(resolution);
       const max = Math.round(resolution * aspectRatio);
-      return gl!.drawingBufferWidth > gl!.drawingBufferHeight ? { width: max, height: min } : { width: min, height: max };
+      return gl!.drawingBufferWidth > gl!.drawingBufferHeight
+        ? { width: max, height: min }
+        : { width: min, height: max };
     }
 
     const copyProgram = new GLProgram(baseVertexShader, copyShader);
@@ -342,8 +511,14 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
     const curlProgram = new GLProgram(baseVertexShader, curlShader);
     const vorticityProgram = new GLProgram(baseVertexShader, vorticityShader);
     const pressureProgram = new GLProgram(baseVertexShader, pressureShader);
-    const gradientSubtractProgram = new GLProgram(baseVertexShader, gradientSubtractShader);
-    const displayProgram = new GLProgram(baseVertexShader, displayFragmentShader);
+    const gradientSubtractProgram = new GLProgram(
+      baseVertexShader,
+      gradientSubtractShader,
+    );
+    const displayProgram = new GLProgram(
+      baseVertexShader,
+      displayFragmentShader,
+    );
 
     let dye: ReturnType<typeof createDoubleFBO>;
     let velocity: ReturnType<typeof createDoubleFBO>;
@@ -357,11 +532,46 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       const texType = halfFloatTexType;
       const filtering = supportLinearFiltering ? gl!.LINEAR : gl!.NEAREST;
       gl!.disable(gl!.BLEND);
-      dye = createDoubleFBO(dyeRes.width, dyeRes.height, rgba!.internalFormat, rgba!.format, texType, filtering);
-      velocity = createDoubleFBO(simRes.width, simRes.height, rg!.internalFormat, rg!.format, texType, filtering);
-      divergence = createFBO(simRes.width, simRes.height, rFmt!.internalFormat, rFmt!.format, texType, gl!.NEAREST);
-      curl = createFBO(simRes.width, simRes.height, rFmt!.internalFormat, rFmt!.format, texType, gl!.NEAREST);
-      pressure = createDoubleFBO(simRes.width, simRes.height, rFmt!.internalFormat, rFmt!.format, texType, gl!.NEAREST);
+      dye = createDoubleFBO(
+        dyeRes.width,
+        dyeRes.height,
+        rgba!.internalFormat,
+        rgba!.format,
+        texType,
+        filtering,
+      );
+      velocity = createDoubleFBO(
+        simRes.width,
+        simRes.height,
+        rg!.internalFormat,
+        rg!.format,
+        texType,
+        filtering,
+      );
+      divergence = createFBO(
+        simRes.width,
+        simRes.height,
+        rFmt!.internalFormat,
+        rFmt!.format,
+        texType,
+        gl!.NEAREST,
+      );
+      curl = createFBO(
+        simRes.width,
+        simRes.height,
+        rFmt!.internalFormat,
+        rFmt!.format,
+        texType,
+        gl!.NEAREST,
+      );
+      pressure = createDoubleFBO(
+        simRes.width,
+        simRes.height,
+        rFmt!.internalFormat,
+        rFmt!.format,
+        texType,
+        gl!.NEAREST,
+      );
     }
 
     function scaleByPixelRatio(input: number) {
@@ -387,7 +597,10 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
     function splat(x: number, y: number, dx: number, dy: number) {
       splatProgram.bind();
       gl!.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
-      gl!.uniform1f(splatProgram.uniforms.aspectRatio, canvas!.width / canvas!.height);
+      gl!.uniform1f(
+        splatProgram.uniforms.aspectRatio,
+        canvas!.width / canvas!.height,
+      );
       gl!.uniform2f(splatProgram.uniforms.point, x, y);
       gl!.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
       let radius = config.SPLAT_RADIUS / 100.0;
@@ -419,18 +632,31 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       pointer.texcoordY = 1.0 - posY / canvas!.height;
       pointer.deltaX = correctDeltaX(pointer.texcoordX - pointer.prevTexcoordX);
       pointer.deltaY = correctDeltaY(pointer.texcoordY - pointer.prevTexcoordY);
-      pointer.moved = Math.abs(pointer.deltaX) > 0 || Math.abs(pointer.deltaY) > 0;
+      pointer.moved =
+        Math.abs(pointer.deltaX) > 0 || Math.abs(pointer.deltaY) > 0;
     }
 
     const onMouseMove = (e: MouseEvent) => {
-      const rect = container!.getBoundingClientRect();
-      const posX = scaleByPixelRatio(e.clientX - rect.left);
-      const posY = scaleByPixelRatio(e.clientY - rect.top);
-      updatePointerMove(posX, posY);
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      if (
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+      ) {
+        const posX = scaleByPixelRatio(e.clientX - rect.left);
+        const posY = scaleByPixelRatio(e.clientY - rect.top);
+        updatePointerMove(posX, posY);
+      } else {
+        pointer.moved = false;
+      }
     };
-    const onMouseLeave = () => { pointer.moved = false; };
-    container.addEventListener('mousemove', onMouseMove);
-    container.addEventListener('mouseleave', onMouseLeave);
+    const onMouseLeave = () => {
+      pointer.moved = false;
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseleave", onMouseLeave);
 
     let lastUpdateTime = Date.now();
     function calcDeltaTime() {
@@ -445,12 +671,20 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       g.disable(g.BLEND);
 
       curlProgram.bind();
-      g.uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      g.uniform2f(
+        curlProgram.uniforms.texelSize,
+        velocity.texelSizeX,
+        velocity.texelSizeY,
+      );
       g.uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
       blit(curl);
 
       vorticityProgram.bind();
-      g.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      g.uniform2f(
+        vorticityProgram.uniforms.texelSize,
+        velocity.texelSizeX,
+        velocity.texelSizeY,
+      );
       g.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
       g.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
       g.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
@@ -459,8 +693,15 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       velocity.swap();
 
       divergenceProgram.bind();
-      g.uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      g.uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
+      g.uniform2f(
+        divergenceProgram.uniforms.texelSize,
+        velocity.texelSizeX,
+        velocity.texelSizeY,
+      );
+      g.uniform1i(
+        divergenceProgram.uniforms.uVelocity,
+        velocity.read.attach(0),
+      );
       blit(divergence);
 
       clearProgram.bind();
@@ -470,34 +711,61 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       pressure.swap();
 
       pressureProgram.bind();
-      g.uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      g.uniform2f(
+        pressureProgram.uniforms.texelSize,
+        velocity.texelSizeX,
+        velocity.texelSizeY,
+      );
       g.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
       for (let i = 0; i < config.PRESSURE_ITERATIONS; i++) {
-        g.uniform1i(pressureProgram.uniforms.uPressure, pressure.read.attach(1));
+        g.uniform1i(
+          pressureProgram.uniforms.uPressure,
+          pressure.read.attach(1),
+        );
         blit(pressure.write);
         pressure.swap();
       }
 
       gradientSubtractProgram.bind();
-      g.uniform2f(gradientSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      g.uniform1i(gradientSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
-      g.uniform1i(gradientSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
+      g.uniform2f(
+        gradientSubtractProgram.uniforms.texelSize,
+        velocity.texelSizeX,
+        velocity.texelSizeY,
+      );
+      g.uniform1i(
+        gradientSubtractProgram.uniforms.uPressure,
+        pressure.read.attach(0),
+      );
+      g.uniform1i(
+        gradientSubtractProgram.uniforms.uVelocity,
+        velocity.read.attach(1),
+      );
       blit(velocity.write);
       velocity.swap();
 
       advectionProgram.bind();
-      g.uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      g.uniform2f(
+        advectionProgram.uniforms.texelSize,
+        velocity.texelSizeX,
+        velocity.texelSizeY,
+      );
       let velocityId = velocity.read.attach(0);
       g.uniform1i(advectionProgram.uniforms.uVelocity, velocityId);
       g.uniform1i(advectionProgram.uniforms.uSource, velocityId);
       g.uniform1f(advectionProgram.uniforms.dt, dt);
-      g.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+      g.uniform1f(
+        advectionProgram.uniforms.dissipation,
+        config.VELOCITY_DISSIPATION,
+      );
       blit(velocity.write);
       velocity.swap();
 
       g.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
       g.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
-      g.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+      g.uniform1f(
+        advectionProgram.uniforms.dissipation,
+        config.DENSITY_DISSIPATION,
+      );
       blit(dye.write);
       dye.swap();
     }
@@ -508,7 +776,12 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
       g.enable(g.BLEND);
       displayProgram.bind();
       g.uniform1i(displayProgram.uniforms.uTexture, dye.read.attach(0));
-      g.uniform3f(displayProgram.uniforms.uVeilColor, veilColor[0], veilColor[1], veilColor[2]);
+      g.uniform3f(
+        displayProgram.uniforms.uVeilColor,
+        veilColor[0],
+        veilColor[1],
+        veilColor[2],
+      );
       g.uniform1f(displayProgram.uniforms.uRevealGain, 3.6);
       blit(null);
     }
@@ -516,9 +789,16 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
     let rafId = 0;
     let visible = true;
     let onScreen = true;
-    const onVisibility = () => { visible = document.visibilityState === 'visible'; };
-    document.addEventListener('visibilitychange', onVisibility);
-    const io = new IntersectionObserver((entries) => { for (const e of entries) onScreen = e.isIntersecting; }, { rootMargin: '100px' });
+    const onVisibility = () => {
+      visible = document.visibilityState === "visible";
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) onScreen = e.isIntersecting;
+      },
+      { rootMargin: "100px" },
+    );
     io.observe(container);
 
     function updateFrame() {
@@ -528,7 +808,12 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
         if (resizeCanvasToContainer()) initFramebuffers();
         if (pointer.moved) {
           pointer.moved = false;
-          splat(pointer.texcoordX, pointer.texcoordY, pointer.deltaX * config.SPLAT_FORCE, pointer.deltaY * config.SPLAT_FORCE);
+          splat(
+            pointer.texcoordX,
+            pointer.texcoordY,
+            pointer.deltaX * config.SPLAT_FORCE,
+            pointer.deltaY * config.SPLAT_FORCE,
+          );
         }
         step(dt);
         render();
@@ -540,9 +825,9 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
     return () => {
       isActive = false;
       cancelAnimationFrame(rafId);
-      container.removeEventListener('mousemove', onMouseMove);
-      container.removeEventListener('mouseleave', onMouseLeave);
-      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseleave", onMouseLeave);
+      document.removeEventListener("visibilitychange", onVisibility);
       io.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -552,7 +837,9 @@ export function HeroFluidReveal({ containerRef, veilColor = [0.0196, 0.0196, 0.0
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className={className ?? 'pointer-events-none absolute inset-0 h-full w-full'}
+      className={
+        className ?? "pointer-events-none absolute inset-0 h-full w-full"
+      }
     />
   );
 }

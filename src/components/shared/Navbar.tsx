@@ -157,7 +157,7 @@ export const Navbar = () => {
           to isHero's white text (right for the dark Hero section behind it)
           goes near-illegible floating on top of it. Once the menu is open,
           the header's own color should follow that light overlay instead. */}
-      <header className={`fixed inset-x-0 top-0 z-[9999] px-5 py-5 transition-colors duration-500 md:px-8 ${showWhiteText ? "text-white" : "text-foreground"}`}>
+      <header className={`fixed inset-x-0 top-0 z-[9999] px-5 py-5 transition-colors duration-500 md:px-8 pointer-events-none ${showWhiteText ? "text-white" : "text-foreground"}`}>
         {/* The header has no bar of its own, so section copy scrolling up
             under it collided with the wordmark. A soft paper-toned scrim
             fades that copy out before it reaches the header, without adding
@@ -175,12 +175,12 @@ export const Navbar = () => {
           <Link
             href="#hero"
             onClick={(e) => { e.preventDefault(); handleNavClick("#hero"); }}
-            className="outline-none"
+            className="outline-none pointer-events-auto"
           >
             <span className="font-serif text-2xl font-bold tracking-[-0.04em] text-current md:text-[28px]">TRHGATU.</span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pointer-events-auto">
             <SoundToggle />
             {/* Hero's veil/3D-model swap — grouped here with the rest of the
                 header's controls instead of floating alone over Hero (see

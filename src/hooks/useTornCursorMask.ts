@@ -101,19 +101,33 @@ export function useTornCursorMask(
     };
 
     const onMove = (e: MouseEvent) => {
-      pointer = { x: e.clientX, y: e.clientY };
-      schedule();
+      const rect = container.getBoundingClientRect();
+      // Track seamlessly across the window as long as cursor is within container bounds (including header overlays)
+      if (
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+      ) {
+        pointer = { x: e.clientX, y: e.clientY };
+        schedule();
+      } else {
+        if (pointer) {
+          pointer = null;
+          setMaskPosition(-9999, -9999);
+        }
+      }
     };
     const onLeave = () => {
       pointer = null;
       setMaskPosition(-9999, -9999);
     };
 
-    container.addEventListener('mousemove', onMove);
-    container.addEventListener('mouseleave', onLeave);
+    window.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseleave', onLeave);
     return () => {
-      container.removeEventListener('mousemove', onMove);
-      container.removeEventListener('mouseleave', onLeave);
+      window.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseleave', onLeave);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [active, containerRef, wrapperRef]);
