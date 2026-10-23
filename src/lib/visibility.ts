@@ -7,7 +7,7 @@
 export function watchVisibility(
   el: Element,
   onChange: (visible: boolean) => void,
-  rootMargin = '200px',
+  rootMargin = "200px",
 ) {
   let inView = true;
   let tabVisible = !document.hidden;
@@ -20,20 +20,23 @@ export function watchVisibility(
     onChange(visible);
   };
 
-  const io = new IntersectionObserver(([entry]) => {
-    inView = entry.isIntersecting;
-    emit();
-  }, { rootMargin });
+  const io = new IntersectionObserver(
+    ([entry]) => {
+      inView = entry.isIntersecting;
+      emit();
+    },
+    { rootMargin },
+  );
   io.observe(el);
 
   const onVisibility = () => {
     tabVisible = !document.hidden;
     emit();
   };
-  document.addEventListener('visibilitychange', onVisibility);
+  document.addEventListener("visibilitychange", onVisibility);
 
   return () => {
     io.disconnect();
-    document.removeEventListener('visibilitychange', onVisibility);
+    document.removeEventListener("visibilitychange", onVisibility);
   };
 }

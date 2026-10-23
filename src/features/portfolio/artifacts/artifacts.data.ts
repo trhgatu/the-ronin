@@ -1,6 +1,7 @@
 export interface Project {
   id: string;
   category: string;
+  type?: 'Client Work' | 'Personal Project';
   title: string;
   description: string;
   image: string;
@@ -26,6 +27,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'magnum-opus',
     category: 'Personal OS · Modular Monolith',
+    type: 'Personal Project',
     title: 'Magnum Opus',
     description: 'A private operating system for observing and reshaping one\'s own life — journal, mood, memory, habits and routines woven into one loop: record, reflect, notice patterns, change, act.',
     image: '/projects/magnum-opus.webp',
@@ -57,6 +59,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'auto-wp-publisher',
     category: 'AI Content Pipeline · Client Tool',
+    type: 'Client Work',
     title: 'Auto WP Publisher',
     description: 'Turns a raw Excel or Google Sheets product list into published WooCommerce listings — columns mapped, SEO copy written by Gemini, categories, brands, images and RankMath/Yoast metadata filled in.',
     image: '/projects/auto-wp-publisher.webp',
@@ -85,6 +88,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'the-alchemist',
     category: 'Immersive Portfolio · Creative Frontend',
+    type: 'Personal Project',
     title: 'The Alchemist',
     description: 'My previous portfolio: a scroll-driven grimoire after Paulo Coelho\'s novel. A washi-paper portal burns open onto a starfield, a 3D spellbook releases the tech stack as a constellation, and the story ends in the desert — in English and Vietnamese.',
     image: '/projects/the-alchemist.webp',
@@ -116,6 +120,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'kim-khanh',
     category: 'Client Work · Personal Archive',
+    type: 'Client Work',
     title: 'Kim Khanh',
     description: 'A bespoke digital home built for Kim Khanh — a warm botanical scrapbook of flowers, places, notes and small everyday joys, opening on an interactive 3D azalea.',
     image: '/projects/kim-khanh.webp',

@@ -46,29 +46,32 @@ export const CaseStudyModal = ({
           ref={sheetRef}
           className="absolute inset-3 sm:inset-5 lg:inset-[4vmin]"
         >
-          {/* Close Button: Minimalist Architectural Tag */}
+          {/* Close Button: Fog Lens Capsule */}
           <button
             onClick={onClose}
             aria-label="Close project detail"
             title="Close (ESC)"
-            className="case-reveal pointer-events-auto absolute top-5 right-5 sm:top-6 sm:right-6 lg:top-7 lg:right-8 z-50 flex items-center gap-2 px-3 py-1.5 rounded-[2px] border border-white/20 bg-black/60 hover:bg-white/10 hover:border-white/50 backdrop-blur-md text-white/70 hover:text-white transition-all duration-300 group cursor-pointer select-none"
+            className="case-reveal pointer-events-auto absolute top-5 right-5 sm:top-6 sm:right-6 lg:top-7 lg:right-8 z-50 flex items-center gap-2.5 pl-3.5 pr-2.5 py-1.5 sm:pl-4 sm:pr-3 sm:py-2 rounded-full border border-white/20 bg-black/70 hover:bg-black/90 hover:border-white/50 backdrop-blur-xl text-white/70 hover:text-white shadow-[0_4px_20px_rgba(0,0,0,0.6),0_0_12px_rgba(255,255,255,0.06)] hover:shadow-[0_4px_25px_rgba(0,0,0,0.8),0_0_20px_rgba(255,255,255,0.18)] transition-all duration-300 group cursor-pointer select-none"
           >
-            <span className="font-mono text-[10px] tracking-widest uppercase">CLOSE</span>
-            <span className="font-mono text-[9px] text-white/35 group-hover:text-white/60">ESC</span>
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-white/60 group-hover:text-white transition-transform duration-300 group-hover:rotate-90"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <span className="font-mono text-[10px] sm:text-[11px] tracking-[0.2em] uppercase transition-colors">
+              Close
+            </span>
+            <span className="w-4 h-4 sm:w-[18px] sm:h-[18px] rounded-full bg-white/10 group-hover:bg-white/25 flex items-center justify-center transition-all duration-300">
+              <svg
+                width="9"
+                height="9"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-white/80 group-hover:text-white transition-transform duration-300 group-hover:rotate-90"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </span>
           </button>
 
           <div className="absolute inset-0 flex flex-col gap-6 px-7 pt-20 pb-8 sm:px-12 sm:pt-24 lg:grid lg:grid-cols-12 lg:gap-[4vw] lg:px-[5vw] lg:pt-28 lg:pb-[5vmin]">
@@ -115,20 +118,18 @@ export const CaseStudyModal = ({
               }}
               className="case-scroll pointer-events-auto min-h-0 flex-1 overflow-y-auto pr-4 pb-16 lg:col-span-6 lg:h-full"
             >
-              {/* Editorial Header Info */}
-              <div className="case-reveal flex flex-wrap items-center gap-x-3 gap-y-1 mb-3 pt-1 text-[11px] font-mono tracking-[0.2em] uppercase text-white/45">
-                <span>{openProject.category}</span>
-                <span className="text-white/20 select-none">/</span>
+              {/* Header Info */}
+              <div className="case-reveal mb-3 pt-1 text-[11px] font-mono tracking-[0.25em] uppercase text-white/40">
+                <span>{openProject.type ?? (openProject.category.toLowerCase().includes('client') ? 'Client Work' : 'Personal Project')}</span>
+                <span className="mx-2 text-white/20 select-none">·</span>
                 <span>{openProject.year}</span>
-                <span className="text-white/20 select-none">/</span>
-                <span className="text-white/60">{openProject.role}</span>
               </div>
 
-              <h2 id="artifact-case-title" className="case-reveal font-serif text-[2.75rem] sm:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[1.02] mb-4">
+              <h2 id="artifact-case-title" className="case-reveal font-serif text-[2.75rem] sm:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[1.02] mb-3">
                 {openProject.title}
               </h2>
 
-              <p className="case-reveal font-mono text-[12px] sm:text-[13px] text-white/75 tracking-wide leading-relaxed border-l-2 border-white/20 pl-3.5 my-4">
+              <p className="case-reveal font-mono text-[12px] sm:text-[13px] text-white/60 tracking-wide leading-relaxed my-3">
                 {openProject.highlights}
               </p>
 
@@ -142,10 +143,10 @@ export const CaseStudyModal = ({
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`group font-mono text-[11px] tracking-[0.25em] uppercase px-4 py-2 border rounded-[2px] transition-all duration-300 flex items-center gap-2 select-none cursor-pointer ${
+                      className={`group font-mono text-[11px] tracking-[0.2em] uppercase px-4 py-2 border rounded-[2px] transition-all duration-300 flex items-center gap-2 select-none cursor-pointer ${
                         isLive
                           ? 'border-white bg-white text-black font-semibold hover:bg-white/90'
-                          : 'border-white/20 bg-white/[0.03] text-white/80 hover:border-white/60 hover:text-white hover:bg-white/[0.08]'
+                          : 'border-white/20 bg-white/[0.03] text-white/80 hover:border-white/50 hover:text-white hover:bg-white/[0.06]'
                       }`}
                     >
                       <span>{link.label}</span>
@@ -156,12 +157,12 @@ export const CaseStudyModal = ({
               </div>
 
               {([
-                ['01 // THE CHALLENGE', openProject.problem],
-                ['02 // THE APPROACH', openProject.approach],
-                ['03 // THE OUTCOME', openProject.outcome],
+                ['The Problem', openProject.problem],
+                ['Approach', openProject.approach],
+                ['Outcome', openProject.outcome],
               ] as const).map(([label, text]) => (
                 <div key={label} className="case-reveal mb-9">
-                  <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-white/40 mb-2.5 font-bold">
+                  <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/40 mb-2 font-medium">
                     {label}
                   </h4>
                   <p className="text-base lg:text-[16.5px] text-white/80 font-light leading-[1.8]">
@@ -171,8 +172,8 @@ export const CaseStudyModal = ({
               ))}
 
               <div className="case-reveal mb-9">
-                <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-white/40 mb-3 font-bold">
-                  04 // KEY ENGINEERING DECISIONS
+                <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/40 mb-2.5 font-medium">
+                  Engineering Notes
                 </h4>
                 <ul className="space-y-2.5">
                   {openProject.engineering.map((item) => (
@@ -185,12 +186,12 @@ export const CaseStudyModal = ({
               </div>
 
               <div className="case-reveal mb-9 pt-4 border-t border-white/10">
-                <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-white/40 mb-3 font-bold">
-                  TECHNOLOGIES &amp; PLATFORMS //
+                <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/40 mb-2.5 font-medium">
+                  Stack
                 </h4>
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[12px] font-mono text-white/70">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[12px] font-mono text-white/60">
                   {openProject.tags.map((tag, idx) => (
-                    <span key={tag} className="flex items-center gap-2.5">
+                    <span key={tag} className="flex items-center gap-2">
                       <span className="hover:text-white transition-colors">{tag}</span>
                       {idx < openProject.tags.length - 1 && (
                         <span className="text-white/20 select-none">/</span>
@@ -201,10 +202,26 @@ export const CaseStudyModal = ({
               </div>
 
               {openProject.credit && (
-                <p className="case-reveal font-mono text-[10px] text-white/35 leading-relaxed mb-8">
+                <p className="case-reveal font-mono text-[10px] text-white/35 leading-relaxed mb-6">
                   {openProject.credit}
                 </p>
               )}
+
+              {/* Bottom Exit: Return to the lake/surface */}
+              <div className="case-reveal pt-8 pb-14 mt-4 border-t border-white/10 flex items-center justify-between">
+                <button
+                  onClick={onClose}
+                  className="group flex items-center gap-3 text-white/50 hover:text-white transition-colors duration-300 font-mono text-[11px] tracking-[0.2em] uppercase cursor-pointer select-none"
+                >
+                  <span className="w-6 h-6 rounded-full border border-white/20 group-hover:border-white/60 flex items-center justify-center transition-all duration-300 group-hover:-translate-x-0.5">
+                    ←
+                  </span>
+                  <span>Return to projects</span>
+                </button>
+                <span className="font-mono text-[10px] text-white/30 tracking-widest hidden sm:inline-block select-none">
+                  [ESC] TO CLOSE
+                </span>
+              </div>
             </div>
           </div>
         </div>

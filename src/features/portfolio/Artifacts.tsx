@@ -57,6 +57,7 @@ export const Artifacts = () => {
   const slotRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
+  const revealTweensRef = useRef<gsap.core.Animation | null>(null);
   const lastIndexRef = useRef(0);
 
   useEffect(() => {
@@ -334,15 +335,24 @@ export const Artifacts = () => {
     // sheet's soft mist edge (the portal's own anchor stays measurable at
     // opacity 0, so hiding its wrapper is safe).
     gsap.to([textCardRef.current, portalWrapperRef.current], { opacity: 0, duration: 0.35, ease: 'power2.out' });
+    if (detailRef.current) {
+      gsap.killTweensOf(detailRef.current);
+      gsap.set(detailRef.current, { opacity: 1 });
+    }
     const reveal = detailRef.current?.querySelectorAll('.case-reveal');
     if (reveal?.length) {
-      gsap.fromTo(reveal, { opacity: 0, y: 24 }, {
+      gsap.killTweensOf(reveal);
+      revealTweensRef.current = gsap.fromTo(reveal, { opacity: 0, y: 24 }, {
         opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.04, delay: 0.2,
       });
     }
 
     return () => {
       document.body.classList.remove('case-study-open');
+      if (revealTweensRef.current) {
+        revealTweensRef.current.kill();
+        revealTweensRef.current = null;
+      }
     };
   }, [openIdx]);
 
@@ -350,11 +360,25 @@ export const Artifacts = () => {
     if (openIdxRef.current === null || closingRef.current) return;
     closingRef.current = true;
     document.body.classList.remove('case-study-open');
+
+    // Immediately kill text reveals so they never pop in over the shrinking portal
+    if (revealTweensRef.current) {
+      revealTweensRef.current.kill();
+      revealTweensRef.current = null;
+    }
+    if (detailRef.current) {
+      gsap.killTweensOf(detailRef.current);
+      const reveal = detailRef.current.querySelectorAll('.case-reveal');
+      if (reveal?.length) {
+        gsap.killTweensOf(reveal);
+        gsap.set(reveal, { opacity: 0 });
+      }
+      gsap.to(detailRef.current, { opacity: 0, duration: 0.2, ease: 'power2.in' });
+    }
+
     // Land back in the resting frame on the cover, not a gallery image.
     portalRef.current?.showImage(PROJECTS[openIdxRef.current].image);
-    const reveal = detailRef.current?.querySelectorAll('.case-reveal');
-    if (reveal?.length) gsap.to(reveal, { opacity: 0, y: 12, duration: 0.25, ease: 'power2.in' });
-    gsap.to([textCardRef.current, portalWrapperRef.current], { opacity: 1, duration: 0.5, delay: 0.3, ease: 'power2.out' });
+    gsap.to([textCardRef.current, portalWrapperRef.current], { opacity: 1, duration: 0.5, delay: 0.2, ease: 'power2.out' });
     portalRef.current?.close(() => {
       openIdxRef.current = null;
       closingRef.current = false;
