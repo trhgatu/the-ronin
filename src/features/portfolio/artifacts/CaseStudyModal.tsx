@@ -46,23 +46,25 @@ export const CaseStudyModal = ({
           ref={sheetRef}
           className="absolute inset-3 sm:inset-5 lg:inset-[4vmin]"
         >
-          {/* Close Button: High Contrast Ink-Stone Crest */}
+          {/* Close Button: Minimalist Architectural Tag */}
           <button
             onClick={onClose}
             aria-label="Close project detail"
             title="Close (ESC)"
-            className="case-reveal pointer-events-auto absolute top-5 right-5 sm:top-6 sm:right-6 lg:top-7 lg:right-8 z-50 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full border border-white/30 bg-[#0e0e0e]/95 hover:bg-black text-white hover:border-white/80 shadow-[0_4px_24px_rgba(0,0,0,0.85)] transition-all duration-300 hover:scale-105 active:scale-95 group cursor-pointer select-none"
+            className="case-reveal pointer-events-auto absolute top-5 right-5 sm:top-6 sm:right-6 lg:top-7 lg:right-8 z-50 flex items-center gap-2 px-3 py-1.5 rounded-[2px] border border-white/20 bg-black/60 hover:bg-white/10 hover:border-white/50 backdrop-blur-md text-white/70 hover:text-white transition-all duration-300 group cursor-pointer select-none"
           >
+            <span className="font-mono text-[10px] tracking-widest uppercase">CLOSE</span>
+            <span className="font-mono text-[9px] text-white/35 group-hover:text-white/60">ESC</span>
             <svg
-              width="24"
-              height="24"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-white transition-transform duration-300 group-hover:rotate-90"
+              className="text-white/60 group-hover:text-white transition-transform duration-300 group-hover:rotate-90"
             >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -113,22 +115,25 @@ export const CaseStudyModal = ({
               }}
               className="case-scroll pointer-events-auto min-h-0 flex-1 overflow-y-auto pr-4 pb-16 lg:col-span-6 lg:h-full"
             >
-              <div className="case-reveal flex items-center gap-3 mb-4 pt-1">
-                <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/50">
-                  {openProject.category} · {openProject.year}
-                </span>
+              {/* Editorial Header Info */}
+              <div className="case-reveal flex flex-wrap items-center gap-x-3 gap-y-1 mb-3 pt-1 text-[11px] font-mono tracking-[0.2em] uppercase text-white/45">
+                <span>{openProject.category}</span>
+                <span className="text-white/20 select-none">/</span>
+                <span>{openProject.year}</span>
+                <span className="text-white/20 select-none">/</span>
+                <span className="text-white/60">{openProject.role}</span>
               </div>
-              <h2 id="artifact-case-title" className="case-reveal font-serif text-[2.75rem] sm:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[1.02] mb-5">
+
+              <h2 id="artifact-case-title" className="case-reveal font-serif text-[2.75rem] sm:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[1.02] mb-4">
                 {openProject.title}
               </h2>
-              <p className="case-reveal flex items-start gap-2.5 font-mono text-[13px] text-white/75 tracking-wide leading-relaxed mb-3">
-                <span className="mt-1 w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: openProject.accent }} />
+
+              <p className="case-reveal font-mono text-[12px] sm:text-[13px] text-white/75 tracking-wide leading-relaxed border-l-2 border-white/20 pl-3.5 my-4">
                 {openProject.highlights}
               </p>
-              <p className="case-reveal font-caveat text-2xl text-white/55 mb-6">{openProject.role}</p>
 
-              {/* Primary Action Buttons (Instant Live & Source Links without scrolling) */}
-              <div className="case-reveal flex flex-wrap items-center gap-3 mb-10">
+              {/* Action Links */}
+              <div className="case-reveal flex flex-wrap items-center gap-3 my-7">
                 {openProject.links.map((link) => {
                   const isLive = link.label.toLowerCase() === 'live';
                   return (
@@ -137,59 +142,59 @@ export const CaseStudyModal = ({
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`font-mono text-xs tracking-widest uppercase px-4 py-2.5 rounded transition-all cursor-pointer flex items-center gap-2 ${
+                      className={`group font-mono text-[11px] tracking-[0.25em] uppercase px-4 py-2 border rounded-[2px] transition-all duration-300 flex items-center gap-2 select-none cursor-pointer ${
                         isLive
-                          ? 'bg-white text-black font-semibold hover:bg-white/90 shadow-[0_4px_16px_rgba(255,255,255,0.15)] hover:scale-[1.02]'
-                          : 'border border-white/20 bg-white/[0.04] text-white/80 hover:text-white hover:border-white/50 hover:bg-white/[0.08]'
+                          ? 'border-white bg-white text-black font-semibold hover:bg-white/90'
+                          : 'border-white/20 bg-white/[0.03] text-white/80 hover:border-white/60 hover:text-white hover:bg-white/[0.08]'
                       }`}
                     >
                       <span>{link.label}</span>
-                      <span className="text-sm font-sans">↗</span>
+                      <span className="text-xs transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
                     </a>
                   );
                 })}
               </div>
 
               {([
-                ['The Problem', openProject.problem],
-                ['The Approach', openProject.approach],
-                ['The Outcome', openProject.outcome],
+                ['01 // THE CHALLENGE', openProject.problem],
+                ['02 // THE APPROACH', openProject.approach],
+                ['03 // THE OUTCOME', openProject.outcome],
               ] as const).map(([label, text]) => (
-                <div key={label} className="case-reveal mb-10">
-                  <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-2.5">
+                <div key={label} className="case-reveal mb-9">
+                  <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-white/40 mb-2.5 font-bold">
                     {label}
                   </h4>
-                  <p className="text-base lg:text-[17px] text-white/80 font-light leading-[1.75]">
+                  <p className="text-base lg:text-[16.5px] text-white/80 font-light leading-[1.8]">
                     {text}
                   </p>
                 </div>
               ))}
 
-              <div className="case-reveal mb-10">
-                <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-3">
-                  Under the Hood
+              <div className="case-reveal mb-9">
+                <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-white/40 mb-3 font-bold">
+                  04 // KEY ENGINEERING DECISIONS
                 </h4>
                 <ul className="space-y-2.5">
                   {openProject.engineering.map((item) => (
-                    <li key={item} className="flex gap-3 text-[15px] lg:text-base text-white/75 font-light leading-relaxed">
-                      <span className="text-white/30 font-mono">—</span>
+                    <li key={item} className="flex gap-3 text-[14.5px] lg:text-[15.5px] text-white/75 font-light leading-relaxed">
+                      <span className="text-white/30 font-mono select-none">—</span>
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="case-reveal mb-10">
-                <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/45 mb-2.5">
-                  Stack
+              <div className="case-reveal mb-9 pt-4 border-t border-white/10">
+                <h4 className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-white/40 mb-3 font-bold">
+                  TECHNOLOGIES &amp; PLATFORMS //
                 </h4>
-                <div className="flex flex-wrap gap-2">
-                  {openProject.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="font-mono text-[10px] tracking-wider px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
-                    >
-                      {tag}
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[12px] font-mono text-white/70">
+                  {openProject.tags.map((tag, idx) => (
+                    <span key={tag} className="flex items-center gap-2.5">
+                      <span className="hover:text-white transition-colors">{tag}</span>
+                      {idx < openProject.tags.length - 1 && (
+                        <span className="text-white/20 select-none">/</span>
+                      )}
                     </span>
                   ))}
                 </div>
